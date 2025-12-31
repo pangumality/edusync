@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
 import { seedClasses, seedStudents } from '../../utils/seed';
-import { CreditCard, Search, Plus, ListChecks, Printer, Trash2, ChevronDown } from 'lucide-react';
+import { CreditCard, Search, Plus, ListChecks, Printer, Trash2 } from 'lucide-react';
+import Select from '../../components/Select';
 
 const FEE_AMOUNT = 1200;
 
@@ -183,56 +184,48 @@ export default function Finance() {
                 className="pl-9 pr-3 py-2 border rounded-md bg-white text-gray-700 placeholder-gray-400 w-64"
               />
             </div>
-            <div className="relative w-28">
-              <select
+            <div className="w-28">
+              <Select
                 value={year}
-                onChange={e => setYear(e.target.value)}
-                className="w-full px-3 py-2 pr-9 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 shadow-soft hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-300 transition-colors text-sm appearance-none"
-              >
-                {Array.from({ length: 5 }).map((_, i) => {
+                onChange={setYear}
+                options={Array.from({ length: 5 }).map((_, i) => {
                   const y = (new Date().getFullYear() - i).toString();
-                  return <option key={y} value={y}>{y}</option>;
+                  return { value: y, label: y };
                 })}
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              />
             </div>
-            <div className="relative w-28">
-              <select
+            <div className="w-28">
+              <Select
                 value={term}
-                onChange={e => setTerm(e.target.value)}
-                className="w-full px-3 py-2 pr-9 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 shadow-soft hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-300 transition-colors text-sm appearance-none"
-              >
-                <option value="1">Term 1</option>
-                <option value="2">Term 2</option>
-                <option value="3">Term 3</option>
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                onChange={setTerm}
+                options={[
+                  { value: '1', label: 'Term 1' },
+                  { value: '2', label: 'Term 2' },
+                  { value: '3', label: 'Term 3' },
+                ]}
+              />
             </div>
-            <div className="relative w-40">
-              <select
+            <div className="w-40">
+              <Select
                 value={klassFilter}
-                onChange={e => setKlassFilter(e.target.value)}
-                className="w-full px-3 py-2 pr-9 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 shadow-soft hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-300 transition-colors text-sm appearance-none"
-              >
-                <option value="all">All Classes</option>
-                {classes.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                onChange={setKlassFilter}
+                options={[
+                  { value: 'all', label: 'All Classes' },
+                  ...classes.map(c => ({ value: c.id, label: c.name })),
+                ]}
+              />
             </div>
-            <div className="relative w-36">
-              <select
+            <div className="w-36">
+              <Select
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 pr-9 rounded-xl bg-gray-50 text-gray-800 border border-gray-200 shadow-soft hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-300 transition-colors text-sm appearance-none"
-              >
-                <option value="all">All Status</option>
-                <option value="Paid">Paid</option>
-                <option value="Partial">Partial</option>
-                <option value="Not Paid">Not Paid</option>
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                onChange={setStatusFilter}
+                options={[
+                  { value: 'all', label: 'All Status' },
+                  { value: 'Paid', label: 'Paid' },
+                  { value: 'Partial', label: 'Partial' },
+                  { value: 'Not Paid', label: 'Not Paid' },
+                ]}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
