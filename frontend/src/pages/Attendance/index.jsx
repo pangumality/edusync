@@ -9,7 +9,7 @@ const classes = [
 const roster = {
   'class-1-A': [
     { id: 's-1', name: 'Amina Kora' },
-    { id: 's-2', name: 'Daniel Mensah' },
+    { id: 's-2', name: 'Just Testing' },
     { id: 's-3', name: 'Grace Okoro' },
     { id: 's-4', name: 'Sam Ndlovu' },
   ],
