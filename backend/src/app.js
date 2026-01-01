@@ -30,6 +30,10 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('School ERP Backend is running');
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const classes = [
   { id: 'class-1', name: 'Grade 1', sections: ['A', 'B'] },
@@ -9,7 +9,7 @@ const classes = [
 const roster = {
   'class-1-A': [
     { id: 's-1', name: 'Amina Kora' },
-    { id: 's-2', name: 'Daniel Mensah' },
+    { id: 's-2', name: 'Just Testing' },
     { id: 's-3', name: 'Grace Okoro' },
     { id: 's-4', name: 'Sam Ndlovu' },
   ],
@@ -34,6 +34,29 @@ const roster = {
   ],
 };
 
+const schoolByClass = {
+  'class-1': { id: 'uncharted-tech', name: 'Uncharted Technologies', lat: -15.48288, lng: 28.34432, radiusMeters: 3, useAccuracyBuffer: false },
+  'class-2': { id: 'uncharted-tech', name: 'Uncharted Technologies', lat: -15.48288, lng: 28.34432, radiusMeters: 3, useAccuracyBuffer: false },
+  'class-3': { id: 'uncharted-tech', name: 'Uncharted Technologies', lat: -15.48288, lng: 28.34432, radiusMeters: 3, useAccuracyBuffer: false },
+};
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function getAssignedSchool(klassId) {
+  return schoolByClass[klassId];
+}
+
 function storageKey(date, klass, section) {
   return `attendance:doonites:${date}:${klass}-${section}`;
 }
@@ -45,6 +68,11 @@ export default function Attendance() {
   const [section, setSection] = useState(classes[0].sections[0]);
   const [search, setSearch] = useState('');
   const [records, setRecords] = useState({});
+  const [locStatus, setLocStatus] = useState('idle');
+  const [position, setPosition] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [locError, setLocError] = useState('');
+  const watchIdRef = useRef(null);
 
   const currentKey = storageKey(date, klass, section);
   const currentStudents = (roster[`${klass}-${section}`] ?? []).filter(s =>
@@ -64,7 +92,98 @@ export default function Attendance() {
   const absentCount = Object.values(records).filter(v => v === 'A').length;
   const unmarkedCount = currentStudents.length - presentCount - absentCount;
 
+  const school = getAssignedSchool(klass);
+
+  const checkLocation = () => {
+    setLocError('');
+    if (!school) {
+      setLocStatus('blocked');
+      return;
+    }
+    if (!('geolocation' in navigator)) {
+      setLocStatus('unsupported');
+      return;
+    }
+    setLocStatus('checking');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setPosition({ latitude, longitude, accuracy });
+        const d = haversineDistance(latitude, longitude, school.lat, school.lng);
+        setDistance(Math.round(d));
+        const buffer = school.useAccuracyBuffer === false ? 0 : (accuracy || 0);
+        if (d <= school.radiusMeters + buffer) {
+          setLocStatus('allowed');
+        } else {
+          setLocStatus('blocked');
+        }
+      },
+      (err) => {
+        if (err.code === 1) {
+          setLocStatus('permission_denied');
+        } else {
+          setLocStatus('error');
+        }
+        setLocError(err.message || 'Location error');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  const stopWatch = () => {
+    if (watchIdRef.current !== null && 'geolocation' in navigator) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
+
+  const startWatch = () => {
+    setLocError('');
+    if (!school) {
+      setLocStatus('blocked');
+      return;
+    }
+    if (!('geolocation' in navigator)) {
+      setLocStatus('unsupported');
+      return;
+    }
+    stopWatch();
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setPosition({ latitude, longitude, accuracy });
+        const d = haversineDistance(latitude, longitude, school.lat, school.lng);
+        setDistance(Math.round(d));
+        const buffer = school.useAccuracyBuffer === false ? 0 : (accuracy || 0);
+        if (d <= school.radiusMeters + buffer) {
+          setLocStatus('allowed');
+        } else {
+          setLocStatus('blocked');
+        }
+      },
+      (err) => {
+        if (err.code === 1) {
+          setLocStatus('permission_denied');
+        } else {
+          setLocStatus('error');
+        }
+        setLocError(err.message || 'Location error');
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+    );
+  };
+
+  useEffect(() => {
+    startWatch();
+    return () => {
+      stopWatch();
+    };
+  }, [school?.id]);
+
+  const locationAllowed = locStatus === 'allowed';
+
   const markAll = (status) => {
+    if (!locationAllowed) return;
     const newState = {};
     for (const s of currentStudents) newState[s.id] = status;
     setRecords(newState);
@@ -96,6 +215,29 @@ export default function Attendance() {
       <h2 className="text-xl font-bold text-gray-700 uppercase">Attendance</h2>
 
       <div className="bg-white rounded-xl shadow-soft p-6">
+        <div className={`mb-4 rounded-md border px-4 py-3 ${locationAllowed ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}`}>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              {locationAllowed ? (
+                <span className="text-green-700">Location verified for {school?.name}. Distance {distance}m{position?.accuracy ? `, accuracy ±${Math.round(position.accuracy)}m` : ''}.</span>
+              ) : (
+                <span className="text-yellow-800">
+                  Location check required. Enable location and be within {school?.radiusMeters}m of {school?.name}.
+                  {locStatus === 'unsupported' && ' Your device/browser does not support geolocation.'}
+                  {locStatus === 'permission_denied' && ' Permission denied. Allow location access.'}
+                  {locStatus === 'blocked' && distance !== null && ` You are ${distance}m away.`}
+                  {locStatus === 'error' && ` ${locError}`}
+                </span>
+              )}
+            </div>
+            <button
+              className="text-sm px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+              onClick={checkLocation}
+            >
+              Check location
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm text-gray-600 mb-1">Date</label>
@@ -148,14 +290,16 @@ export default function Attendance() {
 
         <div className="mt-6 flex items-center gap-3">
           <button
-            className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
+            className={`px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 ${!locationAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={() => markAll('P')}
+            disabled={!locationAllowed}
           >
             Mark all Present
           </button>
           <button
-            className="px-3 py-2 rounded-md bg-gray-500 text-white hover:bg-gray-600"
+            className={`px-3 py-2 rounded-md bg-gray-500 text-white hover:bg-gray-600 ${!locationAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={() => markAll('A')}
+            disabled={!locationAllowed}
           >
             Mark all Absent
           </button>
@@ -207,14 +351,22 @@ export default function Attendance() {
                     <td className="px-4 py-2 border-b">
                       <div className="flex items-center gap-3">
                         <button
-                          className={`px-3 py-1 rounded-md border ${status === 'P' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-                          onClick={() => setRecords({ ...records, [s.id]: 'P' })}
+                          className={`px-3 py-1 rounded-md border ${status === 'P' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'} ${!locationAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => {
+                            if (!locationAllowed) return;
+                            setRecords({ ...records, [s.id]: 'P' });
+                          }}
+                          disabled={!locationAllowed}
                         >
                           Present
                         </button>
                         <button
-                          className={`px-3 py-1 rounded-md border ${status === 'A' ? 'bg-gray-600 text-white border-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-                          onClick={() => setRecords({ ...records, [s.id]: 'A' })}
+                          className={`px-3 py-1 rounded-md border ${status === 'A' ? 'bg-gray-600 text-white border-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'} ${!locationAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => {
+                            if (!locationAllowed) return;
+                            setRecords({ ...records, [s.id]: 'A' });
+                          }}
+                          disabled={!locationAllowed}
                         >
                           Absent
                         </button>
