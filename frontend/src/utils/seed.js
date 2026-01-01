@@ -27,6 +27,7 @@ export function seedTeachers() {
     id: uid(),
     name: n,
     email: `${n.split(' ')[0].toLowerCase()}@doonites.com`,
+    role: 'TEACHER',
     subject: subjects[i % subjects.length],
   }));
   localStorage.setItem('teachers:doonites', JSON.stringify(list));
@@ -47,6 +48,7 @@ export function seedStudents(classes) {
           id: uid(),
           name,
           email: `${name.split(' ')[0].toLowerCase()}@school.local`,
+          role: 'STUDENT',
           klass: c.id,
           section: sec,
         });
@@ -58,8 +60,92 @@ export function seedStudents(classes) {
   return list;
 }
 
+export function seedParents(students) {
+  const list = students.slice(0, 20).map(student => ({
+    id: uid(),
+    name: `Parent of ${student.name.split(' ')[0]}`,
+    email: `parent.${student.email}`,
+    role: 'PARENT',
+    children: [student.id]
+  }));
+  localStorage.setItem('parents:doonites', JSON.stringify(list));
+  return list;
+}
+
+export function seedStaff() {
+  const admins = [
+    { id: uid(), name: 'Super Admin User', email: 'super@doonites.com', role: 'SUPER_ADMIN' },
+    { id: uid(), name: 'Admin User', email: 'admin@doonites.com', role: 'ADMIN' },
+  ];
+  const librarians = [
+    { id: uid(), name: 'Librarian User', email: 'library@doonites.com', role: 'LIBRARIAN' },
+  ];
+  
+  localStorage.setItem('admins:doonites', JSON.stringify(admins));
+  localStorage.setItem('librarians:doonites', JSON.stringify(librarians));
+  
+  return { admins, librarians };
+}
+
+export function seedMessages() {
+  const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
+  const students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
+  
+  if (teachers.length === 0 || students.length === 0) return [];
+
+  const conversations = [];
+  const messageTemplates = [
+    "Hello, I have a question about the assignment.",
+    "Please submit your report by Friday.",
+    "Can we meet to discuss my grades?",
+    "Don't forget the parent-teacher meeting.",
+    "The class schedule has been updated.",
+    "Thank you for the update!",
+    "I will be absent tomorrow due to illness.",
+    "Please bring your textbook to class."
+  ];
+
+  // Create conversation between first teacher and first few students
+  const activeTeacher = teachers[0]; 
+
+  for (let i = 0; i < 5; i++) {
+    const student = students[i];
+    const conversationId = uid();
+    
+    const convoMessages = [];
+    const numMessages = 3 + Math.floor(Math.random() * 3);
+    
+    for (let m = 0; m < numMessages; m++) {
+      const isTeacherSender = Math.random() > 0.5;
+      convoMessages.push({
+        id: uid(),
+        content: messageTemplates[Math.floor(Math.random() * messageTemplates.length)],
+        senderId: isTeacherSender ? activeTeacher.id : student.id,
+        createdAt: new Date(Date.now() - Math.floor(Math.random() * 86400000 * (numMessages - m))).toISOString(),
+        read: Math.random() > 0.3
+      });
+    }
+
+    convoMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    conversations.push({
+      id: conversationId,
+      participants: [activeTeacher, student],
+      messages: convoMessages,
+      lastMessage: convoMessages[convoMessages.length - 1],
+      updatedAt: convoMessages[convoMessages.length - 1].createdAt
+    });
+  }
+
+  localStorage.setItem('conversations:doonites', JSON.stringify(conversations));
+  return conversations;
+}
+
 export function seedAll() {
   const classes = seedClasses();
-  seedTeachers();
-  seedStudents(classes);
+  const teachers = seedTeachers();
+  const students = seedStudents(classes);
+  seedParents(students);
+  seedStaff();
+  seedMessages();
 }
