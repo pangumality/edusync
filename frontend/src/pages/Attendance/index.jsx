@@ -8,7 +8,7 @@ const classes = [
 
 const roster = {
   'class-1-A': [
-    { id: 's-1', name: 'Amina Kora' },
+    { id: 's-1', name: 'Run Moretests' },
     { id: 's-2', name: 'First Test' },
     { id: 's-3', name: 'Second Test' },
     { id: 's-4', name: 'Third Test' },
