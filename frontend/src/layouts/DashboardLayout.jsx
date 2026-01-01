@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Bell, 
@@ -19,6 +19,7 @@ import {
   Package
 } from 'lucide-react';
 import clsx from 'clsx';
+import { seedAll } from '../utils/seed';
 
 const SidebarItem = ({ icon: Icon, label, to, active }) => {
   return (
@@ -44,8 +45,49 @@ const SidebarItem = ({ icon: Icon, label, to, active }) => {
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const loadUser = () => {
+      // 1. Try to get the specifically selected demo user
+      const savedUserId = localStorage.getItem('current_demo_user_id');
+      
+      let foundUser = null;
+      
+      // Load all lists
+      const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
+      const students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
+      const admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
+      const librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
+      const parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
+
+      const allUsers = [...admins, ...teachers, ...librarians, ...students, ...parents];
+
+      if (allUsers.length === 0) {
+        // Fallback if nothing seeded yet (should be handled by Messages page, but safety first)
+        seedAll();
+        return; 
+      }
+
+      if (savedUserId) {
+        foundUser = allUsers.find(u => u.id === savedUserId);
+      }
+
+      // Default if no specific user selected
+      if (!foundUser) {
+        if (admins.length > 0) foundUser = admins[0];
+        else if (teachers.length > 0) foundUser = teachers[0];
+      }
+
+      setCurrentUser(foundUser);
+    };
+
+    loadUser();
+    window.addEventListener('storage', loadUser);
+    return () => window.removeEventListener('storage', loadUser);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Top Navigation Bar */}
@@ -60,12 +102,14 @@ const DashboardLayout = () => {
            </button>
            <div className="flex items-center gap-2">
              <User size={20} className="text-purple-400" />
-             <span className="text-sm font-medium">Admin KORA (ADMIN)</span>
+             <span className="text-sm font-medium">
+               {currentUser ? `${currentUser.name} (${currentUser.role})` : 'Loading...'}
+             </span>
            </div>
-           <button className="flex items-center gap-1 hover:text-gray-300">
+           <Link to="/messages" className="flex items-center gap-1 hover:text-gray-300">
              <MessageSquare size={20} />
              <span className="text-sm">Messages</span>
-           </button>
+           </Link>
            <button className="flex items-center gap-1 hover:text-red-400">
              <span className="text-sm">Logout</span>
            </button>

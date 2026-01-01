@@ -9,13 +9,14 @@ datasource db {
 
 // Multi-tenancy model
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique // For subdomain or header lookup
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
-  students  Student[]
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique // For subdomain or header lookup
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         User[]
+  students      Student[]
+  conversations Conversation[]
 }
 
 model User {
@@ -27,6 +28,10 @@ model User {
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Messaging relations
+  conversations Conversation[]
+  sentMessages  Message[]      @relation("SentMessages")
 }
 
 model Student {
@@ -48,4 +53,25 @@ enum Role {
   LIBRARIAN
   STUDENT
   PARENT
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  users     User[]
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  content        String
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
 }
