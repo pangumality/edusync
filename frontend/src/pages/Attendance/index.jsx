@@ -9,9 +9,9 @@ const classes = [
 const roster = {
   'class-1-A': [
     { id: 's-1', name: 'Amina Kora' },
-    { id: 's-2', name: 'Daniel Mensah' },
-    { id: 's-3', name: 'Grace Okoro' },
-    { id: 's-4', name: 'Sam Ndlovu' },
+    { id: 's-2', name: 'First Test' },
+    { id: 's-3', name: 'Second Test' },
+    { id: 's-4', name: 'Third Test' },
   ],
   'class-1-B': [
     { id: 's-5', name: 'Kofi Boateng' },
