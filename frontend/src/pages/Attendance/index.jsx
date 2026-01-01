@@ -8,10 +8,10 @@ const classes = [
 
 const roster = {
   'class-1-A': [
-    { id: 's-1', name: 'Run Moretests' },
-    { id: 's-2', name: 'First Test' },
-    { id: 's-3', name: 'Second Test' },
-    { id: 's-4', name: 'Third Test' },
+    { id: 's-1', name: 'accde fjhij' },
+    { id: 's-2', name: 'First kilo' },
+    { id: 's-3', name: 'Second kilos' },
+    { id: 's-4', name: 'Third kick' },
   ],
   'class-1-B': [
     { id: 's-5', name: 'Kofi Boateng' },
