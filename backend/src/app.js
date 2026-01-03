@@ -104,22 +104,63 @@ app.get('/api/classes/:classId/school', async (req, res) => {
 });
 
 
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        phone: true,
+        isActive: true,
+        schoolId: true
+      }
+    });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users', details: error.message });
+  }
+});
+
 // Basic Auth Route Placeholder
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   
-  if (email === 'admin@admin.com' && password === 'admin') {
-     return res.json({ 
-       token: 'fake-jwt-token', 
-       user: { 
-         id: '1', 
-         name: 'Admin KORA', 
-         role: 'ADMIN',
-         email: 'admin@admin.com'
-       } 
-     });
+  try {
+    // 1. Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: email }
+    });
+
+    // 2. Validate user and password (plain text for now as per instructions, but should be hashed in prod)
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // 3. Check if active
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Account is disabled' });
+    }
+
+    // 4. Return success (fake token for now)
+    return res.json({ 
+      token: 'fake-jwt-token-' + user.id, 
+      user: { 
+        id: user.id, 
+        firstName: user.firstName,
+        lastName: user.lastName, 
+        role: user.role,
+        email: user.email
+      } 
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  res.status(401).json({ error: 'Invalid credentials' });
 });
 
 export default app;

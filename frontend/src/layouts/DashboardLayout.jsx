@@ -78,6 +78,13 @@ const DashboardLayout = () => {
   useEffect(() => {
     const loadUser = () => {
       const savedUserId = localStorage.getItem('current_demo_user_id');
+      // Also check authToken
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
       let foundUser = null;
       
       const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
@@ -85,15 +92,17 @@ const DashboardLayout = () => {
       const admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
       const librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
       const parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
       const allUsers = [...admins, ...teachers, ...librarians, ...students, ...parents];
 
-      if (allUsers.length === 0) {
+      // Prioritize the currentUser from login
+      if (currentUser) {
+        foundUser = currentUser;
+      } else if (allUsers.length === 0) {
         seedAll();
         return; 
-      }
-
-      if (savedUserId) {
+      } else if (savedUserId) {
         foundUser = allUsers.find(u => u.id === savedUserId);
       }
 
@@ -108,7 +117,15 @@ const DashboardLayout = () => {
     loadUser();
     window.addEventListener('storage', loadUser);
     return () => window.removeEventListener('storage', loadUser);
-  }, []);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('current_demo_user_id');
+    navigate('/login');
+    window.location.reload(); // Ensure state clears
+  };
 
   // Handle Mobile Header
   if (isMobile) {
@@ -211,7 +228,7 @@ const DashboardLayout = () => {
           <button onClick={() => window.location.reload()} className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
             <RotateCw size={24} />
           </button>
-           <button className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100 text-red-400">
+           <button onClick={handleLogout} className="flex items-center gap-1 hover:text-red-400 text-red-400">
             <LogOut size={24} />
           </button>
         </div>
@@ -242,7 +259,7 @@ const DashboardLayout = () => {
              <MessageSquare size={20} />
              <span className="text-sm">Messages</span>
            </Link>
-           <button className="flex items-center gap-1 hover:text-red-400">
+           <button onClick={handleLogout} className="flex items-center gap-1 hover:text-red-400">
              <span className="text-sm">Logout</span>
            </button>
         </div>
