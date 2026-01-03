@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardLayout from './layouts/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import RequireRole from './components/RequireRole';
 import Attendance from './pages/Attendance';
 import Messages from './pages/Messages';
 import Teachers from './pages/Teachers';
@@ -19,6 +20,7 @@ import RadioSubject from './pages/Radio/Subject';
 import Sports from './pages/Sports';
 import GroupStudies from './pages/GroupStudies';
 import Inventory from './pages/Inventory';
+import Schools from './pages/Schools';
 
 function App() {
   return (
@@ -37,6 +39,11 @@ function App() {
           <Route path="teachers" element={<Teachers />} />
           <Route path="students" element={<Students />} />
           <Route path="classes" element={<Classes />} />
+          <Route path="schools" element={
+            <RequireRole roles={['admin']}>
+              <Schools />
+            </RequireRole>
+          } />
           <Route path="exams" element={<Exams />} />
           <Route path="finance" element={<Finance />} />
           <Route path="library" element={<Library />} />

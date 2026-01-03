@@ -1,0 +1,34 @@
+[2026-01-03T09:22:03.140Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T09:23:29.570Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T09:28:08.563Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T09:29:00.664Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T09:33:21.966Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T09:45:16.386Z] User:super-admin-001 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"3516e01d-d65f-495e-9546-673e69576e35","name":"B Wise"}
+[2026-01-03T09:46:28.368Z] User:super-admin-001 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"8d6ca0b1-cdb9-4999-b0e9-b3464a304e9d","name":"Tabo Academy"}
+[2026-01-03T09:46:48.971Z] User:super-admin-001 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:16:51.141Z] User:super-admin-001 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"5769f963-43d2-47f1-922d-96976db9f111","name":"Chalwe Trust"}
+[2026-01-03T10:17:15.196Z] User:18922c07-bb78-4125-8ee7-b01cb3cf0753 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:21:32.219Z] User:chalwe@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:22:28.569Z] User:chalwe@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:22:35.731Z] User:chalwe@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:23:13.286Z] User:chalwe@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:23:22.285Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:23:24.126Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:23:28.178Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:32:20.167Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:32:35.032Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:32:40.488Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T10:33:29.784Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:34:42.068Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"3d1401de-5cf5-4271-ba7c-6b8693c96b85","name":"B Wise"}
+[2026-01-03T10:35:03.032Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:43:10.576Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:43:41.885Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:44:15.933Z] User:3010bfa1-5bf6-4ece-9a7f-a1dc2c254c45 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T10:45:19.531Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"124bfc71-c580-46d5-b190-6d1f083191e3","name":"oneous mality"}
+[2026-01-03T10:46:27.749Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"604b795d-1afe-444a-8e17-ed5a1bbee269","name":"PETER CHEWE"}
+[2026-01-03T10:50:22.874Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"de8121ab-28d3-44c0-81d3-40faaff10703","name":"Priscar Kaliye"}
+[2026-01-03T10:50:59.145Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"604b795d-1afe-444a-8e17-ed5a1bbee269"}
+[2026-01-03T10:51:05.811Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"124bfc71-c580-46d5-b190-6d1f083191e3"}
+[2026-01-03T10:52:02.199Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"86f0b47b-5f24-4d66-96d8-c38db465f2eb","name":"Oneous Mality"}
+[2026-01-03T11:02:08.604Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:ACCESS_DENIED | Resource:school:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-03T11:02:08.853Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:ACCESS_DENIED | Resource:school:manage | IP:unknown | Details:"Role staff missing permission"

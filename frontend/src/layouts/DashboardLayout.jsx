@@ -20,11 +20,13 @@ import {
   Menu,
   ArrowLeft,
   RotateCw,
-  X
+  X,
+  School as SchoolIcon
 } from 'lucide-react';
 import clsx from 'clsx';
 import { seedAll } from '../utils/seed';
 import MobileDashboardHome from '../components/MobileDashboardHome';
+import api from '../utils/api';
 
 const SidebarItem = ({ icon: Icon, label, to, active, onClick }) => {
   return (
@@ -56,6 +58,7 @@ const MENU_ITEMS = [
   { icon: Users, label: 'Teachers', to: '/teachers' },
   { icon: GraduationCap, label: 'Students', to: '/students' },
   { icon: Home, label: 'Classes', to: '/classes' },
+  { icon: SchoolIcon, label: 'Schools', to: '/schools' },
   { icon: BookOpen, label: 'Exams', to: '/exams' },
   { icon: CreditCard, label: 'Finance', to: '/finance' },
   { icon: Library, label: 'Library', to: '/library' },
@@ -272,15 +275,21 @@ const DashboardLayout = () => {
              <h3 className="text-gray-500 font-bold text-xs uppercase mb-2">Main Menu</h3>
           </div>
           <div className="flex flex-col px-3">
-             {MENU_ITEMS.map((item) => (
-               <SidebarItem 
-                 key={item.to}
-                 icon={item.icon} 
-                 label={item.label} 
-                 to={item.to} 
-                 active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))} 
-               />
-             ))}
+             {MENU_ITEMS.map((item) => {
+               // Only show Schools to 'admin'
+               if (item.label === 'Schools' && currentUser?.role !== 'admin') {
+                 return null;
+               }
+               return (
+                 <SidebarItem 
+                   key={item.to}
+                   icon={item.icon} 
+                   label={item.label} 
+                   to={item.to} 
+                   active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))} 
+                 />
+               );
+             })}
           </div>
         </aside>
 
