@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,45 +6,224 @@ datasource db {
   provider = "postgresql"
 }
 
-// Multi-tenancy model
-model Tenant {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique // For subdomain or header lookup
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
-  students  Student[]
+model AttendanceRecord {
+  id                 String            @id
+  sessionId          String
+  studentId          String
+  status             AttendanceStatus?
+  recordedLatitude   Float?
+  recordedLongitude  Float?
+  distanceFromSchool Float?
+  recordedAt         DateTime          @default(now())
+  session            AttendanceSession @relation(fields: [sessionId], references: [id])
+  student            Student           @relation(fields: [studentId], references: [id])
+  
+  @@map("AttendanceRecord")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(STUDENT)
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model AttendanceSession {
+  id               String             @id
+  classId          String
+  date             DateTime
+  latitude         Float?
+  longitude        Float?
+  radiusMeters     Int?
+  records          AttendanceRecord[]
+  klass            Class              @relation(fields: [classId], references: [id])
+  
+  @@map("AttendanceSession")
+}
+
+model Class {
+  id                String              @id
+  schoolId          String
+  name              String
+  attendanceSessions AttendanceSession[]
+  school            School              @relation(fields: [schoolId], references: [id])
+  classSubjects     ClassSubject[]
+  students          Student[]
+  
+  @@map("Class")
+}
+
+model ClassSubject {
+  id        String   @id
+  classId   String
+  subjectId String
+  teacherId String?
+  klass     Class    @relation(fields: [classId], references: [id])
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  
+  @@map("ClassSubject")
+}
+
+model Conversation {
+  id        String    @id
+  schoolId  String
+  createdAt DateTime  @default(now())
+  school    School    @relation(fields: [schoolId], references: [id])
+  messages  Message[]
+  
+  @@map("Conversation")
+}
+
+model Exam {
+  id         String       @id
+  schoolId   String
+  name       String?
+  term       String?
+  year       Int?
+  school     School       @relation(fields: [schoolId], references: [id])
+  results    ExamResult[]
+  
+  @@map("Exam")
+}
+
+model ExamResult {
+  id        String  @id
+  examId    String
+  studentId String
+  subjectId String
+  score     Float?
+  exam      Exam    @relation(fields: [examId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  
+  @@map("ExamResult")
+}
+
+model Message {
+  id             String       @id
+  conversationId String
+  senderId       String
+  content        String?
+  sentAt         DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+  
+  @@map("Message")
+}
+
+model Parent {
+  id             String           @id
+  userId         String           @unique
+  user           User             @relation(fields: [userId], references: [id])
+  children       ParentStudents[]
+  
+  @@map("Parent")
+}
+
+model ParentStudents {
+  parentId  String
+  studentId String
+  parent    Parent  @relation(fields: [parentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@id([parentId, studentId])
+  @@map("ParentStudents")
+}
+
+model Payment {
+  id        String        @id
+  studentId String
+  amount    Float
+  method    PaymentMethod
+  reference String?
+  paidAt    DateTime      @default(now())
+  student   Student       @relation(fields: [studentId], references: [id])
+  
+  @@map("Payment")
+}
+
+model School {
+  id             String         @id
+  name           String
+  code           String         @unique
+  createdAt      DateTime       @default(now())
+  classes        Class[]
+  conversations  Conversation[]
+  exams          Exam[]
+  students       Student[]
+  subjects       Subject[]
+  users          User[]
+  
+  @@map("School")
 }
 
 model Student {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  email     String?
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String             @id
+  schoolId         String
+  userId           String             @unique
+  classId          String?
+  attendanceRecords AttendanceRecord[]
+  examResults      ExamResult[]
+  parents          ParentStudents[]
+  payments         Payment[]
+  klass            Class?             @relation(fields: [classId], references: [id])
+  school           School             @relation(fields: [schoolId], references: [id])
+  user             User               @relation(fields: [userId], references: [id])
+  
+  @@map("Student")
 }
 
-enum Role {
-  SUPER_ADMIN
-  ADMIN
-  TEACHER
-  ACCOUNTANT
-  LIBRARIAN
-  STUDENT
-  PARENT
+model Subject {
+  id            String         @id
+  schoolId      String
+  name          String
+  classSubjects ClassSubject[]
+  examResults   ExamResult[]
+  school        School         @relation(fields: [schoolId], references: [id])
+  
+  @@map("Subject")
+}
+
+model Teacher {
+  id             String         @id
+  userId         String         @unique
+  employeeNumber String?
+  classSubjects  ClassSubject[]
+  user           User           @relation(fields: [userId], references: [id])
+  
+  @@map("Teacher")
+}
+
+model User {
+  id        String    @id
+  schoolId  String
+  firstName String
+  lastName  String
+  email     String?   @unique
+  phone     String?
+  password  String
+  role      UserRole
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  sentMessages Message[]
+  parent    Parent?
+  student   Student?
+  teacher   Teacher?
+  school    School    @relation(fields: [schoolId], references: [id])
+  
+  @@map("User")
+}
+
+enum AttendanceStatus {
+  present
+  absent
+}
+
+enum PaymentMethod {
+  cash
+  mobile_money
+  bank
+}
+
+enum UserRole {
+  student
+  teacher
+  parent
+  admin
+  driver
+  staff
 }

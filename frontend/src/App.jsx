@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardLayout from './layouts/DashboardLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 import Attendance from './pages/Attendance';
 import Messages from './pages/Messages';
 import Teachers from './pages/Teachers';
@@ -20,15 +21,16 @@ import GroupStudies from './pages/GroupStudies';
 import Inventory from './pages/Inventory';
 
 function App() {
-  // Mock auth state for now
-  const isAuthenticated = true; // Set to false to test login redirect
-
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
         
-        <Route path="/" element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />}>
+        <Route path="/" element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="messages" element={<Messages />} />

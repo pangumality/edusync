@@ -1,53 +1,102 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-const classes = [
-  { id: 'class-1', name: 'Grade 1', sections: ['A', 'B'] },
-  { id: 'class-2', name: 'Grade 2', sections: ['A'] },
-  { id: 'class-3', name: 'Grade 3', sections: ['A', 'B', 'C'] },
-];
-
-const roster = {
-  'class-1-A': [
-    { id: 's-1', name: 'Amina Kora' },
-    { id: 's-2', name: 'Daniel Mensah' },
-    { id: 's-3', name: 'Grace Okoro' },
-    { id: 's-4', name: 'Sam Ndlovu' },
-  ],
-  'class-1-B': [
-    { id: 's-5', name: 'Kofi Boateng' },
-    { id: 's-6', name: 'Lilian Owusu' },
-  ],
-  'class-2-A': [
-    { id: 's-7', name: 'Rahul Patel' },
-    { id: 's-8', name: 'Yara Hassan' },
-  ],
-  'class-3-A': [
-    { id: 's-9', name: 'Chen Li' },
-    { id: 's-10', name: 'Maryam Ali' },
-  ],
-  'class-3-B': [
-    { id: 's-11', name: 'Peter Kim' },
-    { id: 's-12', name: 'Olivia Adebayo' },
-  ],
-  'class-3-C': [
-    { id: 's-13', name: 'Kwame Darko' },
-  ],
-};
-
-function storageKey(date, klass, section) {
-  return `attendance:doonites:${date}:${klass}-${section}`;
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
+
+function storageKey(date, klass) {
+  return `attendance:doonites:${date}:${klass}`;
+}
+
+const API_BASE = 'http://localhost:5000/api';
 
 export default function Attendance() {
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [date, setDate] = useState(todayStr);
-  const [klass, setKlass] = useState(classes[0].id);
-  const [section, setSection] = useState(classes[0].sections[0]);
+  
+  // State for fetched data
+  const [classes, setClasses] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+
+  const [klass, setKlass] = useState('');
   const [search, setSearch] = useState('');
   const [records, setRecords] = useState({});
+  const [locStatus, setLocStatus] = useState('idle');
+  const [position, setPosition] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [locError, setLocError] = useState('');
+  const watchIdRef = useRef(null);
+  const [school, setSchool] = useState(null);
 
-  const currentKey = storageKey(date, klass, section);
-  const currentStudents = (roster[`${klass}-${section}`] ?? []).filter(s =>
+  // Fetch Classes on Mount
+  useEffect(() => {
+    fetch(`${API_BASE}/classes`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch classes');
+        return res.json();
+      })
+      .then(data => {
+        setClasses(data);
+        if (data.length > 0) {
+          setKlass(data[0].id);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        setFetchError('Error loading classes. Please check backend connection.');
+      })
+      .finally(() => setLoadingClasses(false));
+  }, []);
+
+  // Fetch Students when Class changes
+  useEffect(() => {
+    if (!klass) return;
+    
+    setLoadingStudents(true);
+    fetch(`${API_BASE}/students?classId=${klass}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch students');
+        return res.json();
+      })
+      .then(data => {
+        setStudents(data);
+      })
+      .catch(err => {
+        console.error(err);
+        setStudents([]); // Clear on error
+      })
+      .finally(() => setLoadingStudents(false));
+  }, [klass]);
+
+  useEffect(() => {
+    if (!klass) return;
+    fetch(`${API_BASE}/classes/${klass}/school`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch school');
+        return res.json();
+      })
+      .then(data => setSchool(data))
+      .catch(err => {
+        console.error(err);
+        setSchool(null);
+      });
+  }, [klass]);
+
+  const currentKey = storageKey(date, klass);
+  
+  const currentStudents = students.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -64,41 +113,145 @@ export default function Attendance() {
   const absentCount = Object.values(records).filter(v => v === 'A').length;
   const unmarkedCount = currentStudents.length - presentCount - absentCount;
 
-  const markAll = (status) => {
-    const newState = {};
-    for (const s of currentStudents) newState[s.id] = status;
-    setRecords(newState);
+  const checkLocation = () => {
+    setLocError('');
+    if (!school) {
+      setLocStatus('blocked');
+      setLocError('No assigned school coordinates for this class.');
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocStatus('error');
+      setLocError('Geolocation not supported');
+      return;
+    }
+
+    setLocStatus('checking');
+    
+    // Clear existing watch if any
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setPosition({ latitude, longitude, accuracy });
+
+        const d = haversineDistance(latitude, longitude, school.lat, school.lng);
+        setDistance(Math.round(d));
+
+        // Logic: if useAccuracyBuffer is true, we subtract accuracy from distance to be lenient.
+        // But user requirement is strict 3m. So we ignore accuracy buffer or assume standard.
+        // "disable the attendance reigiter once the student goes beyond 3 meters"
+        // Strict check: distance <= radius
+        
+        if (d <= school.radiusMeters) {
+          setLocStatus('allowed');
+        } else {
+          setLocStatus('blocked');
+        }
+      },
+      (err) => {
+        console.error(err);
+        if (err.code === 1) setLocStatus('permission_denied');
+        else setLocStatus('error');
+        setLocError(err.message || 'Location error');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   };
 
-  const exportCSV = () => {
-    const rows = [
-      ['Date', 'Class', 'Section', 'Student', 'Status'],
-      ...currentStudents.map(s => [
-        date,
-        classes.find(c => c.id === klass)?.name || '',
-        section,
-        s.name,
-        records[s.id] || '',
-      ]),
-    ];
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `attendance_${date}_${klass}_${section}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // Cleanup watch on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
+  const toggleStatus = (studentId) => {
+    if (locStatus !== 'allowed') {
+      alert("You must be at the school location to mark attendance.");
+      return;
+    }
+    setRecords(prev => {
+      const current = prev[studentId];
+      const next = current === 'P' ? 'A' : current === 'A' ? undefined : 'P';
+      if (next === undefined) {
+        const copy = { ...prev };
+        delete copy[studentId];
+        return copy;
+      }
+      return { ...prev, [studentId]: next };
+    });
+  };
+
+  const markAll = (status) => {
+    if (locStatus !== 'allowed') {
+      alert("You must be at the school location to mark attendance.");
+      return;
+    }
+    const newRecords = { ...records };
+    currentStudents.forEach(s => {
+      newRecords[s.id] = status;
+    });
+    setRecords(newRecords);
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-700 uppercase">Attendance</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h2 className="text-xl font-bold text-gray-700 uppercase">Attendance</h2>
+        
+        {/* Location Status Badge */}
+        <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg shadow-sm">
+          <div className={`w-3 h-3 rounded-full ${
+            locStatus === 'allowed' ? 'bg-green-500' :
+            locStatus === 'blocked' ? 'bg-red-500' :
+            locStatus === 'checking' ? 'bg-yellow-500 animate-pulse' :
+            'bg-gray-400'
+          }`} />
+          <div className="text-sm">
+            {locStatus === 'allowed' && <span className="text-green-700 font-medium">Location Verified</span>}
+            {locStatus === 'blocked' && <span className="text-red-700 font-medium">Out of Bounds ({distance}m)</span>}
+            {locStatus === 'checking' && <span className="text-yellow-700">Locating...</span>}
+            {locStatus === 'idle' && <span className="text-gray-500">Location Check Required</span>}
+            {(locStatus === 'error' || locStatus === 'permission_denied') && <span className="text-red-600">Loc Error</span>}
+          </div>
+          {distance !== null && locStatus !== 'allowed' && (
+             <span className="text-xs text-gray-400">Target: {school?.radiusMeters}m</span>
+          )}
+          {locStatus === 'idle' && (
+            <button 
+              onClick={checkLocation}
+              className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+            >
+              Enable
+            </button>
+          )}
+        </div>
+      </div>
+
+      {locError && (
+        <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm">
+          {locError}
+        </div>
+      )}
+
+      {fetchError && (
+        <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm">
+          {fetchError}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-soft p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm text-gray-600 mb-1">Date</label>
+        {/* Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Date</label>
             <input
               type="date"
               className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
@@ -107,135 +260,123 @@ export default function Attendance() {
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Class</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Class</label>
             <select
               className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
               value={klass}
-              onChange={(e) => {
-                const id = e.target.value;
-                setKlass(id);
-                setSection(classes.find(c => c.id === id)?.sections[0] || '');
-              }}
+              onChange={(e) => setKlass(e.target.value)}
+              disabled={loadingClasses}
             >
               {classes.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
+          
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Section</label>
-            <select
-              className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Search</label>
+            <div className="relative">
+              <input
+                type="text"
+                className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 focus:outline-none focus:border-gray-400"
+                placeholder="Student name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex gap-4 mb-6 text-sm">
+          <div className="px-3 py-1 rounded-full bg-green-100 text-green-700">
+            Present: <b>{presentCount}</b>
+          </div>
+          <div className="px-3 py-1 rounded-full bg-red-100 text-red-700">
+            Absent: <b>{absentCount}</b>
+          </div>
+          <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+            Unmarked: <b>{unmarkedCount}</b>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <button 
+              onClick={() => markAll('P')}
+              disabled={locStatus !== 'allowed'}
+              className={`text-xs px-3 py-1 rounded border ${
+                locStatus === 'allowed' 
+                ? 'border-green-200 text-green-700 hover:bg-green-50' 
+                : 'border-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
             >
-              {classes.find(c => c.id === klass)?.sections.map(sec => (
-                <option key={sec} value={sec}>{sec}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Search</label>
-            <input
-              type="text"
-              className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Search student"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex items-center gap-3">
-          <button
-            className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
-            onClick={() => markAll('P')}
-          >
-            Mark all Present
-          </button>
-          <button
-            className="px-3 py-2 rounded-md bg-gray-500 text-white hover:bg-gray-600"
-            onClick={() => markAll('A')}
-          >
-            Mark all Absent
-          </button>
-          <button
-            className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => setRecords({})}
-          >
-            Clear
-          </button>
-          <button
-            className="ml-auto px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={exportCSV}
-          >
-            Export CSV
-          </button>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="text-sm text-gray-600">Present</div>
-            <div className="text-2xl font-bold text-gray-800">{presentCount}</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="text-sm text-gray-600">Absent</div>
-            <div className="text-2xl font-bold text-gray-800">{absentCount}</div>
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="text-sm text-gray-600">Unmarked</div>
-            <div className="text-2xl font-bold text-gray-800">{unmarkedCount}</div>
+              Mark All Present
+            </button>
+            <button 
+              onClick={() => markAll('A')}
+              disabled={locStatus !== 'allowed'}
+              className={`text-xs px-3 py-1 rounded border ${
+                locStatus === 'allowed'
+                ? 'border-red-200 text-red-700 hover:bg-red-50'
+                : 'border-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Mark All Absent
+            </button>
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">#</th>
-                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Student</th>
-                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentStudents.map((s, idx) => {
-                const status = records[s.id] || '';
-                return (
-                  <tr key={s.id} className="odd:bg-white even:bg-gray-50">
-                    <td className="px-4 py-2 border-b text-gray-600">{idx + 1}</td>
-                    <td className="px-4 py-2 border-b text-gray-800">{s.name}</td>
-                    <td className="px-4 py-2 border-b">
-                      <div className="flex items-center gap-3">
-                        <button
-                          className={`px-3 py-1 rounded-md border ${status === 'P' ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-                          onClick={() => setRecords({ ...records, [s.id]: 'P' })}
-                        >
-                          Present
-                        </button>
-                        <button
-                          className={`px-3 py-1 rounded-md border ${status === 'A' ? 'bg-gray-600 text-white border-gray-600' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-                          onClick={() => setRecords({ ...records, [s.id]: 'A' })}
-                        >
-                          Absent
-                        </button>
-                        <button
-                          className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                          onClick={() => {
-                            const clone = { ...records };
-                            delete clone[s.id];
-                            setRecords(clone);
-                          }}
-                        >
-                          Clear
-                        </button>
-                      </div>
+        {/* List */}
+        {loadingStudents ? (
+          <div className="text-center py-8 text-gray-500">Loading students...</div>
+        ) : (
+          <div className="border border-gray-100 rounded-lg overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Student Name</th>
+                  <th className="px-4 py-3 font-semibold text-center w-32">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {currentStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="px-4 py-8 text-center text-gray-400">
+                      No students found in this class.
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  currentStudents.map(student => {
+                    const status = records[student.id];
+                    return (
+                      <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 text-gray-700">{student.name}</td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => toggleStatus(student.id)}
+                            disabled={locStatus !== 'allowed'}
+                            className={`w-24 py-1 rounded-md text-sm font-medium transition-all ${
+                              status === 'P'
+                                ? 'bg-green-500 text-white shadow-sm'
+                                : status === 'A'
+                                ? 'bg-red-500 text-white shadow-sm'
+                                : locStatus === 'allowed' 
+                                  ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                  : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                            }`}
+                          >
+                            {status === 'P' ? 'Present' : status === 'A' ? 'Absent' : 'Mark'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
