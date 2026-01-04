@@ -32,3 +32,79 @@
 [2026-01-03T10:52:02.199Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"86f0b47b-5f24-4d66-96d8-c38db465f2eb","name":"Oneous Mality"}
 [2026-01-03T11:02:08.604Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:ACCESS_DENIED | Resource:school:manage | IP:unknown | Details:"Role staff missing permission"
 [2026-01-03T11:02:08.853Z] User:94646aef-24db-4503-afea-819443d59b63 | Action:ACCESS_DENIED | Resource:school:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-03T21:11:12.146Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:13:42.001Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:15:29.285Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"2fe6d303-b428-414d-a35b-31988a06241f","name":"Tabo Academy"}
+[2026-01-03T21:16:08.468Z] User:taboacademy@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T21:16:27.137Z] User:taboacademy@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T21:16:39.483Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:17:55.214Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:CREATE | Resource:school | IP:unknown | Details:{"id":"a26353f9-4cb0-427d-8313-e6169365c9c2","name":"Chile Academy"}
+[2026-01-03T21:18:42.843Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:50:02.088Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"6f09f964-6885-48ec-bdf4-243dfd76a4a1","name":"Oneous Mality"}
+[2026-01-03T21:50:56.124Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"15ef41f0-907d-4d4e-b21e-fd8889efcf63","name":"Pethias Nyangala"}
+[2026-01-03T21:51:06.088Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"15ef41f0-907d-4d4e-b21e-fd8889efcf63"}
+[2026-01-03T21:52:05.372Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"53c02b8c-1070-4141-9cf5-f70b637ad765","name":"Pethias Nyangala"}
+[2026-01-03T21:53:57.816Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"a605f4c1-117b-45c1-b924-f6c85f8dc9af","name":"Charity Solomon"}
+[2026-01-03T21:59:20.700Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:59:22.062Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"0ef390f0-d63e-4639-8b26-72e6a749e7ac","name":"Test Teacher"}
+[2026-01-03T21:59:22.258Z] User:0ef390f0-d63e-4639-8b26-72e6a749e7ac | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T21:59:59.532Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"a605f4c1-117b-45c1-b924-f6c85f8dc9af"}
+[2026-01-03T22:00:06.433Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"53c02b8c-1070-4141-9cf5-f70b637ad765"}
+[2026-01-03T22:00:10.830Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:DELETE | Resource:teacher | IP:unknown | Details:{"id":"6f09f964-6885-48ec-bdf4-243dfd76a4a1"}
+[2026-01-03T22:00:46.408Z] User:e5b91e19-24f9-4016-a398-0bc81424dbbb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"838e3836-8f81-4c3a-9f77-814b45474e58","name":"Oneous Mality"}
+[2026-01-03T22:01:25.790Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T22:01:47.863Z] User:pangumalIity@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-03T22:01:54.154Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T22:02:35.007Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:02:35.235Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:02:47.057Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:02:47.312Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:06:41.583Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:06:41.847Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:10:11.943Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:10:12.145Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-03T22:59:50.443Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T23:00:30.859Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-03T23:02:00.036Z] User:838e3836-8f81-4c3a-9f77-814b45474e58 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T06:28:17.839Z] User:admin@admin.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-04T06:28:23.569Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-04T06:29:11.001Z] User:admin@system.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-04T06:33:34.417Z] User:758b2c62-4934-4bad-8233-f86005bcec3f | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T06:37:43.471Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T06:38:56.740Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:subject:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:39:00.745Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:subject:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:39:16.686Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:subject:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:43:02.213Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"9862206d-460f-4dfc-8264-db2c973da3ad","name":"Kakoma Kakoma"}
+[2026-01-04T06:48:15.864Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:48:16.118Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:56:12.767Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T06:56:12.971Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role staff missing permission"
+[2026-01-04T07:01:39.228Z] User:9862206d-460f-4dfc-8264-db2c973da3ad | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T07:08:09.941Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T07:56:12.737Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"Charity Mality","classId":"14c7454c-d7c2-42cc-8394-7947f3132f58"}
+[2026-01-04T07:56:53.719Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"Kuvezika Mality","classId":"14c7454c-d7c2-42cc-8394-7947f3132f58"}
+[2026-01-04T07:58:42.087Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"Onewell Mality","classId":"14c7454c-d7c2-42cc-8394-7947f3132f58"}
+[2026-01-04T08:12:59.924Z] User:758b2c62-4934-4bad-8233-f86005bcec3f | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T09:01:36.299Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"sss fff","classId":"14c7454c-d7c2-42cc-8394-7947f3132f58"}
+[2026-01-04T09:06:26.326Z] User:charity@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-04T09:09:36.204Z] User:charity@gmail.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-04T09:10:10.157Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T09:10:41.642Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T09:13:05.083Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:13:05.290Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:13:12.217Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:13:12.662Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:elearning:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:13:32.439Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:13:44.926Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:18:54.663Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T09:19:39.239Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:19:55.101Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:44:43.019Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T09:48:10.134Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T10:07:27.930Z] User:9862206d-460f-4dfc-8264-db2c973da3ad | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T10:21:12.946Z] User:9862206d-460f-4dfc-8264-db2c973da3ad | Action:ACCESS_DENIED | Resource:teacher:manage | IP:unknown | Details:"Role teacher missing permission"
+[2026-01-04T10:59:09.434Z] User:9862206d-460f-4dfc-8264-db2c973da3ad | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T11:16:52.013Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T12:09:46.107Z] User:849796be-2398-4f0f-b0c4-8fbf11a41457 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-01-04T12:33:36.340Z] User:456a8023-c0d9-4922-ab78-a4c6fbd7982a | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-04T12:33:45.634Z] User:456a8023-c0d9-4922-ab78-a4c6fbd7982a | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role parent missing permission"

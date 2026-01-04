@@ -21,7 +21,8 @@ import {
   ArrowLeft,
   RotateCw,
   X,
-  School as SchoolIcon
+  School as SchoolIcon,
+  FileText
 } from 'lucide-react';
 import clsx from 'clsx';
 import { seedAll } from '../utils/seed';
@@ -53,21 +54,23 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick }) => {
 
 const MENU_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
-  { icon: Calendar, label: 'Attendance', to: '/attendance' },
-  { icon: MessageSquare, label: 'Messages', to: '/messages' },
-  { icon: Users, label: 'Teachers', to: '/teachers' },
-  { icon: GraduationCap, label: 'Students', to: '/students' },
-  { icon: Home, label: 'Classes', to: '/classes' },
-  { icon: SchoolIcon, label: 'Schools', to: '/schools' },
-  { icon: BookOpen, label: 'Exams', to: '/exams' },
-  { icon: CreditCard, label: 'Finance', to: '/finance' },
-  { icon: Library, label: 'Library', to: '/library' },
-  { icon: Home, label: 'Hostel', to: '/hostel' },
-  { icon: Bus, label: 'Transport', to: '/transport' },
-  { icon: Radio, label: 'Radio', to: '/radio' },
-  { icon: Trophy, label: 'Sports', to: '/sports' },
-  { icon: Users, label: 'Group Studies', to: '/group-studies' },
-  { icon: Package, label: 'Inventory', to: '/inventory' },
+  { icon: Calendar, label: 'Attendance', to: '/attendance', allowedRoles: ['student','teacher','admin','staff'] },
+  { icon: MessageSquare, label: 'Messages', to: '/messages', allowedRoles: ['student','teacher','admin','staff','parent'] },
+  { icon: Users, label: 'Teachers', to: '/teachers', excludedRoles: ['student','teacher','parent'] },
+  { icon: GraduationCap, label: 'Students', to: '/students', excludedRoles: ['student','parent'] },
+  { icon: Home, label: 'Classes', to: '/classes', allowedRoles: ['teacher','admin','staff'] },
+  { icon: SchoolIcon, label: 'Schools', to: '/schools', allowedRoles: ['admin'] },
+  { icon: BookOpen, label: 'Exams', to: '/exams', excludedRoles: ['student','parent'] },
+  { icon: FileText, label: 'My Exams', to: '/student/exams', allowedRoles: ['student'] },
+  { icon: CreditCard, label: 'Finance', to: '/finance', excludedRoles: ['student','teacher','parent'] },
+  { icon: Library, label: 'Library', to: '/library', allowedRoles: ['student','admin','staff'] },
+  { icon: Home, label: 'Hostel', to: '/hostel', allowedRoles: ['student','admin','staff'] },
+  { icon: Bus, label: 'Transport', to: '/transport', excludedRoles: ['student','teacher','parent'] },
+  { icon: Radio, label: 'E-Learning', to: '/e-learning', allowedRoles: ['student','teacher','admin','staff'] },
+  { icon: BookOpen, label: 'Subjects', to: '/subjects', allowedRoles: ['student','teacher','admin','staff'] },
+  { icon: Trophy, label: 'Sports', to: '/sports', excludedRoles: ['student','teacher','parent'] },
+  { icon: Users, label: 'Group Studies', to: '/group-studies', allowedRoles: ['student','teacher','admin','staff'] },
+  { icon: Package, label: 'Inventory', to: '/inventory', excludedRoles: ['student','teacher','parent'] },
 ];
 
 const DashboardLayout = () => {
@@ -276,10 +279,10 @@ const DashboardLayout = () => {
           </div>
           <div className="flex flex-col px-3">
              {MENU_ITEMS.map((item) => {
-               // Only show Schools to 'admin'
-               if (item.label === 'Schools' && currentUser?.role !== 'admin') {
-                 return null;
-               }
+               // Filter logic
+               if (item.allowedRoles && (!currentUser || !item.allowedRoles.includes(currentUser.role))) return null;
+               if (item.excludedRoles && currentUser && item.excludedRoles.includes(currentUser.role)) return null;
+
                return (
                  <SidebarItem 
                    key={item.to}
@@ -295,9 +298,13 @@ const DashboardLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-6">
-           <Outlet />
+           <Outlet context={{ currentUser }} />
         </main>
       </div>
+      
+      <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-500">
+        © {new Date().getFullYear()} School ERP. All rights reserved.
+      </footer>
     </div>
   );
 };

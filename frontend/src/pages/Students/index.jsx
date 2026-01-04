@@ -1,74 +1,114 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { seedStudents } from '../../utils/seed';
-
-function uid() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
+import api from '../../utils/api';
 
 export default function Students() {
-  const classesFromStore = JSON.parse(localStorage.getItem('classes:doonites') || '[]');
-  const defaultClasses = classesFromStore.length
-    ? classesFromStore
-    : [
-        { id: 'class-1', name: 'Grade 1', sections: ['A', 'B'] },
-        { id: 'class-2', name: 'Grade 2', sections: ['A'] },
-        { id: 'class-3', name: 'Grade 3', sections: ['A', 'B', 'C'] },
-      ];
-  const [classesList, setClassesList] = useState(defaultClasses);
-  const [klass, setKlass] = useState(defaultClasses[0].id);
-  const [section, setSection] = useState(defaultClasses[0].sections[0]);
+  const [classesList, setClassesList] = useState([]);
+  const [klass, setKlass] = useState('');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: '', email: '', klass: defaultClasses[0].id, section: defaultClasses[0].sections[0] });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '' });
   const [list, setList] = useState([]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('students:doonites');
-    if (saved) {
-      setList(JSON.parse(saved));
-    } else {
-      const seeded = seedStudents(classesList);
-      setList(seeded);
+  const loadClasses = async () => {
+    try {
+      const { data } = await api.get('/classes');
+      setClassesList(data);
+      if (!klass && data.length) {
+        setKlass(data[0].id);
+        setForm(f => ({ ...f, klass: data[0].id }));
+      }
+    } catch {
+      setClassesList([]);
     }
+  };
+
+  const loadStudents = async (cid) => {
+    if (!cid) return;
+    try {
+      const { data } = await api.get(`/students?classId=${cid}`);
+      setList(data);
+    } catch {
+      setList([]);
+    }
+  };
+
+  useEffect(() => {
+    loadClasses();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('students:doonites', JSON.stringify(list));
-  }, [list]);
+    loadStudents(klass);
+  }, [klass]);
 
   const filtered = useMemo(() => {
-    return list
-      .filter(s => s.klass === klass && s.section === section)
-      .filter(s => `${s.name} ${s.email}`.toLowerCase().includes(search.toLowerCase()));
-  }, [list, klass, section, search]);
+    return list.filter(s => `${s.firstName} ${s.lastName} ${s.email} ${s.phone} ${s.gender}`.toLowerCase().includes(search.toLowerCase()));
+  }, [list, search]);
 
   const startAdd = () => {
     setEditingId('new');
-    setForm({ name: '', email: '', klass, section });
+    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || (classesList[0]?.id || '') });
   };
 
   const startEdit = (s) => {
     setEditingId(s.id);
-    setForm({ name: s.name, email: s.email || '', klass: s.klass, section: s.section });
+    setForm({
+      firstName: s.firstName || '',
+      lastName: s.lastName || '',
+      email: s.email || '',
+      phone: s.phone || '',
+      gender: s.gender || '',
+      klass: s.classId
+    });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ name: '', email: '', klass, section });
+    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || '' });
   };
 
-  const save = () => {
-    if (!form.name.trim()) return;
-    if (editingId === 'new') {
-      setList([{ id: uid(), ...form }, ...list]);
-    } else {
-      setList(list.map(s => (s.id === editingId ? { ...s, ...form } : s)));
+  const save = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.klass) return;
+    try {
+      if (editingId === 'new') {
+        await api.post('/students', {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email || undefined,
+          phone: form.phone || undefined,
+          gender: form.gender || undefined,
+          classId: form.klass
+        });
+      } else {
+        await api.put(`/students/${editingId}`, {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phone: form.phone || undefined,
+          gender: form.gender || undefined,
+          classId: form.klass
+        });
+      }
+      cancelEdit();
+      loadStudents(klass);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        'Failed to save student';
+      alert(msg);
     }
-    cancelEdit();
   };
 
-  const remove = (id) => {
-    setList(list.filter(s => s.id !== id));
+  const remove = async (id) => {
+    try {
+      await api.delete(`/students/${id}`);
+      loadStudents(klass);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        'Failed to delete student';
+      alert(msg);
+    }
   };
 
   return (
@@ -76,7 +116,7 @@ export default function Students() {
       <h2 className="text-xl font-bold text-gray-700 uppercase">Students</h2>
 
       <div className="bg-white rounded-xl shadow-soft p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Class</label>
             <select
@@ -85,23 +125,10 @@ export default function Students() {
               onChange={(e) => {
     const id = e.target.value;
     setKlass(id);
-    setSection(classesList.find(c => c.id === id)?.sections[0] || '');
               }}
             >
               {classesList.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Section</label>
-            <select
-              className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              value={section}
-              onChange={(e) => setSection(e.target.value)}
-            >
-              {classesList.find(c => c.id === klass)?.sections.map(sec => (
-                <option key={sec} value={sec}>{sec}</option>
               ))}
             </select>
           </div>
@@ -122,53 +149,62 @@ export default function Students() {
             >
               Add Student
             </button>
-            <button
-              className="ml-3 px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-              onClick={() => setList(seedStudents(classesList))}
-            >
-              Seed Demo Data
-            </button>
           </div>
         </div>
 
         {editingId && (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input
-              type="text"
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <input
-              type="email"
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <select
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              value={form.klass}
-              onChange={(e) => {
-                const id = e.target.value;
-                setForm({ ...form, klass: id, section: baseClasses.find(c => c.id === id)?.sections[0] || '' });
-              }}
-            >
-              {classesList.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <select
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              value={form.section}
-              onChange={(e) => setForm({ ...form, section: e.target.value })}
-            >
-              {classesList.find(c => c.id === form.klass)?.sections.map(sec => (
-                <option key={sec} value={sec}>{sec}</option>
-              ))}
-            </select>
-            <div className="md:col-span-4 flex items-center gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <input
+            type="text"
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            placeholder="First name"
+            value={form.firstName}
+            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+          />
+          <input
+            type="text"
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            placeholder="Last name"
+            value={form.lastName}
+            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+          />
+          <input
+            type="email"
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+          <input
+            type="tel"
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            placeholder="Phone"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+          <select
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            value={form.gender}
+            onChange={(e) => setForm({ ...form, gender: e.target.value })}
+          >
+            <option value="">Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          <select
+            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            value={form.klass}
+            onChange={(e) => {
+              const id = e.target.value;
+              setForm({ ...form, klass: id });
+            }}
+          >
+            {classesList.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+            <div className="md:col-span-6 flex items-center gap-3">
               <button
                 className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
                 onClick={save}
@@ -189,20 +225,24 @@ export default function Students() {
           <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Name</th>
+                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">First Name</th>
+                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Last Name</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Email</th>
+                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Phone</th>
+                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Gender</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Class</th>
-                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Section</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(s => (
                 <tr key={s.id} className="odd:bg-white even:bg-gray-50">
-                  <td className="px-4 py-2 border-b text-gray-800">{s.name}</td>
+                  <td className="px-4 py-2 border-b text-gray-800">{s.firstName}</td>
+                  <td className="px-4 py-2 border-b text-gray-800">{s.lastName}</td>
                   <td className="px-4 py-2 border-b text-gray-700">{s.email || '-'}</td>
-                  <td className="px-4 py-2 border-b text-gray-700">{classesList.find(c => c.id === s.klass)?.name || '-'}</td>
-                  <td className="px-4 py-2 border-b text-gray-700">{s.section}</td>
+                  <td className="px-4 py-2 border-b text-gray-700">{s.phone || '-'}</td>
+                  <td className="px-4 py-2 border-b text-gray-700">{s.gender || '-'}</td>
+                  <td className="px-4 py-2 border-b text-gray-700">{classesList.find(c => c.id === s.classId)?.name || s.className || '-'}</td>
                   <td className="px-4 py-2 border-b">
                     <div className="flex items-center gap-3">
                       <button

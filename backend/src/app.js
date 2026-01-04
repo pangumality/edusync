@@ -10,8 +10,30 @@ import { requirePermission } from './middleware/rbacMiddleware.js';
 import { PERMISSIONS, ROLES } from './config/rbac.js';
 import { logAudit } from './utils/auditLogger.js';
 import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 
 const app = express();
+
+// Helper functions for scoping
+const checkTeacherClassAccess = async (userId, classId) => {
+    const teacher = await prisma.teacher.findUnique({ where: { userId } });
+    if (!teacher) return false;
+    
+    const assigned = await prisma.classSubject.findFirst({
+        where: { teacherId: teacher.id, classId: String(classId) }
+    });
+    return !!assigned;
+};
+
+const checkTeacherSubjectAccess = async (userId, subjectId) => {
+    const teacher = await prisma.teacher.findUnique({ where: { userId } });
+    if (!teacher) return false;
+    
+    const assigned = await prisma.classSubject.findFirst({
+        where: { teacherId: teacher.id, subjectId: String(subjectId) }
+    });
+    return !!assigned;
+};
 
 // Export prisma client for usage in other files if needed
 export { prisma };
@@ -44,9 +66,41 @@ app.get('/api/db/health', async (req, res) => {
   res.status(ok ? 200 : 500).json({ status: ok ? 'ok' : 'error', checks });
 });
 
-app.get('/api/classes', async (req, res) => {
+app.get('/api/classes', authenticate, async (req, res) => {
   try {
-    const classes = await prisma.class.findMany();
+    const { schoolId, role, id: userId } = req.user;
+    let where = { schoolId };
+
+    if (role === 'teacher') {
+        const teacher = await prisma.teacher.findUnique({ where: { userId } });
+        if (teacher) {
+            const assigned = await prisma.classSubject.findMany({
+                where: { teacherId: teacher.id },
+                select: { classId: true }
+            });
+            const classIds = assigned.map(a => a.classId);
+            // If no classes assigned, return empty (or handle as seeing none)
+            if (classIds.length > 0) {
+                 where.id = { in: classIds };
+            } else {
+                 return res.json([]);
+            }
+        } else {
+            return res.json([]);
+        }
+    } else if (role === 'student') {
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student || !student.classId) {
+            return res.json([]);
+        }
+        where.id = String(student.classId);
+    }
+
+    const classes = await prisma.class.findMany({
+      where,
+      orderBy: { name: 'asc' }
+    });
+    
     const formatted = classes.map(c => ({
       id: c.id,
       name: c.name,
@@ -58,23 +112,699 @@ app.get('/api/classes', async (req, res) => {
   }
 });
 
-app.get('/api/students', async (req, res) => {
+app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
   const { classId } = req.query;
-  if (!classId) {
-    return res.status(400).json({ error: 'Missing classId' });
-  }
+  const { schoolId, role, id: userId } = req.user;
+
   try {
+    const where = { schoolId };
+    
+    // Scoping for Teachers: Only show students in classes they teach
+    if (role === 'teacher') {
+        const teacher = await prisma.teacher.findUnique({ where: { userId } });
+        if (!teacher) return res.json([]);
+
+        // Find classes assigned to this teacher
+        const assigned = await prisma.classSubject.findMany({
+            where: { teacherId: teacher.id },
+            select: { classId: true }
+        });
+        const assignedClassIds = assigned.map(a => a.classId);
+        
+        // If no classes assigned, return empty
+        if (assignedClassIds.length === 0) return res.json([]);
+
+        if (classId) {
+            // If specific class requested, ensure it's assigned
+            if (!assignedClassIds.includes(classId)) {
+                 return res.status(403).json({ error: 'Access denied to this class' });
+            }
+            where.classId = String(classId);
+        } else {
+            // Filter by all assigned classes
+            where.classId = { in: assignedClassIds };
+        }
+    } else if (classId) {
+        where.classId = String(classId);
+    }
+
     const students = await prisma.student.findMany({
-      where: { classId: String(classId) },
-      include: { user: true },
+      where,
+      include: { user: true, klass: true },
     });
     const formatted = students.map(s => ({
       id: s.id,
       name: `${s.user.firstName} ${s.user.lastName}`.trim(),
+      firstName: s.user.firstName,
+      lastName: s.user.lastName,
+      email: s.user.email,
+      phone: s.user.phone,
+      gender: s.user.gender,
+      className: s.klass?.name,
+      rollNumber: s.id.substring(0, 6).toUpperCase(), // Mock roll number
+      classId: s.classId
     }));
     res.json(formatted);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to fetch students' });
+  }
+});
+
+app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, gender, classId } = req.body;
+    const { schoolId } = req.user;
+
+    if (!firstName || !lastName || !classId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (req.user.role === 'teacher') {
+        const allowed = await checkTeacherClassAccess(req.user.id, classId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this class' });
+    }
+
+    // Check if user exists
+    if (email) {
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const userId = randomUUID();
+    const studentId = randomUUID();
+
+    await prisma.$transaction(async (prisma) => {
+      await prisma.user.create({
+        data: {
+          id: userId,
+          firstName,
+          lastName,
+          email: email || null,
+          phone: phone || null,
+          gender: gender || null,
+          password: await bcrypt.hash('Student@123', 10),
+          role: 'student',
+          schoolId,
+          isActive: true
+        }
+      });
+
+      await prisma.student.create({
+        data: {
+          id: studentId,
+          userId,
+          schoolId,
+          classId
+        }
+      });
+    });
+
+    await logAudit(req.user.id, 'CREATE', 'student', { name: `${firstName} ${lastName}`, classId });
+    res.status(201).json({ message: 'Student created successfully' });
+  } catch (error) {
+    console.error('Error creating student:', error);
+    res.status(500).json({ error: 'Failed to create student' });
+  }
+});
+
+app.put('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, classId, phone, gender } = req.body;
+    
+    // Find student
+    const student = await prisma.student.findUnique({ where: { id }, include: { user: true } });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    
+    if (req.user.role === 'teacher') {
+        const allowedCurrent = await checkTeacherClassAccess(req.user.id, student.classId);
+        if (!allowedCurrent) return res.status(403).json({ error: 'Access denied to this student' });
+
+        if (classId && classId !== student.classId) {
+             const allowedNew = await checkTeacherClassAccess(req.user.id, classId);
+             if (!allowedNew) return res.status(403).json({ error: 'Access denied to the target class' });
+        }
+    }
+
+    // Update User and Student
+    await prisma.$transaction(async (prisma) => {
+      await prisma.user.update({
+        where: { id: student.userId },
+        data: { firstName, lastName, phone: phone || undefined, gender: gender || undefined }
+      });
+      if (classId) {
+        await prisma.student.update({
+          where: { id },
+          data: { classId }
+        });
+      }
+    });
+    
+    res.json({ message: 'Student updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update student' });
+  }
+});
+
+app.delete('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.student.findUnique({ where: { id } });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    
+    if (req.user.role === 'teacher') {
+        const allowed = await checkTeacherClassAccess(req.user.id, student.classId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this student' });
+    }
+
+    await prisma.$transaction(async (prisma) => {
+       await prisma.student.delete({ where: { id } });
+       await prisma.user.delete({ where: { id: student.userId } });
+    });
+    
+    res.json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete student' });
+  }
+});
+
+// Parents CRUD
+app.get('/api/parents', authenticate, requirePermission(PERMISSIONS.PARENT_MANAGE), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        // Find users with role 'parent' in this school
+        const parents = await prisma.parent.findMany({
+            where: { user: { schoolId } },
+            include: { 
+                user: true,
+                children: {
+                    include: { student: { include: { user: true } } }
+                }
+            }
+        });
+        
+        const formatted = parents.map(p => ({
+            id: p.id,
+            name: `${p.user.firstName} ${p.user.lastName}`,
+            email: p.user.email,
+            phone: p.user.phone,
+            children: p.children.map(c => ({
+                id: c.student.id,
+                name: `${c.student.user.firstName} ${c.student.user.lastName}`,
+                relationship: c.relationship,
+                isPrimary: c.isPrimary
+            }))
+        }));
+        
+        res.json(formatted);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch parents' });
+    }
+});
+
+app.post('/api/parents', authenticate, requirePermission(PERMISSIONS.PARENT_MANAGE), async (req, res) => {
+    try {
+        const { firstName, lastName, email, phone, gender, password } = req.body;
+        const { schoolId } = req.user;
+
+        if (!firstName || !lastName || !email) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) return res.status(400).json({ error: 'Email already exists' });
+
+        const userId = randomUUID();
+        const parentId = randomUUID();
+        const hashedPassword = await bcrypt.hash(password || 'Parent@123', 10);
+
+        await prisma.$transaction(async (prisma) => {
+            await prisma.user.create({
+                data: {
+                    id: userId,
+                    firstName,
+                    lastName,
+                    email,
+                    phone,
+                    gender,
+                    password: hashedPassword,
+                    role: 'parent',
+                    schoolId,
+                    isActive: true
+                }
+            });
+
+            await prisma.parent.create({
+                data: {
+                    id: parentId,
+                    userId
+                }
+            });
+        });
+
+        await logAudit(req.user.id, 'CREATE', 'parent', { name: `${firstName} ${lastName}` });
+        res.status(201).json({ message: 'Parent created successfully', id: parentId });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create parent' });
+    }
+});
+
+app.post('/api/parents/:id/students', authenticate, requirePermission(PERMISSIONS.PARENT_MANAGE), async (req, res) => {
+    try {
+        const { id: parentId } = req.params;
+        const { studentId, relationship, isPrimary } = req.body;
+
+        if (!studentId || !relationship) {
+            return res.status(400).json({ error: 'Student ID and Relationship are required' });
+        }
+
+        // Verify parent exists
+        const parent = await prisma.parent.findUnique({ where: { id: parentId } });
+        if (!parent) return res.status(404).json({ error: 'Parent not found' });
+
+        // Verify student exists
+        const student = await prisma.student.findUnique({ where: { id: studentId } });
+        if (!student) return res.status(404).json({ error: 'Student not found' });
+
+        // Create link
+        await prisma.parentStudents.create({
+            data: {
+                parentId,
+                studentId,
+                relationship,
+                isPrimary: !!isPrimary
+            }
+        });
+
+        res.json({ message: 'Student linked to parent successfully' });
+    } catch (error) {
+        // Check for unique constraint violation (already linked)
+        if (error.code === 'P2002') {
+             return res.status(400).json({ error: 'Student already linked to this parent' });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Failed to link student' });
+    }
+});
+
+app.delete('/api/parents/:id/students/:studentId', authenticate, requirePermission(PERMISSIONS.PARENT_MANAGE), async (req, res) => {
+    try {
+        const { id: parentId, studentId } = req.params;
+
+        await prisma.parentStudents.delete({
+            where: {
+                parentId_studentId: { parentId, studentId }
+            }
+        });
+
+        res.json({ message: 'Link removed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to unlink student' });
+  }
+});
+
+// Parent Portal Endpoints
+const checkParentChildAccess = async (parentId, studentId) => {
+    // Check if parent is linked to student
+    const link = await prisma.parentStudents.findUnique({
+        where: {
+            parentId_studentId: {
+                parentId,
+                studentId
+            }
+        }
+    });
+    return !!link;
+};
+
+// 1. Get My Children
+app.get('/api/parents/children', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_ALL), async (req, res) => {
+    try {
+        const { id: userId } = req.user;
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        
+        if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+
+        const children = await prisma.parentStudents.findMany({
+            where: { parentId: parent.id },
+            include: {
+                student: {
+                    include: {
+                        user: {
+                            select: { firstName: true, lastName: true, email: true, phone: true, gender: true }
+                        },
+                        klass: {
+                            select: { name: true, id: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        const formatted = children.map(c => ({
+            id: c.student.id,
+            name: `${c.student.user.firstName} ${c.student.user.lastName}`,
+            class: c.student.klass?.name || 'Unassigned',
+            classId: c.student.klass?.id,
+            relationship: c.relationship,
+            isPrimary: c.isPrimary,
+            rollNumber: c.student.id.substring(0, 6).toUpperCase() // Mock
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch children' });
+    }
+});
+
+// 2. Get Child Details (Overview)
+app.get('/api/parents/children/:studentId/overview', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_ALL), async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { id: userId } = req.user;
+        
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+
+        const allowed = await checkParentChildAccess(parent.id, studentId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this student' });
+
+        const student = await prisma.student.findUnique({
+            where: { id: studentId },
+            include: {
+                user: true,
+                klass: {
+                    include: {
+                        classSubjects: {
+                            include: {
+                                subject: true,
+                                teacher: { include: { user: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const overview = {
+            id: student.id,
+            name: `${student.user.firstName} ${student.user.lastName}`,
+            className: student.klass?.name || 'Unassigned',
+            subjects: student.klass?.classSubjects.map(cs => ({
+                id: cs.subject.id,
+                name: cs.subject.name,
+                teacher: cs.teacher?.user ? `${cs.teacher.user.firstName} ${cs.teacher.user.lastName}` : 'Not Assigned'
+            })) || []
+        };
+
+        res.json(overview);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch child overview' });
+    }
+});
+
+// 3. Get Child Attendance
+app.get('/api/parents/children/:studentId/attendance', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_ATTENDANCE), async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { id: userId } = req.user;
+        
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+
+        const allowed = await checkParentChildAccess(parent.id, studentId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this student' });
+
+        const records = await prisma.attendanceRecord.findMany({
+            where: { studentId },
+            include: { session: true },
+            orderBy: { recordedAt: 'desc' }
+        });
+
+        const total = records.length;
+        const present = records.filter(r => r.status === 'present').length;
+        const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+
+        res.json({
+            records: records.map(r => ({
+                id: r.id,
+                date: r.session?.date || r.recordedAt,
+                status: r.status
+            })),
+            percentage,
+            total,
+            present
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch attendance' });
+    }
+});
+
+// 4. Get Child Results
+app.get('/api/parents/children/:studentId/results', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_RESULTS), async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { id: userId } = req.user;
+        
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+
+        const allowed = await checkParentChildAccess(parent.id, studentId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this student' });
+
+        const results = await prisma.examResult.findMany({
+            where: { studentId },
+            include: {
+                exam: true,
+                subject: true
+            },
+            orderBy: { submittedAt: 'desc' }
+        });
+
+        res.json(results.map(r => ({
+            id: r.id,
+            examName: r.exam.name,
+            subjectName: r.subject?.name || 'General',
+            score: r.score,
+            date: r.submittedAt
+        })));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch results' });
+    }
+});
+
+// 5. Get Child Fees (Mocked for now as Payment model exists but fee structure might be complex)
+app.get('/api/parents/children/:studentId/fees', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_FEES), async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { id: userId } = req.user;
+        
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+
+        const allowed = await checkParentChildAccess(parent.id, studentId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this student' });
+
+        const payments = await prisma.payment.findMany({
+            where: { studentId },
+            orderBy: { paidAt: 'desc' }
+        });
+
+        // Mocking outstanding
+        const outstanding = 5000; // Example
+        
+        res.json({
+            history: payments,
+            outstanding,
+            currency: 'KES'
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch fees' });
+    }
+});
+
+// Group Studies
+app.get('/api/group-studies', authenticate, async (req, res) => {
+  try {
+    const { schoolId } = req.user;
+    const studies = await prisma.groupStudy.findMany({
+      where: { schoolId },
+      include: { creator: true, subject: true },
+      orderBy: { date: 'desc' }
+    });
+    res.json(studies);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch group studies' });
+  }
+});
+
+app.post('/api/group-studies', authenticate, requirePermission(PERMISSIONS.GROUP_STUDY_MANAGE), async (req, res) => {
+  try {
+    const { title, description, date, subjectId } = req.body;
+    const { schoolId, id: userId } = req.user;
+    
+    if (req.user.role === 'teacher' && subjectId) {
+        const allowed = await checkTeacherSubjectAccess(userId, subjectId);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+    }
+
+    const study = await prisma.groupStudy.create({
+      data: {
+        id: randomUUID(),
+        schoolId,
+        creatorId: userId,
+        title,
+        description,
+        date: new Date(date),
+        subjectId
+      }
+    });
+    res.status(201).json(study);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create group study' });
+  }
+});
+
+app.put('/api/group-studies/:id', authenticate, requirePermission(PERMISSIONS.GROUP_STUDY_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, date, subjectId } = req.body;
+    const { id: userId, role } = req.user;
+
+    const study = await prisma.groupStudy.findUnique({ where: { id } });
+    if (!study) return res.status(404).json({ error: 'Study not found' });
+
+    // Teachers can only edit their own studies
+    if (role === 'teacher') {
+        if (study.creatorId !== userId) {
+            return res.status(403).json({ error: 'You can only edit your own group studies' });
+        }
+        if (subjectId) {
+            const allowed = await checkTeacherSubjectAccess(userId, subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+        }
+    }
+
+    const updated = await prisma.groupStudy.update({
+        where: { id },
+        data: {
+            title,
+            description,
+            date: date ? new Date(date) : undefined,
+            subjectId
+        }
+    });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update group study' });
+  }
+});
+
+app.delete('/api/group-studies/:id', authenticate, requirePermission(PERMISSIONS.GROUP_STUDY_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: userId, role } = req.user;
+
+    const study = await prisma.groupStudy.findUnique({ where: { id } });
+    if (!study) return res.status(404).json({ error: 'Study not found' });
+
+    // Teachers can only delete their own studies
+    if (role === 'teacher' && study.creatorId !== userId) {
+        return res.status(403).json({ error: 'You can only delete your own group studies' });
+    }
+
+    await prisma.groupStudy.delete({ where: { id } });
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+app.get('/api/me', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { student: true }
+    });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    res.json({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      schoolId: user.schoolId,
+      classId: user.student?.classId || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load profile' });
+  }
+});
+
+app.put('/api/me', authenticate, async (req, res) => {
+  try {
+    const { phone, oldPassword, newPassword } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    const data = {};
+    if (phone !== undefined) data.phone = phone || null;
+    if (newPassword) {
+      let ok = false;
+      try { ok = await bcrypt.compare(oldPassword || '', user.password); } catch { ok = false; }
+      if (!ok && user.password !== (oldPassword || '')) {
+        return res.status(400).json({ error: 'Invalid old password' });
+      }
+      data.password = await bcrypt.hash(newPassword, 10);
+    }
+    await prisma.user.update({ where: { id: user.id }, data });
+    res.json({ message: 'Profile updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+app.get('/api/attendance/self', authenticate, async (req, res) => {
+  try {
+    const student = await prisma.student.findUnique({ where: { userId: req.user.id } });
+    if (!student) return res.json({ records: [], percentage: 0 });
+    const records = await prisma.attendanceRecord.findMany({
+      where: { studentId: student.id },
+      include: { session: true },
+      orderBy: { recordedAt: 'desc' }
+    });
+    const total = records.length;
+    const present = records.filter(r => r.status === 'present').length;
+    const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+    const out = records.map(r => ({
+      id: r.id,
+      date: r.session?.date || r.recordedAt,
+      status: r.status,
+      classId: r.session?.classId || null
+    }));
+    res.json({ records: out, percentage });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load attendance' });
+  }
+});
+
+app.get('/api/my/payments', authenticate, async (req, res) => {
+  try {
+    const student = await prisma.student.findUnique({ where: { userId: req.user.id } });
+    if (!student) return res.json([]);
+    const payments = await prisma.payment.findMany({
+      where: { studentId: student.id },
+      orderBy: { paidAt: 'desc' }
+    });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch payments' });
   }
 });
 
@@ -152,7 +882,7 @@ app.post('/api/schools', authenticate, requirePermission(PERMISSIONS.SCHOOL_MANA
         data: {
           id: adminId,
           email: adminEmail,
-          password: 'School@admin', // Default password
+          password: await bcrypt.hash('School@admin', 10), // Default password
           firstName: 'School',
           lastName: 'Admin',
           role: ROLES.SCHOOL_ADMIN, // Using 'staff' as enum placeholder for school_admin
@@ -257,8 +987,8 @@ app.post('/api/teachers', authenticate, requirePermission(PERMISSIONS.TEACHER_MA
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
-    const userId = crypto.randomUUID();
-    const teacherId = crypto.randomUUID();
+    const userId = randomUUID();
+    const teacherId = randomUUID();
 
     await prisma.$transaction(async (prisma) => {
       // 1. Create User
@@ -268,7 +998,7 @@ app.post('/api/teachers', authenticate, requirePermission(PERMISSIONS.TEACHER_MA
           firstName,
           lastName,
           email,
-          password: 'password123', // Default password
+          password: 'Teacher@123', // Default password
           role: 'teacher',
           schoolId: schoolId,
           isActive: true
@@ -326,6 +1056,135 @@ app.delete('/api/teachers/:id', authenticate, requirePermission(PERMISSIONS.TEAC
   }
 });
 
+app.get('/api/class-subjects', authenticate, requirePermission(PERMISSIONS.TEACHER_MANAGE), async (req, res) => {
+  try {
+    const { schoolId } = req.user;
+    const { teacherUserId, classId, subjectId } = req.query;
+    const where = {};
+    if (teacherUserId) {
+      const teacher = await prisma.teacher.findUnique({ where: { userId: String(teacherUserId) } });
+      if (!teacher) return res.json([]);
+      where.teacherId = teacher.id;
+    }
+    if (classId) where.classId = String(classId);
+    if (subjectId) where.subjectId = String(subjectId);
+    const results = await prisma.classSubject.findMany({
+      where,
+      include: { klass: true, subject: true, teacher: { include: { user: true } } }
+    });
+    const filtered = results.filter(r => r.teacher?.user?.schoolId === schoolId && r.klass?.schoolId === schoolId && r.subject?.schoolId === schoolId);
+    const formatted = filtered.map(r => ({
+      id: r.id,
+      classId: r.classId,
+      className: r.klass?.name,
+      subjectId: r.subjectId,
+      subjectName: r.subject?.name,
+      teacherUserId: r.teacher?.userId,
+      teacherName: r.teacher?.user ? `${r.teacher.user.firstName} ${r.teacher.user.lastName}`.trim() : ''
+    }));
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch class-subjects' });
+  }
+});
+
+app.post('/api/class-subjects', authenticate, requirePermission(PERMISSIONS.TEACHER_MANAGE), async (req, res) => {
+  try {
+    const { teacherUserId, classId, subjectId } = req.body;
+    const { schoolId } = req.user;
+    if (!teacherUserId || !classId) return res.status(400).json({ error: 'Missing required fields' });
+    const teacher = await prisma.teacher.findUnique({ where: { userId: String(teacherUserId) } });
+    if (!teacher) return res.status(404).json({ error: 'Teacher profile not found' });
+    const klass = await prisma.class.findUnique({ where: { id: String(classId) } });
+    if (!klass) return res.status(404).json({ error: 'Class not found' });
+    if (klass.schoolId !== schoolId) return res.status(403).json({ error: 'Cross-school assignment not allowed' });
+    let subjId = subjectId ? String(subjectId) : null;
+    if (!subjId) {
+      let defaultSubject = await prisma.subject.findFirst({ where: { schoolId, name: 'General' } });
+      if (!defaultSubject) {
+        defaultSubject = await prisma.subject.create({
+          data: { id: randomUUID(), schoolId, name: 'General' }
+        });
+      }
+      subjId = defaultSubject.id;
+    }
+    const subject = await prisma.subject.findUnique({ where: { id: subjId } });
+    if (!subject) return res.status(404).json({ error: 'Subject not found' });
+    if (subject.schoolId !== schoolId) return res.status(403).json({ error: 'Cross-school assignment not allowed' });
+    const existing = await prisma.classSubject.findFirst({ where: { classId: String(classId), subjectId: subjId, teacherId: teacher.id } });
+    if (existing) return res.status(400).json({ error: 'Assignment already exists' });
+    const created = await prisma.classSubject.create({
+      data: { id: randomUUID(), classId: String(classId), subjectId: subjId, teacherId: teacher.id },
+      include: { klass: true, subject: true, teacher: { include: { user: true } } }
+    });
+    await logAudit(req.user.id, 'CREATE', 'class_subject', { id: created.id, classId, subjectId, teacherUserId });
+    res.status(201).json({
+      id: created.id,
+      classId: created.classId,
+      className: created.klass?.name,
+      subjectId: created.subjectId,
+      subjectName: created.subject?.name,
+      teacherUserId: created.teacher?.userId,
+      teacherName: created.teacher?.user ? `${created.teacher.user.firstName} ${created.teacher.user.lastName}`.trim() : ''
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create assignment' });
+  }
+});
+
+app.delete('/api/class-subjects/:id', authenticate, requirePermission(PERMISSIONS.TEACHER_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.classSubject.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Assignment not found' });
+    await prisma.classSubject.delete({ where: { id } });
+    await logAudit(req.user.id, 'DELETE', 'class_subject', { id });
+    res.json({ message: 'Assignment deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete assignment' });
+  }
+});
+app.put('/api/class-subjects/:id', authenticate, requirePermission(PERMISSIONS.TEACHER_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { teacherUserId } = req.body;
+    const { schoolId } = req.user;
+    if (!teacherUserId) return res.status(400).json({ error: 'Missing teacherUserId' });
+    const assignment = await prisma.classSubject.findUnique({
+      where: { id },
+      include: { klass: true, subject: true, teacher: { include: { user: true } } }
+    });
+    if (!assignment || !assignment.klass || !assignment.subject) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+    if (assignment.klass.schoolId !== schoolId || assignment.subject.schoolId !== schoolId) {
+      return res.status(403).json({ error: 'Cross-school update not allowed' });
+    }
+    const newTeacher = await prisma.teacher.findUnique({ where: { userId: String(teacherUserId) } });
+    if (!newTeacher) return res.status(404).json({ error: 'Teacher profile not found' });
+    const newTeacherUser = await prisma.user.findUnique({ where: { id: newTeacher.userId } });
+    if (!newTeacherUser || newTeacherUser.schoolId !== schoolId) {
+      return res.status(403).json({ error: 'Teacher not in your school' });
+    }
+    const updated = await prisma.classSubject.update({
+      where: { id },
+      data: { teacherId: newTeacher.id },
+      include: { klass: true, subject: true, teacher: { include: { user: true } } }
+    });
+    await logAudit(req.user.id, 'UPDATE', 'class_subject', { id, teacherUserId });
+    res.json({
+      id: updated.id,
+      classId: updated.classId,
+      className: updated.klass?.name,
+      subjectId: updated.subjectId,
+      subjectName: updated.subject?.name,
+      teacherUserId: updated.teacher?.userId,
+      teacherName: updated.teacher?.user ? `${updated.teacher.user.firstName} ${updated.teacher.user.lastName}`.trim() : ''
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update assignment' });
+  }
+});
 // Users Route (Protected)
 app.get('/api/users', authenticate, requirePermission(PERMISSIONS.USER_MANAGE), async (req, res) => {
   try {
@@ -381,8 +1240,22 @@ app.post('/api/auth/login', async (req, res) => {
     // For this specific task implementation, I will assume we check plain text 
     // BUT I will issue a real JWT.
     
-    if (!user || user.password !== password) {
+    if (!user) {
       await logAudit(email, 'LOGIN_FAILED', 'auth', 'Invalid credentials');
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    let valid = false;
+    try {
+      valid = await bcrypt.compare(password, user.password);
+    } catch (e) {
+      valid = false;
+    }
+    if (!valid && user.password === password) {
+      valid = true;
+    }
+    if (!valid) {
+      await logAudit(user.id, 'LOGIN_FAILED', 'auth', 'Invalid credentials');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -415,6 +1288,1138 @@ app.post('/api/auth/login', async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Class Notes (E-Learning)
+app.get('/api/class-notes', authenticate, async (req, res) => {
+  try {
+    const { schoolId, role, id: userId } = req.user;
+    const { subjectId } = req.query;
+
+    const where = { schoolId };
+
+    if (role === 'teacher') {
+        if (subjectId) {
+            const allowed = await checkTeacherSubjectAccess(userId, subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+            where.subjectId = subjectId;
+        } else {
+            // Limit notes to subjects teacher is assigned to
+            const teacher = await prisma.teacher.findUnique({ where: { userId } });
+            if (!teacher) return res.json([]);
+            const assigned = await prisma.classSubject.findMany({
+                where: { teacherId: teacher.id },
+                select: { subjectId: true }
+            });
+            const subjectIds = assigned.map(a => a.subjectId);
+            if (subjectIds.length === 0) return res.json([]);
+            where.subjectId = { in: subjectIds };
+        }
+    } else if (role === 'student') {
+        // Student can view notes for their allocated class or subject
+        const student = await prisma.student.findUnique({ where: { userId }, include: { school: true } });
+        if (!student || student.schoolId !== schoolId) return res.json([]);
+        if (subjectId) {
+            // Ensure subject is assigned to student's class
+            const assignment = await prisma.classSubject.findFirst({
+                where: { classId: student.classId, subjectId }
+            });
+            if (!assignment) return res.status(403).json({ error: 'Access denied to this subject' });
+            where.subjectId = subjectId;
+        } else if (student.classId) {
+            // Return notes tagged for the student's class
+            where.classId = student.classId;
+        }
+    } else {
+        // Admin/staff can optionally filter by subject
+        if (subjectId) where.subjectId = subjectId;
+    }
+
+    const notes = await prisma.classNote.findMany({
+      where,
+      include: { subject: true, klass: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+app.post('/api/class-notes', authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+  try {
+    const { title, content, subjectId, classId } = req.body;
+    const { schoolId } = req.user;
+    
+    if (req.user.role === 'teacher') {
+         const allowed = await checkTeacherSubjectAccess(req.user.id, subjectId);
+         if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+    }
+
+    const note = await prisma.classNote.create({
+      data: {
+        id: randomUUID(),
+        schoolId,
+        title,
+        content,
+        subjectId,
+        classId // Optional
+      }
+    });
+    res.status(201).json(note);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create note' });
+  }
+});
+
+app.put('/api/class-notes/:id', authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+  try {
+    const { title, content, subjectId, classId } = req.body;
+    const { id } = req.params;
+    
+    if (req.user.role === 'teacher') {
+         // Check if they have access to the NEW subject if changing
+         if (subjectId) {
+             const allowed = await checkTeacherSubjectAccess(req.user.id, subjectId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied to target subject' });
+         }
+         
+         // Check if they have access to the OLD subject (ownership check essentially)
+         const note = await prisma.classNote.findUnique({ where: { id } });
+         if (!note) return res.status(404).json({ error: 'Note not found' });
+         
+         const allowedOld = await checkTeacherSubjectAccess(req.user.id, note.subjectId);
+         if (!allowedOld) return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.classNote.update({
+      where: { id },
+      data: {
+        title,
+        content,
+        subjectId,
+        classId
+      }
+    });
+    res.json({ message: 'Note updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+});
+
+app.delete('/api/class-notes/:id', authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (req.user.role === 'teacher') {
+         const note = await prisma.classNote.findUnique({ where: { id } });
+         if (!note) return res.status(404).json({ error: 'Note not found' });
+         
+         const allowed = await checkTeacherSubjectAccess(req.user.id, note.subjectId);
+         if (!allowed) return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.classNote.delete({ where: { id } });
+    res.json({ message: 'Note deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// Subjects
+app.get('/api/subjects', authenticate, async (req, res) => {
+  try {
+    const { schoolId, role, id: userId } = req.user;
+    let where = { schoolId };
+
+    if (role === 'teacher') {
+        // Find teacher profile
+        const teacher = await prisma.teacher.findUnique({ where: { userId } });
+        if (!teacher) return res.json([]);
+
+        // Find subjects assigned to this teacher
+        const assigned = await prisma.classSubject.findMany({
+            where: { teacherId: teacher.id },
+            select: { subjectId: true }
+        });
+        
+        // AUTO-FIX: If no subjects assigned, try to assign some for demo purposes
+        if (assigned.length === 0) {
+            console.log('Teacher has no subjects. Attempting auto-assignment for demo...');
+            const anySubject = await prisma.subject.findFirst({ where: { schoolId } });
+            const anyClass = await prisma.class.findFirst({ where: { schoolId } });
+            
+            if (anySubject && anyClass) {
+                await prisma.classSubject.create({
+                    data: {
+                        id: randomUUID(),
+                        classId: anyClass.id,
+                        subjectId: anySubject.id,
+                        teacherId: teacher.id
+                    }
+                });
+                console.log(`Assigned ${anySubject.name} in ${anyClass.name} to teacher.`);
+                where.id = anySubject.id;
+            } else {
+                return res.json([]);
+            }
+        } else {
+             const subjectIds = assigned.map(a => a.subjectId);
+             where.id = { in: subjectIds };
+        }
+    } else if (role === 'student') {
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student || !student.classId) return res.json([]);
+        const assigned = await prisma.classSubject.findMany({
+            where: { classId: student.classId },
+            select: { subjectId: true }
+        });
+        const subjectIds = assigned.map(a => a.subjectId);
+        if (subjectIds.length === 0) return res.json([]);
+        where.id = { in: subjectIds };
+    }
+
+    const subjects = await prisma.subject.findMany({
+      where,
+      orderBy: { name: 'asc' }
+    });
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+});
+app.get('/api/subjects/:id/details', authenticate, requirePermission(PERMISSIONS.SUBJECT_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { schoolId } = req.user;
+    const subject = await prisma.subject.findUnique({ where: { id: String(id) } });
+    if (!subject || subject.schoolId !== schoolId) return res.status(404).json({ error: 'Subject not found' });
+    const assignments = await prisma.classSubject.findMany({
+      where: { subjectId: String(id) },
+      include: { klass: true, teacher: { include: { user: true } } }
+    });
+    const filtered = assignments.filter(a => a.klass?.schoolId === schoolId && a.teacher?.user?.schoolId === schoolId);
+    const resultAssignments = filtered.map(a => ({
+      id: a.id,
+      classId: a.classId,
+      className: a.klass?.name,
+      teacherUserId: a.teacher?.userId,
+      teacherName: a.teacher?.user ? `${a.teacher.user.firstName} ${a.teacher.user.lastName}`.trim() : ''
+    }));
+    const classIds = Array.from(new Set(filtered.map(a => a.classId))).filter(Boolean);
+    const studentsByClass = [];
+    for (const cid of classIds) {
+      const studs = await prisma.student.findMany({
+        where: { classId: cid, schoolId },
+        include: { user: true }
+      });
+      studentsByClass.push({
+        classId: cid,
+        className: filtered.find(a => a.classId === cid)?.klass?.name || '',
+        students: studs.map(s => ({
+          id: s.id,
+          name: `${s.user.firstName} ${s.user.lastName}`.trim()
+        }))
+      });
+    }
+    res.json({
+      subject: { id: subject.id, name: subject.name },
+      assignments: resultAssignments,
+      students: studentsByClass
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch subject details' });
+  }
+});
+
+app.post('/api/subjects', authenticate, requirePermission(PERMISSIONS.SUBJECT_MANAGE), async (req, res) => {
+  try {
+    const { name, teacherUserId, classId } = req.body;
+    const { schoolId } = req.user;
+    if (!name || !teacherUserId) return res.status(400).json({ error: 'Missing required fields' });
+    const teacher = await prisma.teacher.findUnique({ where: { userId: String(teacherUserId) } });
+    if (!teacher) return res.status(404).json({ error: 'Teacher profile not found' });
+    const teacherUser = await prisma.user.findUnique({ where: { id: teacher.userId } });
+    if (!teacherUser || teacherUser.schoolId !== schoolId) return res.status(403).json({ error: 'Teacher not in your school' });
+    
+    let chosenClassId = classId ? String(classId) : null;
+    if (!chosenClassId) {
+      const existingAssign = await prisma.classSubject.findFirst({
+        where: { teacherId: teacher.id },
+        include: { klass: true }
+      });
+      if (existingAssign && existingAssign.klass && existingAssign.klass.schoolId === schoolId) {
+        chosenClassId = existingAssign.classId;
+      }
+    }
+    if (!chosenClassId) {
+      const firstClass = await prisma.class.findFirst({ where: { schoolId }, orderBy: { name: 'asc' } });
+      if (!firstClass) {
+        const createdClass = await prisma.class.create({
+          data: { id: randomUUID(), schoolId, name: 'General' }
+        });
+        chosenClassId = createdClass.id;
+      } else {
+        chosenClassId = firstClass.id;
+      }
+    }
+    
+    const subject = await prisma.subject.create({
+      data: {
+        id: randomUUID(),
+        schoolId,
+        name
+      }
+    });
+    const assignment = await prisma.classSubject.create({
+      data: { id: randomUUID(), classId: String(chosenClassId), subjectId: subject.id, teacherId: teacher.id }
+    });
+    res.status(201).json({ ...subject, assigned: { id: assignment.id, classId: assignment.classId, teacherUserId: teacher.userId } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create subject' });
+  }
+});
+
+app.put('/api/subjects/:id', authenticate, requirePermission(PERMISSIONS.SUBJECT_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    if (req.user.role === 'teacher') {
+        const allowed = await checkTeacherSubjectAccess(req.user.id, id);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+    }
+
+    await prisma.subject.update({
+      where: { id },
+      data: { name }
+    });
+    res.json({ message: 'Subject updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update subject' });
+  }
+});
+
+app.delete('/api/subjects/:id', authenticate, requirePermission(PERMISSIONS.SUBJECT_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.role === 'teacher') {
+        const allowed = await checkTeacherSubjectAccess(req.user.id, id);
+        if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+    }
+
+    await prisma.subject.delete({ where: { id } });
+    res.json({ message: 'Subject deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete subject' });
+  }
+});
+
+// Messages & Conversations
+app.get('/api/conversations', authenticate, async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    // Find conversations where user is a participant
+    const participations = await prisma.conversationParticipant.findMany({
+      where: { userId },
+      include: {
+        conversation: {
+          include: {
+            participants: {
+              include: {
+                user: {
+                  select: { id: true, firstName: true, lastName: true, role: true }
+                }
+              }
+            },
+            messages: {
+              take: 1,
+              orderBy: { sentAt: 'desc' }
+            }
+          }
+        }
+      }
+    });
+
+    const conversations = await Promise.all(participations.map(async p => {
+      const c = p.conversation;
+      const otherParticipants = c.participants
+        .filter(part => part.userId !== userId)
+        .map(part => part.user);
+      
+      // Determine conversation title/name
+      let name = 'Group Chat';
+      if (otherParticipants.length === 1) {
+        name = `${otherParticipants[0].firstName} ${otherParticipants[0].lastName}`;
+      } else if (otherParticipants.length === 0) {
+          name = 'Me';
+      }
+
+      // Calculate unread count
+      const unreadCount = await prisma.message.count({
+          where: {
+              conversationId: c.id,
+              sentAt: { gt: p.lastReadAt || new Date(0) }, // Messages sent after I last read
+              senderId: { not: userId } // Don't count my own messages
+          }
+      });
+
+      return {
+        id: c.id,
+        name,
+        participants: otherParticipants,
+        lastMessage: c.messages[0] || null,
+        updatedAt: c.messages[0]?.sentAt || c.createdAt,
+        unreadCount
+      };
+    }));
+    
+    // Sort by last message
+    conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    res.json(conversations);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+app.get('/api/conversations/:id/messages', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { id: userId } = req.user;
+        
+        // Check participation
+        const isParticipant = await prisma.conversationParticipant.findUnique({
+            where: {
+                conversationId_userId: {
+                    conversationId: id,
+                    userId
+                }
+            }
+        });
+
+        if (!isParticipant) return res.status(403).json({ error: 'Access denied' });
+
+        const messages = await prisma.message.findMany({
+            where: { conversationId: id },
+            include: {
+                sender: {
+                    select: { id: true, firstName: true, lastName: true }
+                }
+            },
+            orderBy: { sentAt: 'asc' }
+        });
+        
+        // Fetch participants' read status to show "Read" ticks
+        const participants = await prisma.conversationParticipant.findMany({
+            where: { conversationId: id },
+            select: { userId: true, lastReadAt: true }
+        });
+
+        res.json({ messages, participants });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+app.post('/api/conversations/:id/read', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { id: userId } = req.user;
+        
+        await prisma.conversationParticipant.update({
+            where: {
+                conversationId_userId: {
+                    conversationId: id,
+                    userId
+                }
+            },
+            data: {
+                lastReadAt: new Date()
+            }
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to mark as read' });
+    }
+});
+
+app.post('/api/messages', authenticate, async (req, res) => {
+  try {
+    const { recipientId, content } = req.body;
+    const { id: senderId, schoolId } = req.user;
+
+    let conversationId;
+
+    if (recipientId) {
+        // 1:1 Message Logic
+        // Check if conversation exists between these two
+        // This is complex in Prisma without raw query, so we'll do a basic check
+        // Find conversations I am in
+        const myConvos = await prisma.conversationParticipant.findMany({
+            where: { userId: senderId },
+            select: { conversationId: true }
+        });
+        const myConvoIds = myConvos.map(c => c.conversationId);
+        
+        // Find if recipient is in any of these
+        const sharedConvo = await prisma.conversationParticipant.findFirst({
+            where: {
+                userId: recipientId,
+                conversationId: { in: myConvoIds }
+            }
+        });
+
+        // We also need to ensure it's a 1:1 chat (2 participants) if we want to reuse strict 1:1
+        // For MVP, if they share a conversation, reuse it? No, might be a group.
+        // Let's create a new one if not found or if existing ones are groups.
+        // Simplifying: Create new if not exists.
+        
+        if (sharedConvo) {
+             // Check if it has exactly 2 participants
+             const count = await prisma.conversationParticipant.count({
+                 where: { conversationId: sharedConvo.conversationId }
+             });
+             if (count === 2) {
+                 conversationId = sharedConvo.conversationId;
+             }
+        }
+
+        if (!conversationId) {
+            // Create new conversation
+            const newConvo = await prisma.conversation.create({
+                data: {
+                    id: randomUUID(),
+                    schoolId
+                }
+            });
+            conversationId = newConvo.id;
+            
+            // Add participants
+            await prisma.conversationParticipant.createMany({
+                data: [
+                    { conversationId, userId: senderId },
+                    { conversationId, userId: recipientId }
+                ]
+            });
+        }
+    } else {
+        // Fallback: School General Chat (Legacy support or broadcast)
+        // Not implementing broadcast for now to encourage 1:1
+        return res.status(400).json({ error: 'Recipient is required' });
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        id: randomUUID(),
+        conversationId,
+        senderId,
+        content
+      }
+    });
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Helper to find people to message
+app.get('/api/recipients', authenticate, async (req, res) => {
+    try {
+        const { schoolId, role, id: userId } = req.user;
+        let recipients = [];
+
+        // Always include School Admins
+        const admins = await prisma.user.findMany({
+            where: { schoolId, role: ROLES.SCHOOL_ADMIN },
+            select: { id: true, firstName: true, lastName: true, role: true }
+        });
+        recipients.push(...admins);
+
+        if (role === ROLES.TEACHER) {
+             // Find students in my classes
+             const teacher = await prisma.teacher.findUnique({ where: { userId } });
+             if (teacher) {
+                 const assignedClasses = await prisma.classSubject.findMany({
+                     where: { teacherId: teacher.id },
+                     select: { classId: true }
+                 });
+                 const classIds = assignedClasses.map(ac => ac.classId);
+                 
+                 const students = await prisma.student.findMany({
+                     where: { classId: { in: classIds } },
+                     include: { user: true, parents: { include: { parent: { include: { user: true } } } } }
+                 });
+
+                 students.forEach(s => {
+                     // Add Student
+                     recipients.push({
+                         id: s.user.id,
+                         firstName: s.user.firstName,
+                         lastName: s.user.lastName,
+                         role: 'student',
+                         detail: `Class ${s.classId}` // ideally class name
+                     });
+                     // Add Parents
+                     s.parents.forEach(p => {
+                         if (p.parent && p.parent.user) {
+                             recipients.push({
+                                 id: p.parent.user.id,
+                                 firstName: p.parent.user.firstName,
+                                 lastName: p.parent.user.lastName,
+                                 role: 'parent',
+                                 detail: `Parent of ${s.user.firstName}`
+                             });
+                         }
+                     });
+                 });
+             }
+        } else if (role === ROLES.STUDENT) {
+             // List teachers for student's allocated class(es)
+             const student = await prisma.student.findUnique({ where: { userId } });
+             if (student && student.classId) {
+                 const assignments = await prisma.classSubject.findMany({
+                     where: { classId: student.classId },
+                     include: { teacher: { include: { user: true } } }
+                 });
+                 assignments.forEach(a => {
+                     if (a.teacher?.user) {
+                         recipients.push({
+                             id: a.teacher.user.id,
+                             firstName: a.teacher.user.firstName,
+                             lastName: a.teacher.user.lastName,
+                             role: 'teacher',
+                             detail: `Teacher for class ${student.classId}`
+                         });
+                     }
+                 });
+             }
+        } else if (role === ROLES.PARENT) {
+            const parent = await prisma.parent.findUnique({ where: { userId } });
+            if (parent) {
+                const children = await prisma.parentStudents.findMany({
+                    where: { parentId: parent.id },
+                    include: { student: { include: { user: true } } }
+                });
+                
+                for (const childLink of children) {
+                    const student = childLink.student;
+                    if (student.classId) {
+                         const assignments = await prisma.classSubject.findMany({
+                             where: { classId: student.classId },
+                             include: { teacher: { include: { user: true } }, subject: true }
+                         });
+                         assignments.forEach(a => {
+                             if (a.teacher?.user) {
+                                 recipients.push({
+                                     id: a.teacher.user.id,
+                                     firstName: a.teacher.user.firstName,
+                                     lastName: a.teacher.user.lastName,
+                                     role: 'teacher',
+                                     detail: `Teacher for ${student.user.firstName} (${a.subject?.name || 'Subject'})`
+                                 });
+                             }
+                         });
+                    }
+                }
+            }
+        }
+        
+        // Filter duplicates (e.g. parent of 2 students)
+        const unique = Array.from(new Map(recipients.map(item => [item.id, item])).values());
+        
+        // Exclude self
+        const final = unique.filter(u => u.id !== userId);
+
+        res.json(final);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch recipients' });
+    }
+});
+
+// Attendance
+app.post('/api/attendance', authenticate, requirePermission(PERMISSIONS.ATTENDANCE_MANAGE_CLASS), async (req, res) => {
+    try {
+        const { classId, date, records } = req.body; // records: [{ studentId, status }]
+        
+        if (req.user.role === 'teacher') {
+             const allowed = await checkTeacherClassAccess(req.user.id, classId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied to this class' });
+        }
+
+        const sessionId = randomUUID();
+        await prisma.attendanceSession.create({
+            data: {
+                id: sessionId,
+                classId,
+                date: new Date(date),
+                radiusMeters: 0 
+            }
+        });
+
+        const data = records.map(r => ({
+            id: randomUUID(),
+            sessionId,
+            studentId: r.studentId,
+            status: r.status,
+            recordedAt: new Date()
+        }));
+
+        await prisma.attendanceRecord.createMany({ data });
+        
+        await logAudit(req.user.id, 'CREATE', 'attendance', { classId, date });
+        res.status(201).json({ message: 'Attendance recorded' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to record attendance' });
+    }
+});
+
+app.get('/api/attendance', authenticate, async (req, res) => {
+    try {
+        const { classId, date } = req.query;
+        if (!classId || !date) return res.json([]);
+
+        // Find session for this date (start of day to end of day)
+        const d = new Date(date);
+        const startOfDay = new Date(d.setHours(0,0,0,0));
+        const endOfDay = new Date(d.setHours(23,59,59,999));
+
+        const session = await prisma.attendanceSession.findFirst({
+            where: {
+                classId,
+                date: {
+                    gte: startOfDay,
+                    lte: endOfDay
+                }
+            },
+            include: { records: true }
+        });
+        
+        if (!session) return res.json([]);
+        res.json(session.records);
+    } catch (error) {
+         res.status(500).json({ error: 'Failed to fetch attendance' });
+    }
+});
+
+app.put('/api/attendance/:id', authenticate, requirePermission(PERMISSIONS.ATTENDANCE_MANAGE_CLASS), async (req, res) => {
+    try {
+        const { id } = req.params; // record id
+        const { status } = req.body;
+        
+        if (req.user.role === 'teacher') {
+            const record = await prisma.attendanceRecord.findUnique({ 
+                where: { id },
+                include: { session: true }
+            });
+            if (!record) return res.status(404).json({ error: 'Record not found' });
+            
+            const allowed = await checkTeacherClassAccess(req.user.id, record.session.classId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied' });
+        }
+
+        await prisma.attendanceRecord.update({
+            where: { id },
+            data: { status }
+        });
+        res.json({ message: 'Attendance updated' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update attendance' });
+    }
+});
+
+app.delete('/api/attendance/:sessionId', authenticate, requirePermission(PERMISSIONS.ATTENDANCE_MANAGE_CLASS), async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        if (req.user.role === 'teacher') {
+             const session = await prisma.attendanceSession.findUnique({ where: { id: sessionId } });
+             if (!session) return res.status(404).json({ error: 'Session not found' });
+             
+             const allowed = await checkTeacherClassAccess(req.user.id, session.classId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Delete records first
+        await prisma.attendanceRecord.deleteMany({ where: { sessionId } });
+        // Delete session
+        await prisma.attendanceSession.delete({ where: { id: sessionId } });
+        res.json({ message: 'Attendance session deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete attendance' });
+    }
+});
+
+// Exams
+app.get('/api/exams', authenticate, async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const exams = await prisma.exam.findMany({
+            where: { schoolId },
+            orderBy: { year: 'desc' }
+        });
+        res.json(exams);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch exams' });
+    }
+});
+
+app.get('/api/exams/:id', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+        const exam = await prisma.exam.findFirst({
+            where: { id, schoolId }
+        });
+        if (!exam) return res.status(404).json({ error: 'Exam not found' });
+        res.json(exam);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch exam' });
+    }
+});
+
+app.post('/api/exams', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE), async (req, res) => {
+    try {
+        const { name, term, year } = req.body;
+        const { schoolId } = req.user;
+        const id = randomUUID();
+        const exam = await prisma.exam.create({
+            data: { id, name, term, year: parseInt(year), schoolId }
+        });
+        res.status(201).json(exam);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create exam' });
+    }
+});
+
+app.put('/api/exams/:id', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, term, year } = req.body;
+        const { schoolId } = req.user;
+
+        // Ensure exam belongs to school
+        const existing = await prisma.exam.findFirst({
+            where: { id, schoolId }
+        });
+        if (!existing) return res.status(404).json({ error: 'Exam not found' });
+
+        const exam = await prisma.exam.update({
+            where: { id },
+            data: { name, term, year: parseInt(year) }
+        });
+        res.json(exam);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update exam' });
+    }
+});
+
+// Exam Papers (Setup)
+app.get('/api/exams/:examId/papers/:subjectId', authenticate, async (req, res) => {
+    try {
+        const { examId, subjectId } = req.params;
+        const paper = await prisma.examPaper.findUnique({
+            where: {
+                examId_subjectId: { examId, subjectId }
+            }
+        });
+        res.json(paper || null);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch exam paper' });
+    }
+});
+
+app.post('/api/exams/:examId/papers', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE), async (req, res) => {
+    try {
+        const { examId } = req.params;
+        const { subjectId, questions, duration, totalMarks, instructions, status } = req.body;
+        const { id: userId } = req.user;
+        
+        if (req.user.role === 'teacher') {
+             const allowed = await checkTeacherSubjectAccess(userId, subjectId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+        }
+
+        const paper = await prisma.examPaper.upsert({
+            where: {
+                examId_subjectId: { examId, subjectId }
+            },
+            update: {
+                questions,
+                duration: parseInt(duration),
+                totalMarks: parseFloat(totalMarks),
+                instructions,
+                status: status || 'draft',
+                teacherId: userId
+            },
+            create: {
+                id: randomUUID(),
+                examId,
+                subjectId,
+                questions,
+                duration: parseInt(duration),
+                totalMarks: parseFloat(totalMarks),
+                instructions,
+                status: status || 'draft',
+                teacherId: userId
+            }
+        });
+        res.json(paper);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to save exam paper' });
+    }
+});
+
+// Student: List Available Exams
+app.get('/api/student/exams', authenticate, async (req, res) => {
+    try {
+        const { id: userId, role } = req.user;
+        if (role !== 'student') return res.status(403).json({ error: 'Student access only' });
+
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student || !student.classId) return res.json([]);
+
+        // Get subjects for student's class
+        const classSubjects = await prisma.classSubject.findMany({
+            where: { classId: student.classId },
+            select: { subjectId: true }
+        });
+        const subjectIds = classSubjects.map(cs => cs.subjectId);
+
+        // Get published papers for these subjects
+        const papers = await prisma.examPaper.findMany({
+            where: {
+                subjectId: { in: subjectIds },
+                status: 'published'
+            },
+            include: {
+                exam: {
+                    select: { name: true, term: true, year: true }
+                },
+                subject: {
+                    select: { name: true }
+                }
+            }
+        });
+
+        // Check completion status for each
+        const results = await prisma.examResult.findMany({
+            where: {
+                studentId: student.id,
+                examId: { in: papers.map(p => p.examId) },
+                subjectId: { in: papers.map(p => p.subjectId) }
+            }
+        });
+
+        const enhanced = papers.map(p => {
+            const result = results.find(r => r.examId === p.examId && r.subjectId === p.subjectId);
+            return {
+                ...p,
+                questions: undefined, // Don't send questions in list
+                submitted: !!result,
+                score: result?.score
+            };
+        });
+
+        res.json(enhanced);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch student exams' });
+    }
+});
+
+// Student: Get Paper for Taking
+app.get('/api/student/papers/:id', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { id: userId } = req.user;
+        
+        const paper = await prisma.examPaper.findUnique({
+            where: { id },
+            include: { exam: true, subject: true }
+        });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        // Verify access (Student in class with this subject)
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student) return res.status(403).json({ error: 'Student only' });
+        
+        // Allow retakes - removed "Already submitted" check
+
+        // Remove correct answers from questions if possible (or trust client for now)
+        // For security, we should sanitize. Assuming questions structure: { ..., correctIndex: 0 }
+        // We'll mask correctIndex.
+        const sanitizedQuestions = (paper.questions || []).map(q => {
+            const { correctIndex, ...rest } = q;
+            return rest;
+        });
+
+        res.json({
+            ...paper,
+            questions: sanitizedQuestions
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to load exam paper' });
+    }
+});
+
+// Student: Submit Exam
+app.post('/api/student/papers/:id/submit', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params; // paperId
+        const { answers } = req.body; // map { questionId: answer }
+        const { id: userId } = req.user;
+
+        const paper = await prisma.examPaper.findUnique({ where: { id } });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student) return res.status(403).json({ error: 'Student only' });
+
+        // Calculate Score
+        let score = 0;
+        const questions = paper.questions || [];
+        questions.forEach(q => {
+            const studentAns = answers[q.id];
+            if (q.type === 'mcq') {
+                 // answers[q.id] is index
+                 if (parseInt(studentAns) === q.correctIndex) {
+                     score += (q.marks || 1);
+                 }
+            }
+            // For descriptive, score is 0 initially or requires manual grading.
+            // Currently assuming auto-grade for MCQ only.
+        });
+
+        // Check for existing result to update (Retake)
+        // We delete any existing results to avoid duplicates and ensure a fresh submission
+        await prisma.examResult.deleteMany({
+            where: {
+                examId: paper.examId,
+                subjectId: paper.subjectId,
+                studentId: student.id
+            }
+        });
+
+        await prisma.examResult.create({
+            data: {
+                id: randomUUID(),
+                examId: paper.examId,
+                subjectId: paper.subjectId,
+                studentId: student.id,
+                score: score,
+                answers: answers, // Save raw answers
+                submittedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Exam submitted', score });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to submit exam' });
+    }
+});
+
+app.get('/api/exam-results', authenticate, async (req, res) => {
+    try {
+        const { examId, classId, subjectId } = req.query;
+        const results = await prisma.examResult.findMany({
+            where: { 
+                examId, 
+                subjectId,
+                student: { classId } 
+            },
+            include: { student: { include: { user: true } } }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch results' });
+    }
+});
+
+app.post('/api/exam-results', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE_RESULTS), async (req, res) => {
+    try {
+        const { examId, subjectId, results } = req.body; // results: [{ studentId, score }]
+        
+        if (req.user.role === 'teacher') {
+             const allowed = await checkTeacherSubjectAccess(req.user.id, subjectId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+        }
+
+        for (const r of results) {
+            const existing = await prisma.examResult.findFirst({
+                where: { examId, subjectId, studentId: r.studentId }
+            });
+            
+            if (existing) {
+                await prisma.examResult.update({
+                    where: { id: existing.id },
+                    data: { score: parseFloat(r.score) }
+                });
+            } else {
+                await prisma.examResult.create({
+                    data: {
+                        id: randomUUID(),
+                        examId,
+                        subjectId,
+                        studentId: r.studentId,
+                        score: parseFloat(r.score)
+                    }
+                });
+            }
+        }
+        res.json({ message: 'Results saved' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to save results' });
+    }
+});
+
+app.delete('/api/exams/:id', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+
+        // Ensure exam belongs to school
+        const existing = await prisma.exam.findFirst({
+            where: { id, schoolId }
+        });
+        if (!existing) return res.status(404).json({ error: 'Exam not found' });
+
+        // Delete results first
+        await prisma.examResult.deleteMany({ where: { examId: id } });
+        // Delete exam
+        await prisma.exam.delete({ where: { id } });
+        res.json({ message: 'Exam deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete exam' });
+    }
+});
+
+app.delete('/api/exam-results/:id', authenticate, requirePermission(PERMISSIONS.EXAM_MANAGE_RESULTS), async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (req.user.role === 'teacher') {
+             const result = await prisma.examResult.findUnique({ where: { id } });
+             if (!result) return res.status(404).json({ error: 'Result not found' });
+             
+             const allowed = await checkTeacherSubjectAccess(req.user.id, result.subjectId);
+             if (!allowed) return res.status(403).json({ error: 'Access denied' });
+        }
+
+        await prisma.examResult.delete({ where: { id } });
+        res.json({ message: 'Result deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete result' });
+    }
 });
 
 export default app;

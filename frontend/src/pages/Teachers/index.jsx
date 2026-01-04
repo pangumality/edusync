@@ -12,6 +12,11 @@ export default function Teachers() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [assigningTeacher, setAssigningTeacher] = useState(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [classes, setClasses] = useState([]);
+  const [assignClassId, setAssignClassId] = useState('');
+  const [assignSubjectId, setAssignSubjectId] = useState('');
 
   const fetchTeachers = async () => {
     setLoading(true);
@@ -30,6 +35,38 @@ export default function Teachers() {
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  const openAssignModal = async (teacher) => {
+    setAssigningTeacher(teacher);
+    setAssignClassId('');
+    setAssignSubjectId('');
+    try {
+      const clsRes = await api.get('/classes');
+      setClasses(clsRes.data);
+      setAssignModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load classes', err);
+      alert('Failed to load classes');
+    }
+  };
+
+  const saveAssignment = async () => {
+    if (!assignClassId || !assigningTeacher) return;
+    try {
+      await api.post('/class-subjects', {
+        teacherUserId: assigningTeacher.id,
+        classId: assignClassId
+      });
+      setAssignModalOpen(false);
+      setAssigningTeacher(null);
+      setAssignClassId('');
+      setAssignSubjectId('');
+      alert('Assignment created');
+    } catch (err) {
+      console.error('Failed to create assignment', err);
+      alert(err.response?.data?.error || 'Failed to create assignment');
+    }
+  };
 
   const filtered = useMemo(() => {
     return list.filter(t =>
@@ -192,6 +229,12 @@ export default function Teachers() {
                     <td className="px-4 py-2 border-b text-gray-700">{t.subject}</td>
                     <td className="px-4 py-2 border-b">
                       <div className="flex items-center gap-3">
+                        <button
+                          className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                          onClick={() => openAssignModal(t)}
+                        >
+                          Assign Class+Subject
+                        </button>
                         {/* 
                         <button
                           className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -215,6 +258,47 @@ export default function Teachers() {
           </table>
         </div>
       </div>
+      
+      {assignModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="text-lg font-bold text-gray-800">Assign Class + Subject</h3>
+              <p className="text-sm text-gray-500">{assigningTeacher?.name}</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                <select
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2"
+                  value={assignClassId}
+                  onChange={(e) => setAssignClassId(e.target.value)}
+                >
+                  <option value="">Select class</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="p-4 border-t flex justify-end gap-2">
+              <button
+                className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onClick={() => { setAssignModalOpen(false); setAssigningTeacher(null); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50"
+                disabled={!assignClassId}
+                onClick={saveAssignment}
+              >
+                Save Assignment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

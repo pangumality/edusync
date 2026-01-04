@@ -15,12 +15,16 @@ import Finance from './pages/Finance';
 import Library from './pages/Library';
 import Hostel from './pages/Hostel';
 import Transport from './pages/Transport';
-import Radio from './pages/Radio';
-import RadioSubject from './pages/Radio/Subject';
+import ELearning from './pages/ELearning';
+import ELearningSubject from './pages/ELearning/Subject';
+import ExamSetup from './pages/Exams/Setup';
 import Sports from './pages/Sports';
 import GroupStudies from './pages/GroupStudies';
 import Inventory from './pages/Inventory';
 import Schools from './pages/Schools';
+import Subjects from './pages/Subjects';
+import StudentExams from './pages/StudentExams';
+import TakeExam from './pages/StudentExams/TakeExam';
 
 function App() {
   return (
@@ -36,7 +40,6 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="messages" element={<Messages />} />
-          <Route path="teachers" element={<Teachers />} />
           <Route path="students" element={<Students />} />
           <Route path="classes" element={<Classes />} />
           <Route path="schools" element={
@@ -45,15 +48,54 @@ function App() {
             </RequireRole>
           } />
           <Route path="exams" element={<Exams />} />
-          <Route path="finance" element={<Finance />} />
-          <Route path="library" element={<Library />} />
-          <Route path="hostel" element={<Hostel />} />
-          <Route path="transport" element={<Transport />} />
-          <Route path="radio" element={<Radio />} />
-          <Route path="radio/:subject" element={<RadioSubject />} />
-          <Route path="sports" element={<Sports />} />
+          
+          {/* Student Exam Routes */}
+          <Route path="student/exams" element={<StudentExams />} />
+          <Route path="student/exams/:paperId/take" element={<TakeExam />} />
+
+          {/* Restricted Routes for Admins only */}
+          <Route path="teachers" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Teachers />
+            </RequireRole>
+          } />
+          <Route path="finance" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Finance />
+            </RequireRole>
+          } />
+          <Route path="library" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Library />
+            </RequireRole>
+          } />
+          <Route path="hostel" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Hostel />
+            </RequireRole>
+          } />
+          <Route path="transport" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Transport />
+            </RequireRole>
+          } />
+          <Route path="sports" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Sports />
+            </RequireRole>
+          } />
+          <Route path="inventory" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Inventory />
+            </RequireRole>
+          } />
+
+          <Route path="radio" element={<Navigate to="/e-learning" replace />} />
+          <Route path="e-learning" element={<ELearning />} />
+          <Route path="e-learning/:subjectId" element={<ELearningSubject />} />
+          <Route path="subjects" element={<Subjects />} />
           <Route path="group-studies" element={<GroupStudies />} />
-          <Route path="inventory" element={<Inventory />} />
+          <Route path="exams/:examId/setup" element={<ExamSetup />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />
