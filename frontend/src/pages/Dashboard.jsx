@@ -1,10 +1,12 @@
 import React from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { 
   Users, 
   GraduationCap, 
   Home, 
   CreditCard 
 } from 'lucide-react';
+import ParentDashboard from './ParentDashboard';
 
 const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
   return (
@@ -22,6 +24,12 @@ const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
 };
 
 const Dashboard = () => {
+  const { currentUser } = useOutletContext() || {};
+
+  if (currentUser?.role === 'parent') {
+    return <ParentDashboard />;
+  }
+
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-700 mb-6 uppercase">My Dashboard</h2>
@@ -34,27 +42,31 @@ const Dashboard = () => {
           tint="bg-brand-500 text-white" 
           buttonLabel="Manage Students"
         />
-        <StatCard 
-          icon={Users} 
-          title="Total Teachers" 
-          count="0" 
-          tint="bg-danger text-white" 
-          buttonLabel="Manage Teachers"
-        />
+        {(!currentUser || currentUser.role !== 'teacher') && (
+          <StatCard 
+            icon={Users} 
+            title="Total Teachers" 
+            count="0" 
+            tint="bg-danger text-white" 
+            buttonLabel="Manage Teachers"
+          />
+        )}
         <StatCard 
           icon={Home} 
           title="Total Administrators" 
           count="0" 
           tint="bg-success text-white" 
-          buttonLabel="Classes" 
+          buttonLabel={currentUser?.role === 'student' ? 'Subjects' : 'Classes'} 
         />
-        <StatCard 
-          icon={CreditCard} 
-          title="Total Parents" 
-          count="0" 
-          tint="bg-purple text-white" 
-          buttonLabel="Finance"
-        />
+        {(!currentUser || currentUser.role !== 'teacher') && (
+          <StatCard 
+            icon={CreditCard} 
+            title="Total Parents" 
+            count="0" 
+            tint="bg-purple text-white" 
+            buttonLabel="Finance"
+          />
+        )}
       </div>
 
       <div className="bg-white rounded shadow p-4">

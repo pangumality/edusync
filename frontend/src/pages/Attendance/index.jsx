@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import api from '../../utils/api';
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const toRad = (v) => (v * Math.PI) / 180;
@@ -17,7 +18,7 @@ function storageKey(date, klass) {
   return `attendance:doonites:${date}:${klass}`;
 }
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Attendance() {
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -40,44 +41,41 @@ export default function Attendance() {
   const watchIdRef = useRef(null);
   const [school, setSchool] = useState(null);
 
-  // Fetch Classes on Mount
+  // Fetch Classes on Mount (authenticated)
   useEffect(() => {
-    fetch(`${API_BASE}/classes`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch classes');
-        return res.json();
-      })
-      .then(data => {
+    const loadClasses = async () => {
+      try {
+        const { data } = await api.get('/classes');
         setClasses(data);
         if (data.length > 0) {
           setKlass(data[0].id);
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error(err);
-        setFetchError('Error loading classes. Please check backend connection.');
-      })
-      .finally(() => setLoadingClasses(false));
+        setFetchError('Error loading classes. Please login and check backend connection.');
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    loadClasses();
   }, []);
 
-  // Fetch Students when Class changes
+  // Fetch Students when Class changes (authenticated)
   useEffect(() => {
     if (!klass) return;
-    
-    setLoadingStudents(true);
-    fetch(`${API_BASE}/students?classId=${klass}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch students');
-        return res.json();
-      })
-      .then(data => {
+    const loadStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const { data } = await api.get(`/students?classId=${klass}`);
         setStudents(data);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error(err);
-        setStudents([]); // Clear on error
-      })
-      .finally(() => setLoadingStudents(false));
+        setStudents([]);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+    loadStudents();
   }, [klass]);
 
   useEffect(() => {

@@ -12,91 +12,22 @@ import {
   User as UserIcon,
   Shield,
   GraduationCap,
-  Book
+  Book,
+  Loader2
 } from 'lucide-react';
-import { seedAll } from '../../utils/seed';
-
-// --- Mock Auth Context (Expanded for Demo) ---
-const useMockAuth = () => {
-  const [user, setUser] = useState(null);
-  const [allUsers, setAllUsers] = useState([]);
-  
-  useEffect(() => {
-    const loadUsers = () => {
-      let teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-      let students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
-      let admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
-      let librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
-      let parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
-
-      // If no data, seed it immediately
-      if (teachers.length === 0 || admins.length === 0) {
-        seedAll();
-        teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-        students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
-        admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
-        librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
-        parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
-      }
-
-      const all = [...admins, ...teachers, ...librarians, ...students, ...parents];
-      setAllUsers(all);
-
-      // Default to Super Admin or first available user if not set
-      const savedUserId = localStorage.getItem('current_demo_user_id');
-      if (savedUserId) {
-        const savedUser = all.find(u => u.id === savedUserId);
-        if (savedUser) {
-          setUser(savedUser);
-          return;
-        }
-      }
-      
-      // Default fallback
-      if (admins.length > 0) setUser(admins[0]);
-      else if (teachers.length > 0) setUser(teachers[0]);
-    };
-
-    loadUsers();
-    window.addEventListener('storage', loadUsers);
-    return () => window.removeEventListener('storage', loadUsers);
-  }, []);
-
-  const switchUser = (userId) => {
-    const newUser = allUsers.find(u => u.id === userId);
-    if (newUser) {
-      setUser(newUser);
-      localStorage.setItem('current_demo_user_id', userId);
-      // Trigger a reload of conversations for the new user
-      window.dispatchEvent(new Event('storage')); 
-    }
-  };
-
-  return { user, allUsers, switchUser };
-};
+import api from '../../utils/api';
 
 // --- Utils ---
 const formatTime = (dateString) => {
+  if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
-const getRoleIcon = (role) => {
-  switch(role) {
-    case 'SUPER_ADMIN':
-    case 'ADMIN': return <Shield size={14} className="text-red-500" />;
-    case 'TEACHER': return <UserIcon size={14} className="text-blue-500" />;
-    case 'STUDENT': return <GraduationCap size={14} className="text-green-500" />;
-    case 'LIBRARIAN': return <Book size={14} className="text-purple-500" />;
-    default: return <UserIcon size={14} className="text-gray-500" />;
-  }
 };
 
 // --- Components ---
 
 const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) => {
-  const otherParticipant = conversation.participants.find(p => p.id !== currentUserId) || conversation.participants[0];
-  const lastMsg = conversation.messages[conversation.messages.length - 1];
+  const lastMsg = conversation.lastMessage;
   
   return (
     <div 
@@ -107,32 +38,45 @@ const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) =>
     >
       <div className="relative">
         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
-          {otherParticipant.name.charAt(0)}
+          {conversation.name.charAt(0)}
         </div>
-        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+        {/* Online indicator placeholder - can be implemented with socket.io later */}
+        {/* <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span> */}
       </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start">
           <h4 className="font-semibold text-gray-800 truncate flex items-center gap-1">
-            {otherParticipant.name}
+            {conversation.name}
           </h4>
-          <span className="text-xs text-gray-400 whitespace-nowrap">{lastMsg ? formatTime(lastMsg.createdAt) : ''}</span>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{lastMsg ? formatTime(lastMsg.sentAt) : ''}</span>
         </div>
-        <div className="flex items-center gap-1 mb-1">
-           <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-medium">
-             {otherParticipant.role}
-           </span>
+        <div className="flex justify-between items-end">
+            <p className={`text-sm truncate ${conversation.unreadCount > 0 ? 'font-bold text-gray-800' : 'text-gray-500'}`}>
+            {lastMsg ? lastMsg.content : 'No messages yet'}
+            </p>
+            {conversation.unreadCount > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    {conversation.unreadCount}
+                </span>
+            )}
         </div>
-        <p className="text-sm text-gray-500 truncate">
-          {lastMsg ? lastMsg.content : 'No messages yet'}
-        </p>
       </div>
     </div>
   );
 };
 
-const ChatMessage = ({ message, isOwn }) => {
+const ChatMessage = ({ message, isOwn, participants, currentUserId }) => {
+  // Determine read status
+  // A message is read if AT LEAST ONE other participant has read it (since 1:1 focus)
+  // Logic: Exists a participant P where P.userId != currentUserId AND P.lastReadAt >= message.sentAt
+  
+  const isRead = isOwn && participants?.some(p => 
+    p.userId !== currentUserId && 
+    p.lastReadAt && 
+    new Date(p.lastReadAt) >= new Date(message.sentAt)
+  );
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
@@ -140,11 +84,12 @@ const ChatMessage = ({ message, isOwn }) => {
           ? 'bg-blue-600 text-white rounded-tr-none' 
           : 'bg-gray-100 text-gray-800 rounded-tl-none'
       }`}>
+        {!isOwn && <p className="text-xs font-bold mb-1 text-gray-500">{message.sender?.firstName}</p>}
         <p className="text-sm">{message.content}</p>
         <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOwn ? 'text-blue-200' : 'text-gray-400'}`}>
-          {formatTime(message.createdAt)}
+          {formatTime(message.sentAt)}
           {isOwn && (
-            message.read ? <CheckCheck size={12} /> : <Check size={12} />
+             isRead ? <CheckCheck size={14} /> : <Check size={14} />
           )}
         </div>
       </div>
@@ -152,70 +97,31 @@ const ChatMessage = ({ message, isOwn }) => {
   );
 };
 
-const NewMessageModal = ({ isOpen, onClose, currentUser, onStartChat }) => {
+const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [availableUsers, setAvailableUsers] = useState([]);
+  const [recipients, setRecipients] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !currentUser) return;
-
-    // Load all potential users
-    const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-    const students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
-    const admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
-    const librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
-    const parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
-
-    let allowedUsers = [];
-
-    // --- Permission Logic ---
-    switch (currentUser.role) {
-      case 'SUPER_ADMIN':
-        // Super Admins share messages with Admins (and implicitly can likely message anyone, but let's follow spec strictly: "share messages with admins")
-        // "allows super admins to share messages with admins"
-        allowedUsers = [...admins]; 
-        // Usually Super Admins can message everyone, adding everyone just in case for a better demo, 
-        // but let's prioritize the specific request. 
-        // "and admins to share meassges with everyone"
-        break;
-      
-      case 'ADMIN':
-        // Admins share messages with everyone
-        allowedUsers = [...teachers, ...students, ...parents, ...librarians, ...admins.filter(a => a.id !== currentUser.id)];
-        break;
-
-      case 'TEACHER':
-        // Teachers with parents and students
-        allowedUsers = [...students, ...parents];
-        break;
-
-      case 'LIBRARIAN':
-        // Librarians with students and teachers
-        allowedUsers = [...students, ...teachers];
-        break;
-
-      case 'STUDENT':
-        // (Inferred) Students need to message Teachers and Librarians
-        allowedUsers = [...teachers, ...librarians];
-        break;
-
-      case 'PARENT':
-        // (Inferred) Parents need to message Teachers
-        allowedUsers = [...teachers];
-        break;
-
-      default:
-        allowedUsers = [];
+    if (isOpen) {
+      fetchRecipients();
     }
+  }, [isOpen]);
 
-    // Remove self
-    allowedUsers = allowedUsers.filter(u => u.id !== currentUser.id);
+  const fetchRecipients = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/recipients');
+      setRecipients(data);
+    } catch (error) {
+      console.error('Failed to fetch recipients', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setAvailableUsers(allowedUsers);
-  }, [isOpen, currentUser]);
-
-  const filteredUsers = availableUsers.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredUsers = recipients.filter(u => 
+    `${u.firstName} ${u.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -227,7 +133,7 @@ const NewMessageModal = ({ isOpen, onClose, currentUser, onStartChat }) => {
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <div>
             <h3 className="font-bold text-gray-800">New Message</h3>
-            <p className="text-xs text-gray-500">As {currentUser.role}, you can message: {availableUsers.length} people</p>
+            <p className="text-xs text-gray-500">Select a recipient to start chatting</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
         </div>
@@ -245,8 +151,12 @@ const NewMessageModal = ({ isOpen, onClose, currentUser, onStartChat }) => {
           </div>
         </div>
         
-        <div className="overflow-y-auto p-2 space-y-1">
-          {filteredUsers.length > 0 ? (
+        <div className="overflow-y-auto p-2 space-y-1 min-h-[200px]">
+          {loading ? (
+             <div className="flex justify-center items-center h-full">
+               <Loader2 className="animate-spin text-blue-500" />
+             </div>
+          ) : filteredUsers.length > 0 ? (
             filteredUsers.map(user => (
               <div 
                 key={user.id} 
@@ -254,16 +164,16 @@ const NewMessageModal = ({ isOpen, onClose, currentUser, onStartChat }) => {
                 className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer group"
               >
                 <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                  {user.name.charAt(0)}
+                  {user.firstName.charAt(0)}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
-                    <p className="font-medium text-gray-800">{user.name}</p>
+                    <p className="font-medium text-gray-800">{user.firstName} {user.lastName}</p>
                     <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 group-hover:bg-white transition-colors">
                       {user.role}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 truncate">{user.email}</p> 
+                  {user.detail && <p className="text-xs text-gray-400 truncate">{user.detail}</p>}
                 </div>
               </div>
             ))
@@ -278,183 +188,191 @@ const NewMessageModal = ({ isOpen, onClose, currentUser, onStartChat }) => {
   );
 };
 
-// --- User Switcher Component ---
-const UserSwitcher = ({ currentUser, allUsers, onSwitch }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Group users by role for better list
-  const groupedUsers = allUsers.reduce((acc, user) => {
-    if (!acc[user.role]) acc[user.role] = [];
-    acc[user.role].push(user);
-    return acc;
-  }, {});
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium"
-      >
-        <span>Viewing as: {currentUser.name} ({currentUser.role})</span>
-        <ChevronDown size={14} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 max-h-[80vh] overflow-y-auto">
-          <div className="p-3 border-b border-gray-100 bg-gray-50">
-             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Switch Demo User</h4>
-          </div>
-          {Object.entries(groupedUsers).map(([role, users]) => (
-            <div key={role} className="p-2">
-              <h5 className="text-xs font-semibold text-gray-400 mb-1 px-2">{role}</h5>
-              {users.slice(0, 3).map(user => ( // Limit to 3 per role to keep list manageable
-                <button
-                  key={user.id}
-                  onClick={() => {
-                    onSwitch(user.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-2 py-1.5 rounded-md text-sm flex items-center justify-between group ${
-                    currentUser.id === user.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <span className="truncate">{user.name}</span>
-                  {currentUser.id === user.id && <Check size={14} />}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export default function Messages() {
-  const { user: currentUser, allUsers, switchUser } = useMockAuth();
+  const [currentUser, setCurrentUser] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [participants, setParticipants] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingConvos, setLoadingConvos] = useState(true);
   const messagesEndRef = useRef(null);
+  const isWindowFocused = useRef(true);
 
-  // Load conversations when user changes
   useEffect(() => {
-    if (!currentUser) return;
+    const onFocus = () => { isWindowFocused.current = true; };
+    const onBlur = () => { isWindowFocused.current = false; };
 
-    const loadConversations = () => {
-      let storedConvos = JSON.parse(localStorage.getItem('conversations:doonites') || '[]');
-      
-      // Filter conversations where current user is a participant
-      const userConvos = storedConvos.filter(c => 
-        c.participants.some(p => p.id === currentUser.id)
-      );
-      
-      // Sort by updated at
-      userConvos.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
 
-      setConversations(userConvos);
-      
-      // Reset selected conversation if it's not in the new list
-      if (selectedConversation && !userConvos.find(c => c.id === selectedConversation.id)) {
-        setSelectedConversation(null);
-      }
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
     };
+  }, []);
 
-    loadConversations();
-    window.addEventListener('storage', loadConversations);
-    return () => window.removeEventListener('storage', loadConversations);
-  }, [currentUser]);
+  useEffect(() => {
+    // Load current user
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    setCurrentUser(user);
+    if (user) {
+        fetchConversations();
+    }
+  }, []);
+
+  const fetchConversations = async () => {
+    setLoadingConvos(true);
+    try {
+      const { data } = await api.get('/conversations');
+      setConversations(data);
+    } catch (error) {
+      console.error('Failed to fetch conversations', error);
+    } finally {
+      setLoadingConvos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedConversation && selectedConversation.id !== 'new') {
+        fetchMessages(selectedConversation.id);
+        markAsRead(selectedConversation.id);
+        
+        // Set up polling for new messages (simple version)
+        const interval = setInterval(() => {
+            fetchMessages(selectedConversation.id);
+            // Mark as read only if window is focused
+            if (isWindowFocused.current) {
+                markAsRead(selectedConversation.id);
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }
+  }, [selectedConversation]);
+
+  const fetchMessages = async (conversationId) => {
+    try {
+        const { data } = await api.get(`/conversations/${conversationId}/messages`);
+        setMessages(data.messages);
+        setParticipants(data.participants);
+    } catch (error) {
+        console.error('Failed to fetch messages', error);
+    }
+  };
+
+  const markAsRead = async (conversationId) => {
+      try {
+          await api.post(`/conversations/${conversationId}/read`);
+          // Refresh conversations list to update badges
+          // But don't trigger full reload logic
+          const { data } = await api.get('/conversations');
+          setConversations(data);
+      } catch (error) {
+          console.error('Failed to mark as read', error);
+      }
+  };
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedConversation?.messages]);
+  }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation || !currentUser) return;
+    if (!newMessage.trim() || !currentUser) return;
 
-    const msg = {
-      id: Math.random().toString(36).substr(2, 9),
-      content: newMessage,
-      senderId: currentUser.id,
-      createdAt: new Date().toISOString(),
-      read: false
-    };
+    try {
+        let recipientId;
+        
+        if (selectedConversation) {
+            const otherParticipant = selectedConversation.participants.find(p => p.id !== currentUser.id);
+            if (otherParticipant) {
+                recipientId = otherParticipant.id;
+            } else {
+                recipientId = currentUser.id;
+            }
+        }
 
-    const updatedConvo = {
-      ...selectedConversation,
-      messages: [...selectedConversation.messages, msg],
-      updatedAt: msg.createdAt
-    };
+        const { data: sentMessage } = await api.post('/messages', {
+            recipientId,
+            content: newMessage
+        });
 
-    // Update global storage
-    const allConvos = JSON.parse(localStorage.getItem('conversations:doonites') || '[]');
-    const updatedAllConvos = allConvos.map(c => 
-      c.id === selectedConversation.id ? updatedConvo : c
-    );
-    
-    localStorage.setItem('conversations:doonites', JSON.stringify(updatedAllConvos));
-    
-    // Trigger update (since we are listening to storage event in same window, we might need manual update or dispatch)
-    setConversations(prev => prev.map(c => c.id === selectedConversation.id ? updatedConvo : c).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)));
-    setSelectedConversation(updatedConvo);
-    setNewMessage('');
-    window.dispatchEvent(new Event('storage'));
+        fetchMessages(selectedConversation.id);
+        setNewMessage('');
+        
+        // Update conversation list last message
+        fetchConversations();
+        
+    } catch (error) {
+        console.error('Failed to send message', error);
+        alert('Failed to send message');
+    }
   };
 
-  const startNewChat = (targetUser) => {
-    // Check global storage for existing conversation
-    const allConvos = JSON.parse(localStorage.getItem('conversations:doonites') || '[]');
+  const startNewChat = async (targetUser) => {
+    setIsModalOpen(false);
     
-    const existing = allConvos.find(c => 
-      c.participants.some(p => p.id === targetUser.id) && 
-      c.participants.some(p => p.id === currentUser.id)
+    // Check if we already have a conversation with this user locally
+    const existing = conversations.find(c => 
+        c.participants.length === 1 && c.participants[0].id === targetUser.id
     );
 
     if (existing) {
-      setSelectedConversation(existing);
-      // Ensure it's in our local list (it should be picked up by effect, but let's be safe)
-      if (!conversations.find(c => c.id === existing.id)) {
-        setConversations([existing, ...conversations]);
-      }
+        setSelectedConversation(existing);
     } else {
-      // Create new
-      const newConvo = {
-        id: Math.random().toString(36).substr(2, 9),
-        participants: [currentUser, targetUser],
-        messages: [],
-        updatedAt: new Date().toISOString()
-      };
-      
-      const newAllConvos = [newConvo, ...allConvos];
-      localStorage.setItem('conversations:doonites', JSON.stringify(newAllConvos));
-      
-      setConversations([newConvo, ...conversations]);
-      setSelectedConversation(newConvo);
-      window.dispatchEvent(new Event('storage'));
+        const tempConvo = {
+            id: 'new', // Flag
+            name: `${targetUser.firstName} ${targetUser.lastName}`,
+            participants: [targetUser], // Simplified
+            lastMessage: null,
+            tempRecipientId: targetUser.id,
+            unreadCount: 0
+        };
+        setSelectedConversation(tempConvo);
+        setMessages([]);
+        setParticipants([]);
     }
-    setIsModalOpen(false);
+  };
+
+  // Wrapper for send message to handle "new" conversation
+  const onSendClick = async (e) => {
+      e.preventDefault();
+      if (!newMessage.trim()) return;
+
+      if (selectedConversation?.id === 'new') {
+          // First message to new recipient
+          try {
+              const { data: sentMsg } = await api.post('/messages', {
+                  recipientId: selectedConversation.tempRecipientId,
+                  content: newMessage
+              });
+              
+              // Now refresh conversations to get the real ID
+              const { data: convos } = await api.get('/conversations');
+              setConversations(convos);
+              setNewMessage('');
+              
+              // Find the new conversation
+              const newConvo = convos.find(c => 
+                  c.participants.some(p => p.id === selectedConversation.tempRecipientId)
+              );
+              if (newConvo) {
+                  setSelectedConversation(newConvo);
+                  fetchMessages(newConvo.id);
+              }
+          } catch (error) {
+              console.error(error);
+          }
+      } else {
+          handleSendMessage(e);
+      }
   };
 
   if (!currentUser) return (
     <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-500">Initializing demo data...</p>
-      </div>
+      <Loader2 className="animate-spin text-blue-500" size={32} />
     </div>
   );
 
@@ -473,11 +391,6 @@ export default function Messages() {
             </button>
           </div>
           
-          {/* User Switcher for Demo */}
-          <div className="mb-4">
-             <UserSwitcher currentUser={currentUser} allUsers={allUsers} onSwitch={switchUser} />
-          </div>
-
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -489,7 +402,9 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {conversations.length > 0 ? (
+          {loadingConvos ? (
+             <div className="flex justify-center p-4"><Loader2 className="animate-spin text-gray-400"/></div>
+          ) : conversations.length > 0 ? (
             conversations.map(convo => (
               <ConversationItem 
                 key={convo.id} 
@@ -516,18 +431,15 @@ export default function Messages() {
             <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
-                  {selectedConversation.participants.find(p => p.id !== currentUser.id)?.name.charAt(0)}
+                  {selectedConversation.name.charAt(0)}
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    {selectedConversation.participants.find(p => p.id !== currentUser.id)?.name}
-                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-normal">
-                       {selectedConversation.participants.find(p => p.id !== currentUser.id)?.role}
-                    </span>
+                    {selectedConversation.name}
                   </h3>
-                  <span className="flex items-center gap-1 text-xs text-green-500">
+                  {/* <span className="flex items-center gap-1 text-xs text-green-500">
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span> Online
-                  </span>
+                  </span> */}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
@@ -539,11 +451,13 @@ export default function Messages() {
 
             {/* Messages Scroll Area */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
-              {selectedConversation.messages.map(msg => (
+              {messages.map(msg => (
                 <ChatMessage 
                   key={msg.id} 
                   message={msg} 
-                  isOwn={msg.senderId === currentUser.id} 
+                  isOwn={msg.senderId === currentUser.id}
+                  participants={participants}
+                  currentUserId={currentUser.id}
                 />
               ))}
               <div ref={messagesEndRef} />
@@ -551,7 +465,7 @@ export default function Messages() {
 
             {/* Input Area */}
             <div className="p-4 bg-white border-t border-gray-100">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
+              <form onSubmit={onSendClick} className="flex gap-2">
                 <input 
                   type="text" 
                   value={newMessage}
@@ -583,7 +497,6 @@ export default function Messages() {
       <NewMessageModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
-        currentUser={currentUser}
         onStartChat={startNewChat}
       />
     </div>

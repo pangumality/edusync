@@ -16,7 +16,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/login`, {
         email,
         password
       });
@@ -120,6 +120,10 @@ const Login = () => {
           </button>
         </form>
       </div>
+      
+      <footer className="absolute bottom-2 left-0 right-0 text-center text-xs text-white/80 z-10">
+        © {new Date().getFullYear()} School ERP. All rights reserved.
+      </footer>
     </div>
   );
 };
