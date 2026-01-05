@@ -1683,8 +1683,27 @@ app.get('/api/conversations', authenticate, async (req, res) => {
     
     // Sort by last message
     conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-
-    res.json(conversations);
+    let filtered = conversations;
+    if (req.user.role === ROLES.SUPER_ADMIN) {
+      filtered = conversations.filter(c => c.participants.every(u => u.role === ROLES.SCHOOL_ADMIN));
+    } else if (req.user.role === ROLES.SCHOOL_ADMIN) {
+      filtered = conversations.filter(c => c.participants.every(u => 
+        u.role === ROLES.TEACHER || u.role === ROLES.PARENT || u.role === ROLES.SUPER_ADMIN
+      ));
+    } else if (req.user.role === ROLES.TEACHER) {
+      filtered = conversations.filter(c => c.participants.every(u => 
+        u.role === ROLES.PARENT || u.role === ROLES.STUDENT
+      ));
+    } else if (req.user.role === ROLES.PARENT) {
+      filtered = conversations.filter(c => c.participants.every(u => 
+        u.role === ROLES.TEACHER || u.role === ROLES.SCHOOL_ADMIN
+      ));
+    } else if (req.user.role === ROLES.STUDENT) {
+      filtered = conversations.filter(c => c.participants.every(u => 
+        u.role === ROLES.TEACHER
+      ));
+    }
+    res.json(filtered);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch conversations' });
@@ -1707,6 +1726,46 @@ app.get('/api/conversations/:id/messages', authenticate, async (req, res) => {
         });
 
         if (!isParticipant) return res.status(403).json({ error: 'Access denied' });
+        if (req.user.role === ROLES.SUPER_ADMIN) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.SCHOOL_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.SCHOOL_ADMIN) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.TEACHER || p.user.role === ROLES.PARENT || p.user.role === ROLES.SUPER_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.TEACHER) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.PARENT || p.user.role === ROLES.STUDENT);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.PARENT) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.TEACHER || p.user.role === ROLES.SCHOOL_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
 
         const messages = await prisma.message.findMany({
             where: { conversationId: id },
@@ -1761,6 +1820,26 @@ app.post('/api/messages', authenticate, async (req, res) => {
     let conversationId;
 
     if (recipientId) {
+        const recipient = await prisma.user.findUnique({ where: { id: recipientId } });
+        if (!recipient) return res.status(404).json({ error: 'Recipient not found' });
+        if (req.user.role === ROLES.SUPER_ADMIN && recipient.role !== ROLES.SCHOOL_ADMIN) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (recipient.role === ROLES.SUPER_ADMIN && req.user.role !== ROLES.SCHOOL_ADMIN) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.SCHOOL_ADMIN && !(recipient.role === ROLES.TEACHER || recipient.role === ROLES.PARENT || recipient.role === ROLES.SUPER_ADMIN)) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.TEACHER && !(recipient.role === ROLES.PARENT || recipient.role === ROLES.STUDENT)) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.PARENT && !(recipient.role === ROLES.TEACHER || recipient.role === ROLES.SCHOOL_ADMIN)) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.STUDENT && recipient.role === ROLES.SCHOOL_ADMIN) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
         // 1:1 Message Logic
         // Check if conversation exists between these two
         // This is complex in Prisma without raw query, so we'll do a basic check
@@ -1840,15 +1919,29 @@ app.get('/api/recipients', authenticate, async (req, res) => {
         const { schoolId, role, id: userId } = req.user;
         let recipients = [];
 
-        // Always include School Admins
-        const admins = await prisma.user.findMany({
-            where: { schoolId, role: ROLES.SCHOOL_ADMIN },
-            select: { id: true, firstName: true, lastName: true, role: true }
-        });
-        recipients.push(...admins);
+        if (role === ROLES.SUPER_ADMIN) {
+            const admins = await prisma.user.findMany({
+                where: { role: ROLES.SCHOOL_ADMIN },
+                select: { id: true, firstName: true, lastName: true, role: true }
+            });
+            const finalAdmins = admins.filter(u => u.id !== userId);
+            return res.json(finalAdmins);
+        }
+        if (role === ROLES.SCHOOL_ADMIN) {
+            const teachers = await prisma.user.findMany({
+                where: { schoolId, role: ROLES.TEACHER },
+                select: { id: true, firstName: true, lastName: true, role: true }
+            });
+            const parents = await prisma.user.findMany({
+                where: { schoolId, role: ROLES.PARENT },
+                select: { id: true, firstName: true, lastName: true, role: true }
+            });
+            const list = [...teachers, ...parents].filter(u => u.id !== userId);
+            return res.json(list);
+        }
+        // No default admin inclusion; handled per-role above
 
         if (role === ROLES.TEACHER) {
-             // Find students in my classes
              const teacher = await prisma.teacher.findUnique({ where: { userId } });
              if (teacher) {
                  const assignedClasses = await prisma.classSubject.findMany({
@@ -1862,19 +1955,18 @@ app.get('/api/recipients', authenticate, async (req, res) => {
                      include: { user: true, parents: { include: { parent: { include: { user: true } } } } }
                  });
 
+                 const list = [];
                  students.forEach(s => {
-                     // Add Student
-                     recipients.push({
+                     list.push({
                          id: s.user.id,
                          firstName: s.user.firstName,
                          lastName: s.user.lastName,
                          role: 'student',
-                         detail: `Class ${s.classId}` // ideally class name
+                         detail: `Class ${s.classId}`
                      });
-                     // Add Parents
                      s.parents.forEach(p => {
                          if (p.parent && p.parent.user) {
-                             recipients.push({
+                             list.push({
                                  id: p.parent.user.id,
                                  firstName: p.parent.user.firstName,
                                  lastName: p.parent.user.lastName,
@@ -1884,7 +1976,11 @@ app.get('/api/recipients', authenticate, async (req, res) => {
                          }
                      });
                  });
+                 const unique = Array.from(new Map(list.map(item => [item.id, item])).values());
+                 const final = unique.filter(u => u.id !== userId);
+                 return res.json(final);
              }
+             return res.json([]);
         } else if (role === ROLES.STUDENT) {
              // List teachers for student's allocated class(es)
              const student = await prisma.student.findUnique({ where: { userId } });
@@ -1913,6 +2009,7 @@ app.get('/api/recipients', authenticate, async (req, res) => {
                     include: { student: { include: { user: true } } }
                 });
                 
+                const list = [];
                 for (const childLink of children) {
                     const student = childLink.student;
                     if (student.classId) {
@@ -1922,7 +2019,7 @@ app.get('/api/recipients', authenticate, async (req, res) => {
                          });
                          assignments.forEach(a => {
                              if (a.teacher?.user) {
-                                 recipients.push({
+                                 list.push({
                                      id: a.teacher.user.id,
                                      firstName: a.teacher.user.firstName,
                                      lastName: a.teacher.user.lastName,
@@ -1933,7 +2030,11 @@ app.get('/api/recipients', authenticate, async (req, res) => {
                          });
                     }
                 }
+                const unique = Array.from(new Map(list.map(item => [item.id, item])).values());
+                const final = unique.filter(u => u.id !== userId);
+                return res.json(final);
             }
+            return res.json([]);
         }
         
         // Filter duplicates (e.g. parent of 2 students)

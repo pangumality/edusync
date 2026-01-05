@@ -273,10 +273,7 @@ export default function Messages() {
       }
   };
 
-  // Auto-scroll
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // Removed auto-scroll on message load
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
