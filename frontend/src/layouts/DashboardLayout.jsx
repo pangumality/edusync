@@ -22,32 +22,42 @@ import {
   RotateCw,
   X,
   School as SchoolIcon,
-  FileText
+  FileText,
+  Newspaper,
+  Clock,
+  FileCheck,
+  Award,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 import { seedAll } from '../utils/seed';
 import MobileDashboardHome from '../components/MobileDashboardHome';
 import api from '../utils/api';
 
-const SidebarItem = ({ icon: Icon, label, to, active, onClick }) => {
+const SidebarItem = ({ icon: Icon, label, to, active, onClick, isCollapsed }) => {
   return (
     <Link
       to={to}
       onClick={onClick}
       className={clsx(
-        'group flex items-center gap-3 px-4 py-3 mb-1 rounded-md border transition-colors',
+        'group flex items-center gap-3 px-4 py-3 mb-1 rounded-md border transition-all duration-300',
         active
           ? 'bg-gray-800 text-white border-gray-800'
-          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
+        isCollapsed ? 'justify-center px-2' : ''
       )}
+      title={isCollapsed ? label : ''}
     >
-      <span
-        className={clsx(
-          'inline-block w-1.5 h-5 rounded-full bg-gray-400 group-hover:bg-gray-500'
-        )}
-      />
+      {!isCollapsed && (
+        <span
+          className={clsx(
+            'inline-block w-1.5 h-5 rounded-full bg-gray-400 group-hover:bg-gray-500'
+          )}
+        />
+      )}
       <Icon size={20} className={clsx(active ? 'text-white' : 'text-gray-500 group-hover:text-gray-700')} />
-      <span className="font-medium">{label}</span>
+      {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{label}</span>}
     </Link>
   );
 };
@@ -56,6 +66,10 @@ const MENU_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
   { icon: Calendar, label: 'Attendance', to: '/attendance', allowedRoles: ['student','teacher','admin','staff'] },
   { icon: MessageSquare, label: 'Messages', to: '/messages', allowedRoles: ['student','teacher','admin','staff','parent'] },
+  { icon: Newspaper, label: 'Newsletters', to: '/newsletters', allowedRoles: ['student','teacher','admin','staff','parent'] },
+  { icon: FileCheck, label: 'Leaves', to: '/leaves', allowedRoles: ['student','parent','admin','staff','teacher'] },
+  { icon: Clock, label: 'Time Table', to: '/timetable', allowedRoles: ['student','teacher','admin','staff','parent'] },
+  { icon: Award, label: 'Certificates', to: '/certificates', allowedRoles: ['student','parent','admin','staff'] },
   { icon: Users, label: 'Teachers', to: '/teachers', excludedRoles: ['student','teacher','parent'] },
   { icon: GraduationCap, label: 'Students', to: '/students', excludedRoles: ['student','parent'] },
   { icon: Home, label: 'Classes', to: '/classes', allowedRoles: ['teacher','admin','staff'] },
@@ -74,7 +88,7 @@ const MENU_ITEMS = [
 ];
 
 const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true); // For desktop
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // For mobile
   const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
@@ -273,9 +287,18 @@ const DashboardLayout = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 border-r border-gray-200 overflow-y-auto flex-shrink-0 pb-10">
-          <div className="p-4">
-             <h3 className="text-gray-500 font-bold text-xs uppercase mb-2">Main Menu</h3>
+        <aside className={clsx(
+            "bg-gray-100 border-r border-gray-200 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300",
+            isCollapsed ? "w-20" : "w-64"
+        )}>
+          <div className={clsx("p-4 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
+             {!isCollapsed && <h3 className="text-gray-500 font-bold text-xs uppercase mb-2">Main Menu</h3>}
+             <button 
+                onClick={() => setIsCollapsed(!isCollapsed)} 
+                className="p-1.5 hover:bg-gray-200 rounded text-gray-500 transition-colors"
+             >
+                {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+             </button>
           </div>
           <div className="flex flex-col px-3">
              {MENU_ITEMS.map((item) => {
@@ -289,7 +312,8 @@ const DashboardLayout = () => {
                    icon={item.icon} 
                    label={item.label} 
                    to={item.to} 
-                   active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))} 
+                   active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))}
+                   isCollapsed={isCollapsed}
                  />
                );
              })}

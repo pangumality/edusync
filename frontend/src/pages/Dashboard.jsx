@@ -1,12 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   Users, 
   GraduationCap, 
   Home, 
-  CreditCard 
+  CreditCard,
+  BarChart2
 } from 'lucide-react';
 import ParentDashboard from './ParentDashboard';
+import api from '../utils/api';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
   return (
@@ -25,10 +46,54 @@ const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
 
 const Dashboard = () => {
   const { currentUser } = useOutletContext() || {};
+  const [stats, setStats] = useState({
+    students: 0,
+    teachers: 0,
+    classes: 0,
+    parents: 0
+  });
+
+  useEffect(() => {
+    if (currentUser?.role === 'admin' || currentUser?.role === 'super_admin') {
+      fetchStats();
+    }
+  }, [currentUser]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/stats');
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
 
   if (currentUser?.role === 'parent') {
     return <ParentDashboard />;
   }
+
+  const chartData = {
+    labels: ['Students', 'Teachers', 'Classes', 'Parents'],
+    datasets: [
+      {
+        label: 'School Statistics',
+        data: [stats.students, stats.teachers, stats.classes, stats.parents],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
 
   return (
     <div>
@@ -38,7 +103,7 @@ const Dashboard = () => {
         <StatCard 
           icon={GraduationCap} 
           title="Total Students" 
-          count="0" 
+          count={stats.students} 
           tint="bg-brand-500 text-white" 
           buttonLabel="Manage Students"
         />
@@ -46,15 +111,15 @@ const Dashboard = () => {
           <StatCard 
             icon={Users} 
             title="Total Teachers" 
-            count="0" 
+            count={stats.teachers} 
             tint="bg-danger text-white" 
             buttonLabel="Manage Teachers"
           />
         )}
         <StatCard 
           icon={Home} 
-          title="Total Administrators" 
-          count="0" 
+          title="Total Classes" 
+          count={stats.classes} 
           tint="bg-success text-white" 
           buttonLabel={currentUser?.role === 'student' ? 'Subjects' : 'Classes'} 
         />
@@ -62,12 +127,33 @@ const Dashboard = () => {
           <StatCard 
             icon={CreditCard} 
             title="Total Parents" 
-            count="0" 
+            count={stats.parents} 
             tint="bg-purple text-white" 
             buttonLabel="Finance"
           />
         )}
       </div>
+
+      {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart2 className="text-gray-500" />
+            <h3 className="text-lg font-bold text-gray-700">Statistics Overview</h3>
+          </div>
+          <div className="h-64">
+            <Bar 
+              data={chartData} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'top' }
+                }
+              }} 
+            />
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded shadow p-4">
         <div className="flex justify-between items-center mb-4 border-b pb-2">

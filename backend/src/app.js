@@ -161,8 +161,9 @@ app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MAN
       phone: s.user.phone,
       gender: s.user.gender,
       className: s.klass?.name,
+      classId: s.classId,
+      section: s.section,
       rollNumber: s.id.substring(0, 6).toUpperCase(), // Mock roll number
-      classId: s.classId
     }));
     res.json(formatted);
   } catch (error) {
@@ -173,7 +174,7 @@ app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MAN
 
 app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, gender, classId } = req.body;
+    const { firstName, lastName, email, phone, gender, classId, section } = req.body;
     const { schoolId } = req.user;
 
     if (!firstName || !lastName || !classId) {
@@ -215,7 +216,8 @@ app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MA
           id: studentId,
           userId,
           schoolId,
-          classId
+          classId,
+          section: section || null
         }
       });
     });
@@ -231,7 +233,7 @@ app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MA
 app.put('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, classId, phone, gender } = req.body;
+    const { firstName, lastName, classId, section, phone, gender } = req.body;
     
     // Find student
     const student = await prisma.student.findUnique({ where: { id }, include: { user: true } });
@@ -253,10 +255,14 @@ app.put('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT
         where: { id: student.userId },
         data: { firstName, lastName, phone: phone || undefined, gender: gender || undefined }
       });
-      if (classId) {
+      if (classId || section !== undefined) {
+        const updateData = {};
+        if (classId) updateData.classId = classId;
+        if (section !== undefined) updateData.section = section;
+        
         await prisma.student.update({
           where: { id },
-          data: { classId }
+          data: updateData
         });
       }
     });
@@ -2421,5 +2427,452 @@ app.delete('/api/exam-results/:id', authenticate, requirePermission(PERMISSIONS.
         res.status(500).json({ error: 'Failed to delete result' });
     }
 });
+
+// Newsletters
+app.get('/api/newsletters', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_VIEW), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const newsletters = await prisma.newsletter.findMany({
+            where: { schoolId },
+            orderBy: { publishedAt: 'desc' }
+        });
+        res.json(newsletters);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch newsletters' });
+    }
+});
+
+app.post('/api/newsletters', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const { title, content } = req.body;
+        
+        console.log('Creating newsletter:', { schoolId, title });
+
+        const newsletter = await prisma.newsletter.create({
+            data: {
+                id: randomUUID(),
+                schoolId,
+                title,
+                content,
+                publishedAt: new Date()
+            }
+        });
+        res.json(newsletter);
+    } catch (error) {
+        console.error('Failed to create newsletter:', error);
+        res.status(500).json({ error: 'Failed to create newsletter', details: error.message });
+    }
+});
+
+app.delete('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+        
+        await prisma.newsletter.deleteMany({
+            where: { id, schoolId } // deleteMany ensures we only delete if it belongs to school
+        });
+        
+        res.json({ message: 'Newsletter deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete newsletter' });
+    }
+});
+
+// --- Leaves Management ---
+// Apply (Student)
+app.post('/api/leaves', authenticate, requirePermission(PERMISSIONS.LEAVE_APPLY), async (req, res) => {
+    try {
+        const { schoolId, id: userId } = req.user;
+        const { reason, type, startDate, endDate } = req.body;
+        
+        const student = await prisma.student.findUnique({ where: { userId } });
+        if (!student) return res.status(403).json({ error: 'Not a student' });
+
+        const leave = await prisma.leaveRequest.create({
+            data: {
+                id: randomUUID(),
+                schoolId,
+                studentId: student.id,
+                reason,
+                type,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                status: 'pending_parent',
+                parentApproved: false
+            }
+        });
+        res.json(leave);
+    } catch (error) {
+        console.error('Leave apply error:', error);
+        res.status(500).json({ error: 'Failed to apply for leave' });
+    }
+});
+
+// View Leaves (Student: own, Parent: children's, Admin: all)
+app.get('/api/leaves', authenticate, async (req, res) => {
+    try {
+        const { schoolId, role, id: userId } = req.user;
+        let where = { schoolId };
+
+        if (role === ROLES.STUDENT) {
+            const student = await prisma.student.findUnique({ where: { userId } });
+            where.studentId = student.id;
+        } else if (role === ROLES.PARENT) {
+            const parent = await prisma.parent.findUnique({ where: { userId } });
+            const children = await prisma.parentStudents.findMany({ where: { parentId: parent.id } });
+            where.studentId = { in: children.map(c => c.studentId) };
+        } else if (role === ROLES.SCHOOL_ADMIN || role === ROLES.TEACHER) {
+             // Admin sees all, can filter by status query param if needed
+             if (req.query.status) where.status = req.query.status;
+        }
+
+        const leaves = await prisma.leaveRequest.findMany({
+            where,
+            include: { student: { include: { user: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(leaves);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch leaves' });
+    }
+});
+
+// Approve Leave (Parent)
+app.post('/api/leaves/:id/approve-parent', authenticate, requirePermission(PERMISSIONS.LEAVE_APPROVE_PARENT), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { id: userId } = req.user;
+        
+        // Verify parent owns this student
+        const parent = await prisma.parent.findUnique({ where: { userId } });
+        const leave = await prisma.leaveRequest.findUnique({ where: { id } });
+        
+        const linked = await prisma.parentStudents.findFirst({
+            where: { parentId: parent.id, studentId: leave.studentId }
+        });
+        if (!linked) return res.status(403).json({ error: 'Not your child' });
+
+        const updated = await prisma.leaveRequest.update({
+            where: { id },
+            data: {
+                parentApproved: true,
+                status: 'pending_school'
+            }
+        });
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to approve leave' });
+    }
+});
+
+// Approve/Reject Leave (Admin)
+app.post('/api/leaves/:id/approve-admin', authenticate, requirePermission(PERMISSIONS.LEAVE_APPROVE_ADMIN), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, adminComment } = req.body; // status: approved/rejected
+
+        let data = { status, adminComment };
+        
+        // If half day and approved, generate gate pass
+        const leave = await prisma.leaveRequest.findUnique({ where: { id } });
+        if (status === 'approved' && leave.type === 'half_day') {
+            data.gatePassCode = 'GP-' + randomUUID().substring(0, 8).toUpperCase();
+        }
+
+        const updated = await prisma.leaveRequest.update({
+            where: { id },
+            data
+        });
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to process leave' });
+    }
+});
+
+// --- Time Table ---
+app.get('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE_VIEW), async (req, res) => {
+    try {
+        const { schoolId, role, id: userId } = req.user;
+        const { classId, subjectId } = req.query; // Admin can query by class or subject
+        
+        let where = { schoolId };
+
+        if (role === ROLES.STUDENT) {
+            const student = await prisma.student.findUnique({ where: { userId } });
+            where.classId = student.classId;
+        } else if (role === ROLES.TEACHER) {
+             // Teacher sees their own schedule OR query by class/subject
+             if (classId) where.classId = classId;
+             else if (subjectId) where.subjectId = subjectId;
+             else where.teacherId = (await prisma.teacher.findUnique({ where: { userId } })).id;
+        } else {
+             // Admin/Staff
+             if (classId) where.classId = classId;
+             if (subjectId) where.subjectId = subjectId;
+        }
+
+        const timetable = await prisma.timeTablePeriod.findMany({
+            where,
+            include: {
+                subject: true,
+                teacher: { include: { user: true } },
+                klass: true
+            },
+            orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
+        });
+        res.json(timetable);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch timetable' });
+    }
+});
+
+app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE_MANAGE), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const { classId, subjectId, teacherId, dayOfWeek, startTime, endTime } = req.body;
+        
+        const period = await prisma.timeTablePeriod.create({
+            data: {
+                id: randomUUID(),
+                schoolId,
+                classId,
+                subjectId,
+                teacherId,
+                dayOfWeek: parseInt(dayOfWeek),
+                startTime,
+                endTime
+            }
+        });
+        res.json(period);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to add timetable period' });
+    }
+});
+
+app.put('/api/timetable/:id', authenticate, requirePermission(PERMISSIONS.TIMETABLE_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { classId, subjectId, teacherId, dayOfWeek, startTime, endTime } = req.body;
+        
+        // Optional: Check access (e.g. if teacher can manage their own timetable, but usually admin/staff manages this)
+        
+        const period = await prisma.timeTablePeriod.update({
+            where: { id },
+            data: {
+                classId,
+                subjectId,
+                teacherId,
+                dayOfWeek: parseInt(dayOfWeek),
+                startTime,
+                endTime
+            }
+        });
+        res.json(period);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update timetable period' });
+    }
+});
+
+app.delete('/api/timetable/:id', authenticate, requirePermission(PERMISSIONS.TIMETABLE_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.timeTablePeriod.delete({ where: { id } });
+        res.json({ message: 'Timetable period deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete timetable period' });
+    }
+});
+
+// --- Certificates ---
+app.get('/api/certificates', authenticate, requirePermission(PERMISSIONS.CERTIFICATE_VIEW), async (req, res) => {
+    try {
+        const { schoolId, role, id: userId } = req.user;
+        let where = { schoolId };
+        
+        if (role === ROLES.STUDENT) {
+            const student = await prisma.student.findUnique({ where: { userId } });
+            where.studentId = student.id;
+        } else if (role === ROLES.PARENT) {
+            const parent = await prisma.parent.findUnique({ where: { userId } });
+            const children = await prisma.parentStudents.findMany({ where: { parentId: parent.id } });
+            where.studentId = { in: children.map(c => c.studentId) };
+        }
+
+        const certs = await prisma.certificate.findMany({
+            where,
+            include: { student: { include: { user: true } } },
+            orderBy: { issuedAt: 'desc' }
+        });
+        res.json(certs);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch certificates' });
+    }
+});
+
+app.post('/api/certificates', authenticate, requirePermission(PERMISSIONS.CERTIFICATE_MANAGE), async (req, res) => {
+    try {
+        const { schoolId, id: userId } = req.user;
+        const { studentId, type, metadata } = req.body;
+        
+        const cert = await prisma.certificate.create({
+            data: {
+                id: randomUUID(),
+                schoolId,
+                studentId,
+                type,
+                issuedBy: userId,
+                metadata: metadata || {},
+                referenceNumber: `CERT-${Date.now()}`
+            }
+        });
+        res.json(cert);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to issue certificate' });
+    }
+});
+
+// --- Dashboard Stats ---
+app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        
+        const [students, teachers, classes, parents] = await Promise.all([
+            prisma.student.count({ where: { schoolId } }),
+            prisma.teacher.count(), // Teacher table doesn't have schoolId directly but User does. 
+            // Better: prisma.user.count({ where: { schoolId, role: 'teacher' } })
+            prisma.class.count({ where: { schoolId } }),
+            prisma.parent.count() // similar issue, check User
+        ]);
+        
+        // Teacher count via User
+        const teacherCount = await prisma.user.count({ where: { schoolId, role: 'teacher' } });
+        const parentCount = await prisma.user.count({ where: { schoolId, role: 'parent' } });
+
+        res.json({
+            students,
+            teachers: teacherCount,
+            classes,
+            parents: parentCount
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// --- E-Learning ---
+
+const checkSubjectAccessForUser = async (user, subjectId) => {
+    if (user.role === 'admin' || user.role === 'staff') return true;
+    if (user.role === 'teacher') return checkTeacherSubjectAccess(user.id, subjectId);
+    return false;
+};
+
+const createElearningCrud = (modelName, endpoint) => {
+    const Model = prisma[modelName];
+
+    // GET All (Filtered by Subject)
+    app.get(`/api/${endpoint}`, authenticate, requirePermission(PERMISSIONS.ELEARNING_VIEW), async (req, res) => {
+        try {
+            const { subjectId } = req.query;
+            if (!subjectId) return res.status(400).json({ error: 'Subject ID required' });
+            
+            const items = await Model.findMany({
+                where: { subjectId },
+                orderBy: { createdAt: 'desc' }
+            });
+            res.json(items);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: `Failed to fetch ${endpoint}` });
+        }
+    });
+
+    // POST
+    app.post(`/api/${endpoint}`, authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+        try {
+            const { subjectId, ...data } = req.body;
+            const { schoolId } = req.user;
+            
+            if (!subjectId) return res.status(400).json({ error: 'Subject ID required' });
+            
+            const allowed = await checkSubjectAccessForUser(req.user, subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+
+            const item = await Model.create({
+                data: {
+                    id: randomUUID(),
+                    schoolId,
+                    subjectId,
+                    ...data
+                }
+            });
+            
+            await logAudit(req.user.id, 'CREATE', endpoint, { id: item.id });
+            res.status(201).json(item);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: `Failed to create ${endpoint}` });
+        }
+    });
+
+    // PUT
+    app.put(`/api/${endpoint}/:id`, authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { subjectId, ...data } = req.body;
+            
+            const item = await Model.findUnique({ where: { id } });
+            if (!item) return res.status(404).json({ error: 'Not found' });
+            
+            const allowed = await checkSubjectAccessForUser(req.user, item.subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
+            // If changing subject, check access to new subject
+            if (subjectId && subjectId !== item.subjectId) {
+                const allowedNew = await checkSubjectAccessForUser(req.user, subjectId);
+                if (!allowedNew) return res.status(403).json({ error: 'Access denied to new subject' });
+            }
+
+            const updated = await Model.update({
+                where: { id },
+                data: { ...data, subjectId }
+            });
+            
+            await logAudit(req.user.id, 'UPDATE', endpoint, { id: updated.id });
+            res.json(updated);
+        } catch (error) {
+             console.error(error);
+             res.status(500).json({ error: `Failed to update ${endpoint}` });
+        }
+    });
+
+    // DELETE
+    app.delete(`/api/${endpoint}/:id`, authenticate, requirePermission(PERMISSIONS.ELEARNING_MANAGE), async (req, res) => {
+        try {
+            const { id } = req.params;
+            const item = await Model.findUnique({ where: { id } });
+            if (!item) return res.status(404).json({ error: 'Not found' });
+            
+            const allowed = await checkSubjectAccessForUser(req.user, item.subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
+            await Model.delete({ where: { id } });
+            res.json({ message: 'Deleted successfully' });
+        } catch (error) {
+             res.status(500).json({ error: `Failed to delete ${endpoint}` });
+        }
+    });
+};
+
+createElearningCrud('homework', 'homework');
+createElearningCrud('classWork', 'class-work');
+createElearningCrud('syllabus', 'syllabus');
+createElearningCrud('subjectGallery', 'gallery');
+createElearningCrud('subjectActivity', 'activities');
+createElearningCrud('dateSheet', 'datesheet');
 
 export default app;

@@ -6,7 +6,7 @@ export default function Students() {
   const [klass, setKlass] = useState('');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '', section: '' });
   const [list, setList] = useState([]);
 
   const loadClasses = async () => {
@@ -46,7 +46,7 @@ export default function Students() {
 
   const startAdd = () => {
     setEditingId('new');
-    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || (classesList[0]?.id || '') });
+    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || (classesList[0]?.id || ''), section: '' });
   };
 
   const startEdit = (s) => {
@@ -57,13 +57,14 @@ export default function Students() {
       email: s.email || '',
       phone: s.phone || '',
       gender: s.gender || '',
-      klass: s.classId
+      klass: s.classId,
+      section: s.section || ''
     });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || '' });
+    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || '', section: '' });
   };
 
   const save = async () => {
@@ -76,7 +77,8 @@ export default function Students() {
           email: form.email || undefined,
           phone: form.phone || undefined,
           gender: form.gender || undefined,
-          classId: form.klass
+          classId: form.klass,
+          section: form.section || undefined
         });
       } else {
         await api.put(`/students/${editingId}`, {
@@ -84,7 +86,8 @@ export default function Students() {
           lastName: form.lastName,
           phone: form.phone || undefined,
           gender: form.gender || undefined,
-          classId: form.klass
+          classId: form.klass,
+          section: form.section || undefined
         });
       }
       cancelEdit();
@@ -110,6 +113,12 @@ export default function Students() {
       alert(msg);
     }
   };
+
+  // Get sections for current selected class in form
+  const currentClassSections = useMemo(() => {
+    const c = classesList.find(c => c.id === form.klass);
+    return c?.sections || [];
+  }, [classesList, form.klass]);
 
   return (
     <div className="space-y-6">
@@ -153,7 +162,7 @@ export default function Students() {
         </div>
 
         {editingId && (
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
           <input
             type="text"
             className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
@@ -197,13 +206,25 @@ export default function Students() {
             value={form.klass}
             onChange={(e) => {
               const id = e.target.value;
-              setForm({ ...form, klass: id });
+              setForm({ ...form, klass: id, section: '' });
             }}
           >
             {classesList.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+          {currentClassSections.length > 0 && (
+            <select
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              value={form.section}
+              onChange={(e) => setForm({ ...form, section: e.target.value })}
+            >
+              <option value="">Select Section</option>
+              {currentClassSections.map(sec => (
+                <option key={sec} value={sec}>{sec}</option>
+              ))}
+            </select>
+          )}
             <div className="md:col-span-6 flex items-center gap-3">
               <button
                 className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
@@ -231,6 +252,7 @@ export default function Students() {
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Phone</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Gender</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Class</th>
+                <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Section</th>
                 <th className="text-left text-sm text-gray-600 px-4 py-2 border-b">Actions</th>
               </tr>
             </thead>
@@ -243,6 +265,7 @@ export default function Students() {
                   <td className="px-4 py-2 border-b text-gray-700">{s.phone || '-'}</td>
                   <td className="px-4 py-2 border-b text-gray-700">{s.gender || '-'}</td>
                   <td className="px-4 py-2 border-b text-gray-700">{classesList.find(c => c.id === s.classId)?.name || s.className || '-'}</td>
+                  <td className="px-4 py-2 border-b text-gray-700">{s.section || '-'}</td>
                   <td className="px-4 py-2 border-b">
                     <div className="flex items-center gap-3">
                       <button
