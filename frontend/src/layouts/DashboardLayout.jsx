@@ -74,7 +74,6 @@ const MENU_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
   { icon: Calendar, label: 'Attendance', to: '/attendance', allowedRoles: ['student','teacher','admin','staff'] },
   { icon: MessageSquare, label: 'Messages', to: '/messages', allowedRoles: ['student','teacher','admin','staff','parent'] },
-  { icon: Bell, label: 'Notice Board', to: '/notices', allowedRoles: ['student','teacher','admin','staff','parent'] },
   { icon: Newspaper, label: 'Newsletters', to: '/newsletters', allowedRoles: ['student','teacher','admin','staff','parent'] },
   { icon: ImageIcon, label: 'Gallery', to: '/gallery', allowedRoles: ['student','teacher','admin','staff','parent'] },
   { icon: FileCheck, label: 'Leaves', to: '/leaves', allowedRoles: ['student','parent','admin','staff','teacher'] },

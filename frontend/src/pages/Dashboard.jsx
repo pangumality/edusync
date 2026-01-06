@@ -69,8 +69,6 @@ const StatCard = ({ icon: Icon, title, count, colorFrom, colorTo, iconColor, but
       <CardContent />
     </div>
   );
-
-  return link ? <Link to={link}>{CardContent}</Link> : CardContent;
 };
 
 const Dashboard = () => {
@@ -228,8 +226,7 @@ const Dashboard = () => {
             iconColor="shadow-blue-500/40"
             buttonLabel="View All"
             link="/students"
-            link="/students"
-        />
+          />
           {(!currentUser || currentUser.role !== 'teacher') && (
             <StatCard 
               icon={Users} 
@@ -240,8 +237,7 @@ const Dashboard = () => {
               iconColor="shadow-rose-500/40"
               buttonLabel="View All"
               link="/teachers"
-              link="/teachers"
-          />
+            />
           )}
           <StatCard 
             icon={Home} 
@@ -252,8 +248,7 @@ const Dashboard = () => {
             iconColor="shadow-emerald-500/40"
             buttonLabel={currentUser?.role === 'student' ? 'My Subjects' : 'View All'} 
             link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
-            link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
-        />
+          />
           {(!currentUser || currentUser.role !== 'teacher') && (
             <StatCard 
               icon={CreditCard} 
@@ -264,8 +259,7 @@ const Dashboard = () => {
               iconColor="shadow-violet-500/40"
               buttonLabel="Finance"
               link="/finance"
-              link="/finance"
-          />
+            />
           )}
         </div>
       )}
