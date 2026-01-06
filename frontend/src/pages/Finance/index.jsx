@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
-import { seedClasses, seedStudents } from '../../utils/seed';
+import api from '../../utils/api';
 import { CreditCard, Search, Plus, ListChecks, Printer, Trash2 } from 'lucide-react';
 import Select from '../../components/Select';
 
@@ -26,28 +26,35 @@ export default function Finance() {
     return (m <= 3 ? 1 : m <= 7 ? 2 : 3).toString();
   });
 
-  useEffect(() => {
-    const cls = JSON.parse(localStorage.getItem('classes:doonites') || '[]');
-    if (!cls.length) {
-      const seeded = seedClasses();
-      setClasses(seeded);
-    } else {
-      setClasses(cls);
+  const fetchData = async () => {
+    try {
+      const [clsRes, finRes] = await Promise.all([
+        api.get('/classes'),
+        api.get('/finance/students')
+      ]);
+      setClasses(clsRes.data);
+      
+      const stds = finRes.data.map(s => ({
+           id: s.id,
+           name: s.name,
+           section: s.section,
+           klass: s.klass // Using ID from backend for filtering
+      }));
+      const pays = {};
+      finRes.data.forEach(s => {
+          pays[s.id] = s.payments;
+      });
+      
+      setStudents(stds);
+      setPayments(pays);
+    } catch (error) {
+      console.error('Failed to fetch finance data', error);
     }
-    const std = JSON.parse(localStorage.getItem('students:doonites') || '[]');
-    if (!std.length) {
-      const seeded = seedStudents(cls.length ? cls : undefined);
-      setStudents(seeded);
-    } else {
-      setStudents(std);
-    }
-    const pay = JSON.parse(localStorage.getItem('payments:doonites') || '{}');
-    setPayments(pay);
-  }, []);
+  };
 
   useEffect(() => {
-    localStorage.setItem('payments:doonites', JSON.stringify(payments));
-  }, [payments]);
+    fetchData();
+  }, []);
 
   const classesById = useMemo(() => {
     const map = {};
@@ -62,7 +69,7 @@ export default function Finance() {
   function lastPaymentDateFor(studentId) {
     const list = payments[studentId] || [];
     if (!list.length) return null;
-    return list[list.length - 1].date;
+    return list[0].date; // Sorted desc in backend
   }
   function statusFor(studentId) {
     const paid = totalPaidFor(studentId);
@@ -108,9 +115,6 @@ export default function Finance() {
     const t = m <= 3 ? 1 : m <= 7 ? 2 : 3;
     return `${y} Term ${t}`;
   }
-  function currentTermLabel() {
-    return termLabelFromDate(new Date().toISOString().slice(0, 10));
-  }
   function selectedTermLabel() {
     return `${year} Term ${term}`;
   }
@@ -133,16 +137,35 @@ export default function Finance() {
     setActiveStudent(student);
     setViewOpen(true);
   }
-  function savePayment() {
+  
+  async function savePayment() {
     if (!activeStudent) return;
     const amt = Number(amount || 0);
     if (!amt || amt <= 0) return;
-    const entry = { amount: amt, method, date, reference };
-    const list = payments[activeStudent.id] ? [...payments[activeStudent.id]] : [];
-    list.push(entry);
-    const next = { ...payments, [activeStudent.id]: list };
-    setPayments(next);
-    setAddOpen(false);
+    
+    try {
+      await api.post('/finance/payments', {
+        studentId: activeStudent.id,
+        amount: amt,
+        method,
+        date,
+        reference
+      });
+      setAddOpen(false);
+      fetchData(); 
+    } catch (error) {
+      alert('Failed to save payment');
+    }
+  }
+
+  async function deletePayment(id) {
+    if(!window.confirm('Are you sure you want to delete this payment?')) return;
+    try {
+      await api.delete(`/finance/payments/${id}`);
+      fetchData();
+    } catch (error) {
+      alert('Failed to delete payment');
+    }
   }
 
   return (
@@ -451,12 +474,7 @@ export default function Finance() {
                             <td className="px-4 py-2 border-b">
                               <button
                                 className="px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs flex items-center gap-1"
-                                onClick={() => {
-                                  const list = (payments[activeStudent.id] || []).slice();
-                                  list.splice(i, 1);
-                                  const next = { ...payments, [activeStudent.id]: list };
-                                  setPayments(next);
-                                }}
+                                onClick={() => deletePayment(p.id)}
                               >
                                 <Trash2 size={14} /> Delete
                               </button>

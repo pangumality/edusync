@@ -9,9 +9,17 @@ import { authenticate } from './middleware/authMiddleware.js';
 import { requirePermission } from './middleware/rbacMiddleware.js';
 import { PERMISSIONS, ROLES } from './config/rbac.js';
 import { logAudit } from './utils/auditLogger.js';
+import { getDepartmentStaff, setDepartmentStaff, listDepartments } from './config/departmentsStore.js';
 import { createNotification, createBulkNotifications } from './utils/notification.js';
 import { upload } from './middleware/uploadMiddleware.js';
 import path from 'path';
+import hostelRoutes from './routes/hostelRoutes.js';
+import libraryRoutes from './routes/libraryRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
+import sportsRoutes from './routes/sportsRoutes.js';
+import groupStudyRoutes from './routes/groupStudyRoutes.js';
+import inventoryRoutes from './routes/inventoryRoutes.js';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
@@ -49,6 +57,13 @@ app.use(helmet({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+
+app.use('/api/hostels', hostelRoutes);
+app.use('/api/books', libraryRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/sports', sportsRoutes);
+app.use('/api/group-studies', groupStudyRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // Routes
 app.get('/', (req, res) => {
@@ -2048,7 +2063,7 @@ app.get('/api/conversations', authenticate, async (req, res) => {
       ));
     } else if (req.user.role === ROLES.TEACHER) {
       filtered = conversations.filter(c => c.participants.every(u => 
-        u.role === ROLES.PARENT || u.role === ROLES.STUDENT
+        u.role === ROLES.PARENT || u.role === ROLES.STUDENT || u.role === ROLES.SCHOOL_ADMIN
       ));
     } else if (req.user.role === ROLES.PARENT) {
       filtered = conversations.filter(c => c.participants.every(u => 
@@ -2072,12 +2087,10 @@ app.get('/api/conversations/:id/messages', authenticate, async (req, res) => {
         const { id: userId } = req.user;
         
         // Check participation
-        const isParticipant = await prisma.conversationParticipant.findUnique({
+        const isParticipant = await prisma.conversationParticipant.findFirst({
             where: {
-                conversationId_userId: {
-                    conversationId: id,
-                    userId
-                }
+                conversationId: id,
+                userId
             }
         });
 
@@ -2109,7 +2122,37 @@ app.get('/api/conversations/:id/messages', authenticate, async (req, res) => {
             });
             const allowed = parts
                 .filter(p => p.userId !== userId)
-                .every(p => p.user.role === ROLES.PARENT || p.user.role === ROLES.STUDENT);
+                .every(p => p.user.role === ROLES.PARENT || p.user.role === ROLES.STUDENT || p.user.role === ROLES.SCHOOL_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.PARENT) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.TEACHER || p.user.role === ROLES.SCHOOL_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.SCHOOL_ADMIN) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.TEACHER || p.user.role === ROLES.PARENT || p.user.role === ROLES.SUPER_ADMIN);
+            if (!allowed) return res.status(403).json({ error: 'Not allowed' });
+        }
+        if (req.user.role === ROLES.TEACHER) {
+            const parts = await prisma.conversationParticipant.findMany({
+                where: { conversationId: id },
+                include: { user: true }
+            });
+            const allowed = parts
+                .filter(p => p.userId !== userId)
+                .every(p => p.user.role === ROLES.PARENT || p.user.role === ROLES.STUDENT || p.user.role === ROLES.SCHOOL_ADMIN);
             if (!allowed) return res.status(403).json({ error: 'Not allowed' });
         }
         if (req.user.role === ROLES.PARENT) {
@@ -2187,7 +2230,7 @@ app.post('/api/messages', authenticate, async (req, res) => {
         if (req.user.role === ROLES.SCHOOL_ADMIN && !(recipient.role === ROLES.TEACHER || recipient.role === ROLES.PARENT || recipient.role === ROLES.SUPER_ADMIN)) {
             return res.status(403).json({ error: 'Not allowed' });
         }
-        if (req.user.role === ROLES.TEACHER && !(recipient.role === ROLES.PARENT || recipient.role === ROLES.STUDENT)) {
+        if (req.user.role === ROLES.TEACHER && !(recipient.role === ROLES.PARENT || recipient.role === ROLES.STUDENT || recipient.role === ROLES.SCHOOL_ADMIN)) {
             return res.status(403).json({ error: 'Not allowed' });
         }
         if (req.user.role === ROLES.PARENT && !(recipient.role === ROLES.TEACHER || recipient.role === ROLES.SCHOOL_ADMIN)) {
@@ -2277,6 +2320,163 @@ app.post('/api/messages', authenticate, async (req, res) => {
   }
 });
 
+app.post('/api/messages/broadcast', authenticate, async (req, res) => {
+  try {
+    const { content, scope, classIds } = req.body;
+    const { id: senderId, role, schoolId } = req.user;
+    if (!content?.trim()) return res.status(400).json({ error: 'Content required' });
+    let recipients = [];
+    if (role === ROLES.SUPER_ADMIN) {
+      if (scope !== 'school_admin_all') return res.status(403).json({ error: 'Not allowed' });
+      recipients = await prisma.user.findMany({
+        where: { role: ROLES.SCHOOL_ADMIN },
+        select: { id: true }
+      });
+    } else if (role === ROLES.SCHOOL_ADMIN) {
+      if (scope === 'teachers_all') {
+        recipients = await prisma.user.findMany({
+          where: { schoolId, role: ROLES.TEACHER },
+          select: { id: true }
+        });
+      } else if (scope === 'parents_all') {
+        recipients = await prisma.user.findMany({
+          where: { schoolId, role: ROLES.PARENT },
+          select: { id: true }
+        });
+      } else if (scope === 'staff_all') {
+        recipients = await prisma.user.findMany({
+          where: { schoolId, role: ROLES.SCHOOL_ADMIN },
+          select: { id: true }
+        });
+      } else if (scope === 'staff_department') {
+        const { department } = req.body || {};
+        if (!listDepartments().includes(department)) return res.status(400).json({ error: 'Unknown department' });
+        const userIds = getDepartmentStaff(department, schoolId);
+        if (userIds.length === 0) return res.status(200).json({ count: 0 });
+        recipients = await prisma.user.findMany({
+          where: { schoolId, role: ROLES.SCHOOL_ADMIN, id: { in: userIds } },
+          select: { id: true }
+        });
+      } else {
+        return res.status(403).json({ error: 'Not allowed' });
+      }
+    } else if (role === ROLES.TEACHER) {
+      if (!Array.isArray(classIds) || classIds.length === 0) return res.status(400).json({ error: 'classIds required' });
+      const teacher = await prisma.teacher.findUnique({ where: { userId: senderId } });
+      if (!teacher) return res.status(403).json({ error: 'Not allowed' });
+      const assigned = await prisma.classSubject.findMany({
+        where: { teacherId: teacher.id, classId: { in: classIds } },
+        select: { classId: true }
+      });
+      const allowedClassIds = Array.from(new Set(assigned.map(a => a.classId)));
+      if (allowedClassIds.length === 0) return res.status(403).json({ error: 'Not allowed' });
+      if (scope === 'class_students') {
+        const students = await prisma.student.findMany({
+          where: { classId: { in: allowedClassIds } },
+          select: { userId: true }
+        });
+        recipients = students.map(s => ({ id: s.userId }));
+      } else if (scope === 'class_parents') {
+        const links = await prisma.parentStudents.findMany({
+          where: { student: { classId: { in: allowedClassIds } } },
+          include: { parent: true }
+        });
+        const parentIds = Array.from(new Set(links.map(l => l.parent.userId).filter(Boolean)));
+        recipients = parentIds.map(id => ({ id }));
+      } else {
+        return res.status(403).json({ error: 'Not allowed' });
+      }
+    } else {
+      return res.status(403).json({ error: 'Not allowed' });
+    }
+    recipients = recipients.filter(r => r.id !== senderId);
+    const uniqueIds = Array.from(new Set(recipients.map(r => r.id)));
+    const sentTo = [];
+    for (const rid of uniqueIds) {
+      const myConvos = await prisma.conversationParticipant.findMany({
+        where: { userId: senderId },
+        select: { conversationId: true }
+      });
+      const myConvoIds = myConvos.map(c => c.conversationId);
+      const sharedConvo = await prisma.conversationParticipant.findFirst({
+        where: { userId: rid, conversationId: { in: myConvoIds } }
+      });
+      let conversationId = null;
+      if (sharedConvo) {
+        const count = await prisma.conversationParticipant.count({
+          where: { conversationId: sharedConvo.conversationId }
+        });
+        if (count === 2) conversationId = sharedConvo.conversationId;
+      }
+      if (!conversationId) {
+        const newConvo = await prisma.conversation.create({
+          data: { id: randomUUID(), schoolId }
+        });
+        conversationId = newConvo.id;
+        await prisma.conversationParticipant.createMany({
+          data: [
+            { conversationId, userId: senderId },
+            { conversationId, userId: rid }
+          ]
+        });
+      }
+      await prisma.message.create({
+        data: { id: randomUUID(), conversationId, senderId, content }
+      });
+      sentTo.push(rid);
+    }
+    res.status(201).json({ count: sentTo.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to broadcast' });
+  }
+});
+
+app.get('/api/departments', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.SCHOOL_ADMIN && req.user.role !== ROLES.SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Not allowed' });
+    }
+    res.json(listDepartments());
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to list departments' });
+  }
+});
+
+app.get('/api/departments/:name/staff', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.SCHOOL_ADMIN && req.user.role !== ROLES.SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Not allowed' });
+    }
+    const { name } = req.params;
+    if (!listDepartments().includes(name)) return res.status(400).json({ error: 'Unknown department' });
+    const ids = getDepartmentStaff(name, req.user.schoolId);
+    if (ids.length === 0) return res.json([]);
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids }, schoolId: req.user.schoolId, role: ROLES.SCHOOL_ADMIN },
+      select: { id: true, firstName: true, lastName: true, role: true }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch department staff' });
+  }
+});
+
+app.post('/api/departments/:name/staff', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.SCHOOL_ADMIN && req.user.role !== ROLES.SUPER_ADMIN) {
+      return res.status(403).json({ error: 'Not allowed' });
+    }
+    const { name } = req.params;
+    if (!listDepartments().includes(name)) return res.status(400).json({ error: 'Unknown department' });
+    const { userIds } = req.body || {};
+    if (!Array.isArray(userIds)) return res.status(400).json({ error: 'userIds array required' });
+    const saved = setDepartmentStaff(name, req.user.schoolId, userIds);
+    res.json({ saved });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update department staff' });
+  }
+});
 // Helper to find people to message
 app.get('/api/recipients', authenticate, async (req, res) => {
     try {
@@ -2412,6 +2612,22 @@ app.get('/api/recipients', authenticate, async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch recipients' });
     }
+});
+
+app.get('/api/teacher/classes', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.TEACHER) return res.status(403).json({ error: 'Not allowed' });
+    const teacher = await prisma.teacher.findUnique({ where: { userId: req.user.id } });
+    if (!teacher) return res.json([]);
+    const assigned = await prisma.classSubject.findMany({
+      where: { teacherId: teacher.id },
+      include: { klass: true }
+    });
+    const classes = Array.from(new Map(assigned.map(a => [a.classId, { id: a.classId, name: a.klass?.name || a.classId }])).values());
+    res.json(classes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch teacher classes' });
+  }
 });
 
 // Attendance
@@ -2928,6 +3144,32 @@ app.post('/api/newsletters', authenticate, requirePermission(PERMISSIONS.NEWSLET
     } catch (error) {
         console.error('Failed to create newsletter:', error);
         res.status(500).json({ error: 'Failed to create newsletter', details: error.message });
+    }
+});
+
+app.put('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+        const { title, content } = req.body;
+
+        const existing = await prisma.newsletter.findFirst({
+            where: { id, schoolId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Newsletter not found' });
+        }
+
+        const updated = await prisma.newsletter.update({
+            where: { id },
+            data: { title, content }
+        });
+        
+        res.json(updated);
+    } catch (error) {
+        console.error('Failed to update newsletter:', error);
+        res.status(500).json({ error: 'Failed to update newsletter' });
     }
 });
 
@@ -3542,5 +3784,7 @@ app.put('/api/notifications/:id/read', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to update notification' });
     }
 });
+
+
 
 export default app;
