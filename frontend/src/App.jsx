@@ -17,14 +17,22 @@ import Hostel from './pages/Hostel';
 import Transport from './pages/Transport';
 import ELearning from './pages/ELearning';
 import ELearningSubject from './pages/ELearning/Subject';
+import ElearningItemForm from './pages/ELearning/ElearningItemForm';
 import ExamSetup from './pages/Exams/Setup';
 import Sports from './pages/Sports';
 import GroupStudies from './pages/GroupStudies';
 import Inventory from './pages/Inventory';
 import Schools from './pages/Schools';
+import SchoolDetails from './pages/Schools/SchoolDetails';
 import Subjects from './pages/Subjects';
 import StudentExams from './pages/StudentExams';
 import TakeExam from './pages/StudentExams/TakeExam';
+import Newsletter from './pages/Newsletter';
+import Gallery from './pages/Gallery';
+import Leaves from './pages/Leaves';
+import TimeTable from './pages/TimeTable';
+import Certificates from './pages/Certificates';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -38,13 +46,24 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="newsletters" element={<Newsletter />} />
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="timetable" element={<TimeTable />} />
+          <Route path="certificates" element={<Certificates />} />
           <Route path="students" element={<Students />} />
           <Route path="classes" element={<Classes />} />
           <Route path="schools" element={
             <RequireRole roles={['admin']}>
               <Schools />
+            </RequireRole>
+          } />
+          <Route path="schools/:id" element={
+            <RequireRole roles={['admin']}>
+              <SchoolDetails />
             </RequireRole>
           } />
           <Route path="exams" element={<Exams />} />
@@ -93,6 +112,7 @@ function App() {
           <Route path="radio" element={<Navigate to="/e-learning" replace />} />
           <Route path="e-learning" element={<ELearning />} />
           <Route path="e-learning/:subjectId" element={<ELearningSubject />} />
+          <Route path="e-learning/:subjectId/:type/form" element={<ElearningItemForm />} />
           <Route path="subjects" element={<Subjects />} />
           <Route path="group-studies" element={<GroupStudies />} />
           <Route path="exams/:examId/setup" element={<ExamSetup />} />

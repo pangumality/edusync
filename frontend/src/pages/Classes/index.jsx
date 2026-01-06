@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { seedClasses } from '../../utils/seed';
-
-function uid() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
+import api from '../../utils/api';
 
 export default function Classes() {
   const [list, setList] = useState([]);
@@ -11,52 +7,78 @@ export default function Classes() {
   const [sectionName, setSectionName] = useState('');
   const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('classes:doonites');
-    if (saved) {
-      setList(JSON.parse(saved));
-    } else {
-      const initial = [
-        { id: 'class-1', name: 'Grade 1', sections: ['A', 'B'] },
-        { id: 'class-2', name: 'Grade 2', sections: ['A'] },
-        { id: 'class-3', name: 'Grade 3', sections: ['A', 'B', 'C'] },
-      ];
-      setList(initial);
-      localStorage.setItem('classes:doonites', JSON.stringify(initial));
+  const loadClasses = async () => {
+    try {
+      const { data } = await api.get('/classes');
+      setList(data);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to load classes');
     }
+  };
+
+  useEffect(() => {
+    loadClasses();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('classes:doonites', JSON.stringify(list));
-  }, [list]);
-
-  const addClass = () => {
+  const addClass = async () => {
     if (!name.trim()) return;
-    setList([{ id: uid(), name: name.trim(), sections: [] }, ...list]);
-    setName('');
+    try {
+      await api.post('/classes', { name: name.trim(), sections: [] });
+      setName('');
+      loadClasses();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to add class');
+    }
   };
 
-  const deleteClass = (id) => {
-    setList(list.filter(c => c.id !== id));
-    if (selectedId === id) setSelectedId(null);
+  const deleteClass = async (id) => {
+    if (!window.confirm('Are you sure? This cannot be undone.')) return;
+    try {
+      await api.delete(`/classes/${id}`);
+      if (selectedId === id) setSelectedId(null);
+      loadClasses();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete class');
+    }
   };
 
-  const addSection = () => {
+  const addSection = async () => {
     if (!selectedId || !sectionName.trim()) return;
-    setList(list.map(c => (
-      c.id === selectedId
-        ? { ...c, sections: [...c.sections, sectionName.trim()] }
-        : c
-    )));
-    setSectionName('');
+    const klass = list.find(c => c.id === selectedId);
+    if (!klass) return;
+
+    try {
+      const newSections = [...(klass.sections || []), sectionName.trim()];
+      // Remove duplicates
+      const uniqueSections = [...new Set(newSections)];
+      
+      await api.put(`/classes/${selectedId}`, {
+        name: klass.name,
+        sections: uniqueSections
+      });
+      setSectionName('');
+      loadClasses();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to add section');
+    }
   };
 
-  const removeSection = (id, sec) => {
-    setList(list.map(c => (
-      c.id === id
-        ? { ...c, sections: c.sections.filter(s => s !== sec) }
-        : c
-    )));
+  const removeSection = async (id, sec) => {
+    if (!window.confirm(`Remove section ${sec}?`)) return;
+    const klass = list.find(c => c.id === id);
+    if (!klass) return;
+
+    try {
+      const newSections = (klass.sections || []).filter(s => s !== sec);
+      await api.put(`/classes/${id}`, {
+        name: klass.name,
+        sections: newSections
+      });
+      loadClasses();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to remove section');
+    }
   };
 
   return (
@@ -80,12 +102,6 @@ export default function Classes() {
                 onClick={addClass}
               >
                 Add
-              </button>
-              <button
-                className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                onClick={() => setList(seedClasses())}
-              >
-                Seed Demo Data
               </button>
             </div>
           </div>
@@ -140,7 +156,7 @@ export default function Classes() {
                   <td className="px-4 py-2 border-b text-gray-800">{c.name}</td>
                   <td className="px-4 py-2 border-b">
                     <div className="flex flex-wrap gap-2">
-                      {c.sections.map(sec => (
+                      {(c.sections || []).map(sec => (
                         <span key={sec} className="px-2 py-1 rounded-md border border-gray-300 text-gray-700">
                           {sec}
                           <button
@@ -151,7 +167,7 @@ export default function Classes() {
                           </button>
                         </span>
                       ))}
-                      {c.sections.length === 0 && (
+                      {(c.sections || []).length === 0 && (
                         <span className="text-gray-500">No sections</span>
                       )}
                     </div>
