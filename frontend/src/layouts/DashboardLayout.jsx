@@ -229,13 +229,17 @@ const DashboardLayout = () => {
                </button>
                <span className="font-medium text-lg">The Asian School</span>
             </div>
-            {/* Optional: Add notification or user icon here if needed */}
+            <Link to="/profile" className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
+              <User size={20} />
+            </Link>
           </div>
           
           <div className="text-center">
-            <h1 className="text-2xl font-light mb-1">
-              Hi! {currentUser ? currentUser.firstName : 'User'}
-            </h1>
+            <Link to="/profile" className="inline-block">
+              <h1 className="text-2xl font-light mb-1 hover:underline decoration-white/50 underline-offset-4 transition-all">
+                Hi! {currentUser ? currentUser.firstName : 'User'}
+              </h1>
+            </Link>
             <p className="text-sm opacity-90">
               Role: {currentUser ? currentUser.role : '...'}
             </p>

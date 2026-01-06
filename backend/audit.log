@@ -224,3 +224,8 @@
 [2026-01-06T15:30:24.236Z] User:758b2c62-4934-4bad-8233-f86005bcec3f | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
 [2026-01-06T15:32:52.197Z] User:6a5db3ef-c32a-46d0-8d4b-318bb5cea5cb | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
 [2026-01-06T16:51:37.978Z] User:f99a636b-2c42-4c04-9906-75c6df5d3129 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-01-06T20:39:29.802Z] User:admin@school.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-06T20:39:35.480Z] User:admin@school.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-06T20:58:36.919Z] User:admin@school.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-06T21:08:49.022Z] User:admin@school.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
+[2026-01-06T21:09:43.158Z] User:admin@school.com | Action:LOGIN_FAILED | Resource:auth | IP:unknown | Details:"Invalid credentials"
