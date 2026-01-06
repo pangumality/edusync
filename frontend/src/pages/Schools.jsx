@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { Plus, Edit2, Trash2, School as SchoolIcon, Loader2, X } from 'lucide-react';
 
 const Schools = () => {
+  const navigate = useNavigate();
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -119,20 +121,30 @@ const Schools = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {schools.map((school) => (
-          <div key={school.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+          <div 
+            key={school.id} 
+            onClick={() => navigate(`/schools/${school.id}`)}
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex justify-between items-start mb-4">
               <div className="bg-blue-50 p-3 rounded-lg">
                 <SchoolIcon className="text-blue-600" size={24} />
               </div>
               <div className="flex gap-2">
                 <button 
-                  onClick={() => handleEdit(school)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(school);
+                  }}
                   className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                 >
                   <Edit2 size={18} />
                 </button>
                 <button 
-                  onClick={() => handleDelete(school.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(school.id);
+                  }}
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                 >
                   <Trash2 size={18} />

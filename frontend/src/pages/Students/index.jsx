@@ -6,7 +6,12 @@ export default function Students() {
   const [klass, setKlass] = useState('');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '', section: '' });
+  const [form, setForm] = useState({ 
+    firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '', section: '',
+    grade: '',
+    dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+    guardianName: '', guardianEmail: '', guardianPhone: ''
+  });
   const [list, setList] = useState([]);
 
   const loadClasses = async () => {
@@ -46,7 +51,13 @@ export default function Students() {
 
   const startAdd = () => {
     setEditingId('new');
-    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || (classesList[0]?.id || ''), section: '' });
+    setForm({ 
+      firstName: '', lastName: '', email: '', phone: '', gender: '', 
+      klass: klass || (classesList[0]?.id || ''), section: '',
+      grade: '',
+      dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+      guardianName: '', guardianEmail: '', guardianPhone: ''
+    });
   };
 
   const startEdit = (s) => {
@@ -58,37 +69,53 @@ export default function Students() {
       phone: s.phone || '',
       gender: s.gender || '',
       klass: s.classId,
-      section: s.section || ''
+      section: s.section || '',
+      grade: s.grade || '',
+      dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split('T')[0] : '',
+      bloodGroup: s.bloodGroup || '',
+      healthCondition: s.healthCondition || '',
+      religion: s.religion || '',
+      guardianName: s.guardianName || '',
+      guardianEmail: s.guardianEmail || '',
+      guardianPhone: s.guardianPhone || ''
     });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ firstName: '', lastName: '', email: '', phone: '', gender: '', klass: klass || '', section: '' });
+    setForm({ 
+      firstName: '', lastName: '', email: '', phone: '', gender: '', 
+      klass: klass || '', section: '',
+      grade: '',
+      dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+      guardianName: '', guardianEmail: '', guardianPhone: ''
+    });
   };
 
   const save = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.klass) return;
     try {
+      const payload = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        gender: form.gender || undefined,
+        classId: form.klass,
+        section: form.section || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        bloodGroup: form.bloodGroup || undefined,
+        healthCondition: form.healthCondition || undefined,
+        religion: form.religion || undefined,
+        guardianName: form.guardianName || undefined,
+        guardianEmail: form.guardianEmail || undefined,
+        guardianPhone: form.guardianPhone || undefined
+      };
+
       if (editingId === 'new') {
-        await api.post('/students', {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email || undefined,
-          phone: form.phone || undefined,
-          gender: form.gender || undefined,
-          classId: form.klass,
-          section: form.section || undefined
-        });
+        await api.post('/students', payload);
       } else {
-        await api.put(`/students/${editingId}`, {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          phone: form.phone || undefined,
-          gender: form.gender || undefined,
-          classId: form.klass,
-          section: form.section || undefined
-        });
+        await api.put(`/students/${editingId}`, payload);
       }
       cancelEdit();
       loadStudents(klass);
@@ -162,58 +189,87 @@ export default function Students() {
         </div>
 
         {editingId && (
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
-          <input
-            type="text"
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            placeholder="First name"
-            value={form.firstName}
-            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-          />
-          <input
-            type="text"
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            placeholder="Last name"
-            value={form.lastName}
-            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-          />
-          <input
-            type="email"
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-          <input
-            type="tel"
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            placeholder="Phone"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
-          <select
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            value={form.gender}
-            onChange={(e) => setForm({ ...form, gender: e.target.value })}
-          >
-            <option value="">Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <select
-            className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-            value={form.klass}
-            onChange={(e) => {
-              const id = e.target.value;
-              setForm({ ...form, klass: id, section: '' });
-            }}
-          >
-            {classesList.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {currentClassSections.length > 0 && (
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg space-y-4">
+          <h3 className="font-semibold text-gray-700">Student Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="First name"
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
+            <input
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Last name"
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            />
+            <input
+              type="email"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+            <input
+              type="tel"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Phone"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+            <select
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            >
+              <option value="">Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            <input 
+              type="date"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Date of Birth"
+              value={form.dateOfBirth}
+              onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
+            />
+            <input 
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Blood Group"
+              value={form.bloodGroup}
+              onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
+            />
+             <input 
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Religion"
+              value={form.religion}
+              onChange={(e) => setForm({ ...form, religion: e.target.value })}
+            />
+             <input 
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400 md:col-span-2"
+              placeholder="Health Condition"
+              value={form.healthCondition}
+              onChange={(e) => setForm({ ...form, healthCondition: e.target.value })}
+            />
+            <select
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              value={form.klass}
+              onChange={(e) => {
+                const id = e.target.value;
+                setForm({ ...form, klass: id, section: '' });
+              }}
+            >
+              {classesList.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
             <select
               className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
               value={form.section}
@@ -224,8 +280,41 @@ export default function Students() {
                 <option key={sec} value={sec}>{sec}</option>
               ))}
             </select>
-          )}
-            <div className="md:col-span-6 flex items-center gap-3">
+             <input 
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Grade"
+              value={form.grade}
+              onChange={(e) => setForm({ ...form, grade: e.target.value })}
+            />
+          </div>
+
+          <h3 className="font-semibold text-gray-700 pt-2 border-t border-gray-200">Guardian Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <input 
+              type="text"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Guardian Name"
+              value={form.guardianName}
+              onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
+            />
+            <input 
+              type="email"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Guardian Email (Login)"
+              value={form.guardianEmail}
+              onChange={(e) => setForm({ ...form, guardianEmail: e.target.value })}
+            />
+            <input 
+              type="tel"
+              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              placeholder="Guardian Phone"
+              value={form.guardianPhone}
+              onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 pt-4">
               <button
                 className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
                 onClick={save}

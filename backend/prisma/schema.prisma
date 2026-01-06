@@ -231,8 +231,24 @@ model School {
   galleries      SubjectGallery[]
   activities     SubjectActivity[]
   dateSheets     DateSheet[]
+  eventGalleries Gallery[]
   
   @@map("School")
+}
+
+model Gallery {
+  id          String   @id @default(uuid())
+  schoolId    String
+  title       String
+  description String?
+  imageUrl    String
+  date        DateTime @default(now())
+  category    String?
+  createdAt   DateTime @default(now())
+  
+  school      School   @relation(fields: [schoolId], references: [id])
+  
+  @@map("Gallery")
 }
 
 model LeaveRequest {
@@ -329,6 +345,11 @@ model Student {
   userId           String             @unique
   classId          String?
   section          String?
+  grade            String?
+  dateOfBirth      DateTime?
+  bloodGroup       String?
+  healthCondition  String?
+  religion         String?
   attendanceRecords AttendanceRecord[]
   examResults      ExamResult[]
   parents          ParentStudents[]
@@ -395,9 +416,23 @@ model User {
   teacher   Teacher?
   conversations ConversationParticipant[]
   issuedCertificates Certificate[]
+  notifications Notification[]
   school    School    @relation(fields: [schoolId], references: [id])
   
   @@map("User")
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  userId       String
+  activityId   String
+  activityType String   // "MESSAGE", "HOMEWORK", "LEAVE_REQUEST", "GENERAL"
+  message      String
+  isRead       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  
+  @@map("Notification")
 }
 
 enum AttendanceStatus {

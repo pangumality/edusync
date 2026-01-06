@@ -15,6 +15,18 @@ const Leaves = () => {
     reason: ''
   });
 
+  const [reasonCategory, setReasonCategory] = useState('');
+
+  const LEAVE_REASONS = [
+    "Sick Leave / Medical Emergency",
+    "Family Function / Event",
+    "Out of Station / Travel",
+    "Personal Reason",
+    "Urgent Piece of Work",
+    "Festival Celebration",
+    "Other"
+  ];
+
   const isStudent = currentUser?.role === 'student';
   const isParent = currentUser?.role === 'parent';
   const isAdmin = ['admin', 'staff', 'teacher'].includes(currentUser?.role);
@@ -22,6 +34,15 @@ const Leaves = () => {
   useEffect(() => {
     fetchLeaves();
   }, []);
+
+  useEffect(() => {
+    if (reasonCategory && reasonCategory !== 'Other') {
+      setFormData(prev => ({ ...prev, reason: reasonCategory }));
+    } else if (reasonCategory === 'Other' && formData.reason === LEAVE_REASONS[0]) {
+       // Clear reason if switching to Other from a preset
+       setFormData(prev => ({ ...prev, reason: '' }));
+    }
+  }, [reasonCategory]);
 
   const fetchLeaves = async () => {
     try {
@@ -138,13 +159,35 @@ const Leaves = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Reason</label>
-                <textarea
+                <select
+                  value={reasonCategory}
+                  onChange={(e) => {
+                    setReasonCategory(e.target.value);
+                    if (e.target.value !== 'Other') {
+                      setFormData({ ...formData, reason: e.target.value });
+                    } else {
+                      setFormData({ ...formData, reason: '' });
+                    }
+                  }}
+                  className="w-full border rounded-lg p-2 mb-2"
                   required
-                  value={formData.reason}
-                  onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                  className="w-full border rounded-lg p-2"
-                  rows={3}
-                />
+                >
+                  <option value="" disabled>Select a reason</option>
+                  {LEAVE_REASONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+                
+                {reasonCategory === 'Other' && (
+                  <textarea
+                    required
+                    placeholder="Please specify your reason..."
+                    value={formData.reason}
+                    onChange={(e) => setFormData({...formData, reason: e.target.value})}
+                    className="w-full border rounded-lg p-2"
+                    rows={3}
+                  />
+                )}
               </div>
               <div className="flex justify-end gap-2 mt-6">
                 <button

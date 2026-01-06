@@ -9,6 +9,9 @@ import { authenticate } from './middleware/authMiddleware.js';
 import { requirePermission } from './middleware/rbacMiddleware.js';
 import { PERMISSIONS, ROLES } from './config/rbac.js';
 import { logAudit } from './utils/auditLogger.js';
+import { createNotification, createBulkNotifications } from './utils/notification.js';
+import { upload } from './middleware/uploadMiddleware.js';
+import path from 'path';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
@@ -40,9 +43,12 @@ export { prisma };
 
 // Middleware
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(morgan('dev'));
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.get('/', (req, res) => {
@@ -64,6 +70,56 @@ app.get('/api/db/health', async (req, res) => {
   }
   const ok = checks.prisma === 'ok';
   res.status(ok ? 200 : 500).json({ status: ok ? 'ok' : 'error', checks });
+});
+
+app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL), async (req, res) => {
+  try {
+    const { schoolId, role } = req.user;
+
+    if (role === ROLES.SUPER_ADMIN) {
+       const [schools, users, revenue, messages] = await Promise.all([
+         prisma.school.count(),
+         prisma.user.count(),
+         prisma.payment.aggregate({ _sum: { amount: true } }),
+         prisma.message.count()
+       ]);
+       
+       return res.json({
+         schools,
+         users,
+         revenue: revenue._sum.amount || 0,
+         messages,
+         role: ROLES.SUPER_ADMIN
+       });
+    }
+
+    // Existing logic for Admin / Teacher
+    // Note: Teacher might only see their own classes/students if we wanted to be strict, 
+    // but the current requirement implies a dashboard overview.
+    // For now we keep the existing logic found in the analysis phase (implied).
+    
+    const [students, teachers, classes, parents] = await Promise.all([
+      prisma.student.count({ where: { schoolId } }),
+      prisma.user.count({ where: { schoolId, role: 'teacher' } }), 
+      prisma.class.count({ where: { schoolId } }),
+      // Parents logic: Count users with role parent linked to this school?
+      // Since schema doesn't link Parent->School directly, we can count distinct parents of students in this school.
+      // Or simpler: User with role parent and schoolId (if schoolId is set on User for parents).
+      prisma.user.count({ where: { schoolId, role: 'parent' } }) 
+    ]);
+
+    res.json({
+      students,
+      teachers,
+      classes,
+      parents,
+      role: role
+    });
+
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
 });
 
 app.get('/api/classes', authenticate, async (req, res) => {
@@ -150,21 +206,42 @@ app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MAN
 
     const students = await prisma.student.findMany({
       where,
-      include: { user: true, klass: true },
+      include: { 
+        user: true, 
+        klass: true,
+        parents: {
+            where: { isPrimary: true },
+            include: { 
+                parent: {
+                    include: { user: true }
+                }
+            }
+        }
+      },
     });
-    const formatted = students.map(s => ({
-      id: s.id,
-      name: `${s.user.firstName} ${s.user.lastName}`.trim(),
-      firstName: s.user.firstName,
-      lastName: s.user.lastName,
-      email: s.user.email,
-      phone: s.user.phone,
-      gender: s.user.gender,
-      className: s.klass?.name,
-      classId: s.classId,
-      section: s.section,
-      rollNumber: s.id.substring(0, 6).toUpperCase(), // Mock roll number
-    }));
+    const formatted = students.map(s => {
+      const primaryGuardian = s.parents[0]?.parent?.user;
+      return {
+        id: s.id,
+        name: `${s.user.firstName} ${s.user.lastName}`.trim(),
+        firstName: s.user.firstName,
+        lastName: s.user.lastName,
+        email: s.user.email,
+        phone: s.user.phone,
+        gender: s.user.gender,
+        className: s.klass?.name,
+        classId: s.classId,
+        section: s.section,
+        rollNumber: s.id.substring(0, 6).toUpperCase(), // Mock roll number
+        dateOfBirth: s.dateOfBirth,
+        bloodGroup: s.bloodGroup,
+        healthCondition: s.healthCondition,
+        religion: s.religion,
+        guardianName: primaryGuardian ? `${primaryGuardian.firstName} ${primaryGuardian.lastName}` : '',
+        guardianEmail: primaryGuardian?.email || '',
+        guardianPhone: primaryGuardian?.phone || ''
+      };
+    });
     res.json(formatted);
   } catch (error) {
     console.error(error);
@@ -174,7 +251,11 @@ app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MAN
 
 app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, gender, classId, section } = req.body;
+    const { 
+      firstName, lastName, email, phone, gender, classId, section,
+      dateOfBirth, bloodGroup, healthCondition, religion, grade,
+      guardianName, guardianEmail, guardianPhone
+    } = req.body;
     const { schoolId } = req.user;
 
     if (!firstName || !lastName || !classId) {
@@ -189,7 +270,7 @@ app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MA
     // Check if user exists
     if (email) {
         const existing = await prisma.user.findUnique({ where: { email } });
-        if (existing) return res.status(400).json({ error: 'Email already exists' });
+        if (existing) return res.status(400).json({ error: 'Student Email already exists' });
     }
 
     const userId = randomUUID();
@@ -217,9 +298,75 @@ app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MA
           userId,
           schoolId,
           classId,
-          section: section || null
+          section: section || null,
+          grade: grade || null,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+          bloodGroup: bloodGroup || null,
+          healthCondition: healthCondition || null,
+          religion: religion || null
         }
       });
+
+      // Handle Guardian/Parent Creation and Linking
+      if (guardianEmail) {
+          let parentUser = await prisma.user.findUnique({ where: { email: guardianEmail } });
+          let parentId;
+
+          if (!parentUser) {
+              // Create Parent User
+              const parentUserId = randomUUID();
+              const nameParts = (guardianName || 'Guardian').trim().split(' ');
+              const pFirstName = nameParts[0];
+              const pLastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '.';
+
+              parentUser = await prisma.user.create({
+                  data: {
+                      id: parentUserId,
+                      firstName: pFirstName,
+                      lastName: pLastName,
+                      email: guardianEmail,
+                      phone: guardianPhone || null,
+                      password: await bcrypt.hash('Parent@123', 10),
+                      role: 'parent',
+                      schoolId,
+                      isActive: true
+                  }
+              });
+
+              parentId = randomUUID();
+              await prisma.parent.create({
+                  data: { id: parentId, userId: parentUserId }
+              });
+          } else {
+              // Check if parent profile exists
+              const existingParent = await prisma.parent.findUnique({ where: { userId: parentUser.id } });
+              if (existingParent) {
+                  parentId = existingParent.id;
+              } else {
+                  parentId = randomUUID();
+                  await prisma.parent.create({
+                      data: { id: parentId, userId: parentUser.id }
+                  });
+              }
+          }
+
+          // Link Parent to Student
+          // Check if already linked to avoid error
+          const existingLink = await prisma.parentStudents.findUnique({
+              where: { parentId_studentId: { parentId, studentId } }
+          });
+
+          if (!existingLink) {
+              await prisma.parentStudents.create({
+                  data: {
+                      parentId,
+                      studentId,
+                      relationship: 'Guardian',
+                      isPrimary: true
+                  }
+              });
+          }
+      }
     });
 
     await logAudit(req.user.id, 'CREATE', 'student', { name: `${firstName} ${lastName}`, classId });
@@ -233,7 +380,11 @@ app.post('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MA
 app.put('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, classId, section, phone, gender } = req.body;
+    const { 
+      firstName, lastName, classId, section, phone, gender,
+      dateOfBirth, bloodGroup, healthCondition, religion, grade,
+      guardianName, guardianEmail, guardianPhone
+    } = req.body;
     
     // Find student
     const student = await prisma.student.findUnique({ where: { id }, include: { user: true } });
@@ -255,15 +406,81 @@ app.put('/api/students/:id', authenticate, requirePermission(PERMISSIONS.STUDENT
         where: { id: student.userId },
         data: { firstName, lastName, phone: phone || undefined, gender: gender || undefined }
       });
-      if (classId || section !== undefined) {
-        const updateData = {};
-        if (classId) updateData.classId = classId;
-        if (section !== undefined) updateData.section = section;
-        
+      
+      const updateData = {};
+      if (classId) updateData.classId = classId;
+      if (section !== undefined) updateData.section = section;
+      if (grade !== undefined) updateData.grade = grade;
+      if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+      if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+      if (healthCondition !== undefined) updateData.healthCondition = healthCondition;
+      if (religion !== undefined) updateData.religion = religion;
+      
+      if (Object.keys(updateData).length > 0) {
         await prisma.student.update({
           where: { id },
           data: updateData
         });
+      }
+
+      // Update Guardian if email provided
+      if (guardianEmail) {
+          // Check if parent exists
+          let parentUser = await prisma.user.findUnique({ where: { email: guardianEmail } });
+          let parentId;
+
+          if (!parentUser) {
+             // Create new parent
+              const parentUserId = randomUUID();
+              const nameParts = (guardianName || 'Guardian').trim().split(' ');
+              const pFirstName = nameParts[0];
+              const pLastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '.';
+
+              parentUser = await prisma.user.create({
+                  data: {
+                      id: parentUserId,
+                      firstName: pFirstName,
+                      lastName: pLastName,
+                      email: guardianEmail,
+                      phone: guardianPhone || null,
+                      password: await bcrypt.hash('Parent@123', 10),
+                      role: 'parent',
+                      schoolId: student.schoolId,
+                      isActive: true
+                  }
+              });
+
+              parentId = randomUUID();
+              await prisma.parent.create({
+                  data: { id: parentId, userId: parentUserId }
+              });
+          } else {
+              const existingParent = await prisma.parent.findUnique({ where: { userId: parentUser.id } });
+              if (existingParent) {
+                  parentId = existingParent.id;
+              } else {
+                  parentId = randomUUID();
+                  await prisma.parent.create({
+                      data: { id: parentId, userId: parentUser.id }
+                  });
+              }
+          }
+
+          // Link if not linked
+          const existingLink = await prisma.parentStudents.findUnique({
+              where: { parentId_studentId: { parentId, studentId: id } }
+          });
+
+          if (!existingLink) {
+              await prisma.parentStudents.create({
+                  data: {
+                      parentId,
+                      studentId: id,
+                      relationship: 'Guardian',
+                      isPrimary: true
+                  }
+              });
+          }
       }
     });
     
@@ -634,6 +851,105 @@ app.get('/api/parents/children/:studentId/fees', authenticate, requirePermission
     }
 });
 
+// Gallery Routes
+app.post('/api/upload', authenticate, upload.single('image'), (req, res) => {
+  if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+  }
+  const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ url });
+});
+
+app.post('/api/upload-multiple', authenticate, upload.array('images', 10), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+  }
+  const urls = req.files.map(file => `${req.protocol}://${req.get('host')}/uploads/${file.filename}`);
+  res.json({ urls });
+});
+
+app.get('/api/gallery', authenticate, requirePermission(PERMISSIONS.GALLERY_VIEW), async (req, res) => {
+  try {
+    const { schoolId } = req.user;
+    const items = await prisma.gallery.findMany({
+      where: { schoolId },
+      orderBy: { date: 'desc' }
+    });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch gallery' });
+  }
+});
+
+app.post('/api/gallery', authenticate, requirePermission(PERMISSIONS.GALLERY_MANAGE), async (req, res) => {
+  try {
+    const { title, description, imageUrl, category, date } = req.body;
+    const { schoolId } = req.user;
+    
+    const item = await prisma.gallery.create({
+      data: {
+        schoolId,
+        title,
+        description,
+        imageUrl,
+        category,
+        date: date ? new Date(date) : new Date()
+      }
+    });
+    res.status(201).json(item);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create gallery item' });
+  }
+});
+
+app.post('/api/gallery/batch', authenticate, requirePermission(PERMISSIONS.GALLERY_MANAGE), async (req, res) => {
+  try {
+    const { items } = req.body; // Array of { title, description, imageUrl, category, date }
+    const { schoolId } = req.user;
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'No items provided' });
+    }
+
+    const createdItems = await prisma.$transaction(
+      items.map(item => prisma.gallery.create({
+        data: {
+          schoolId,
+          title: item.title,
+          description: item.description,
+          imageUrl: item.imageUrl,
+          category: item.category,
+          date: item.date ? new Date(item.date) : new Date()
+        }
+      }))
+    );
+    
+    res.status(201).json(createdItems);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create batch gallery items' });
+  }
+});
+
+app.delete('/api/gallery/:id', authenticate, requirePermission(PERMISSIONS.GALLERY_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { schoolId } = req.user;
+    
+    // Verify ownership
+    const item = await prisma.gallery.findUnique({ where: { id } });
+    if (!item || item.schoolId !== schoolId) {
+        return res.status(404).json({ error: 'Item not found' });
+    }
+
+    await prisma.gallery.delete({ where: { id } });
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
 // Group Studies
 app.get('/api/group-studies', authenticate, async (req, res) => {
   try {
@@ -848,6 +1164,46 @@ app.get('/api/schools', authenticate, requirePermission(PERMISSIONS.SCHOOL_MANAG
   } catch (error) {
     console.error('Error fetching schools:', error);
     res.status(500).json({ error: 'Failed to fetch schools' });
+  }
+});
+
+app.get('/api/schools/:id', authenticate, requirePermission(PERMISSIONS.SCHOOL_MANAGE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const school = await prisma.school.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            students: true,
+            users: { where: { role: 'teacher' } }, // Approximate since role is on User, not Teacher linked to School directly via relation in schema easily? 
+            // Actually User has schoolId. So we can count Users with role teacher.
+            classes: true
+          }
+        }
+      }
+    });
+
+    if (!school) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+
+    // Get teacher count manually if _count relation is tricky or just use prisma count
+    const teacherCount = await prisma.user.count({
+      where: { schoolId: id, role: 'teacher' }
+    });
+
+    res.json({
+      ...school,
+      stats: {
+        students: school._count.students,
+        teachers: teacherCount,
+        classes: school._count.classes
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching school details:', error);
+    res.status(500).json({ error: 'Failed to fetch school details' });
   }
 });
 
@@ -1906,6 +2262,14 @@ app.post('/api/messages', authenticate, async (req, res) => {
       }
     });
 
+    // Send Notification
+    await createNotification(
+      recipientId,
+      message.id,
+      'MESSAGE',
+      `New message from ${req.user.firstName} ${req.user.lastName}`
+    );
+
     res.status(201).json(message);
   } catch (error) {
     console.error(error);
@@ -2590,7 +2954,10 @@ app.post('/api/leaves', authenticate, requirePermission(PERMISSIONS.LEAVE_APPLY)
         const { schoolId, id: userId } = req.user;
         const { reason, type, startDate, endDate } = req.body;
         
-        const student = await prisma.student.findUnique({ where: { userId } });
+        const student = await prisma.student.findUnique({ 
+            where: { userId },
+            include: { user: true }
+        });
         if (!student) return res.status(403).json({ error: 'Not a student' });
 
         const leave = await prisma.leaveRequest.create({
@@ -2606,6 +2973,23 @@ app.post('/api/leaves', authenticate, requirePermission(PERMISSIONS.LEAVE_APPLY)
                 parentApproved: false
             }
         });
+
+        // Notify Parents
+        const parents = await prisma.parentStudents.findMany({
+            where: { studentId: student.id },
+            include: { parent: { include: { user: true } } }
+        });
+        
+        const parentUserIds = parents.map(p => p.parent.user.id);
+        if (parentUserIds.length > 0) {
+            await createBulkNotifications(
+                parentUserIds,
+                leave.id,
+                'LEAVE_REQUEST',
+                `Leave request from ${student.user.firstName} ${student.user.lastName} needs approval`
+            );
+        }
+
         res.json(leave);
     } catch (error) {
         console.error('Leave apply error:', error);
@@ -2664,6 +3048,24 @@ app.post('/api/leaves/:id/approve-parent', authenticate, requirePermission(PERMI
                 status: 'pending_school'
             }
         });
+
+        // Notify Admins
+        const admins = await prisma.user.findMany({
+            where: { 
+                schoolId: req.user.schoolId, 
+                role: ROLES.SCHOOL_ADMIN 
+            }
+        });
+        const adminIds = admins.map(a => a.id);
+        if (adminIds.length > 0) {
+             await createBulkNotifications(
+                adminIds,
+                updated.id,
+                'LEAVE_REQUEST',
+                `Leave request approved by parent, pending your approval`
+            );
+        }
+
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: 'Failed to approve leave' });
@@ -2686,8 +3088,33 @@ app.post('/api/leaves/:id/approve-admin', authenticate, requirePermission(PERMIS
 
         const updated = await prisma.leaveRequest.update({
             where: { id },
-            data
+            data,
+            include: { student: { include: { user: true } } }
         });
+
+        // Notify Student
+        await createNotification(
+            updated.student.userId,
+            updated.id,
+            'LEAVE_REQUEST',
+            `Your leave request has been ${status}`
+        );
+        
+        // Notify Parents
+        const parents = await prisma.parentStudents.findMany({
+            where: { studentId: updated.studentId },
+            include: { parent: { include: { user: true } } }
+        });
+        const parentUserIds = parents.map(p => p.parent.user.id);
+        if (parentUserIds.length > 0) {
+             await createBulkNotifications(
+                parentUserIds,
+                updated.id,
+                'LEAVE_REQUEST',
+                `Leave request for ${updated.student.user.firstName} has been ${status}`
+            );
+        }
+
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: 'Failed to process leave' });
@@ -2836,6 +3263,63 @@ app.post('/api/certificates', authenticate, requirePermission(PERMISSIONS.CERTIF
     }
 });
 
+// --- Gallery ---
+app.post('/api/upload', authenticate, upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ url });
+});
+
+app.get('/api/gallery', authenticate, requirePermission(PERMISSIONS.GALLERY_VIEW), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const gallery = await prisma.gallery.findMany({
+            where: { schoolId },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(gallery);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch gallery' });
+    }
+});
+
+app.post('/api/gallery', authenticate, requirePermission(PERMISSIONS.GALLERY_MANAGE), async (req, res) => {
+    try {
+        const { schoolId } = req.user;
+        const { title, description, imageUrl, category, date } = req.body;
+        
+        const item = await prisma.gallery.create({
+            data: {
+                id: randomUUID(),
+                schoolId,
+                title,
+                description,
+                imageUrl,
+                category,
+                date: date ? new Date(date) : new Date()
+            }
+        });
+        res.status(201).json(item);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create gallery item' });
+    }
+});
+
+app.delete('/api/gallery/:id', authenticate, requirePermission(PERMISSIONS.GALLERY_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.gallery.delete({ where: { id } });
+        res.json({ message: 'Gallery item deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete gallery item' });
+    }
+});
+
 // --- Dashboard Stats ---
 app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL), async (req, res) => {
     try {
@@ -2911,6 +3395,36 @@ const createElearningCrud = (modelName, endpoint) => {
                     ...data
                 }
             });
+
+            if (endpoint === 'homework' && item.classId) {
+                 const students = await prisma.student.findMany({
+                     where: { classId: item.classId, schoolId },
+                     include: { parents: { include: { parent: { include: { user: true } } } } }
+                 });
+                 
+                 let userIds = students.map(s => s.userId);
+                 
+                 // Add parents
+                 students.forEach(s => {
+                     s.parents.forEach(p => {
+                         if (p.parent && p.parent.user) {
+                             userIds.push(p.parent.user.id);
+                         }
+                     });
+                 });
+                 
+                 // Unique IDs
+                 userIds = [...new Set(userIds)];
+
+                 if (userIds.length > 0) {
+                     await createBulkNotifications(
+                         userIds,
+                         item.id,
+                         'HOMEWORK',
+                         `New homework added: ${item.title || 'Homework'}`
+                     );
+                 }
+            }
             
             await logAudit(req.user.id, 'CREATE', endpoint, { id: item.id });
             res.status(201).json(item);
@@ -2975,5 +3489,58 @@ createElearningCrud('syllabus', 'syllabus');
 createElearningCrud('subjectGallery', 'gallery');
 createElearningCrud('subjectActivity', 'activities');
 createElearningCrud('dateSheet', 'datesheet');
+
+// --- Notifications ---
+
+app.get('/api/notifications', authenticate, async (req, res) => {
+    try {
+        const notifications = await prisma.notification.findMany({
+            where: { userId: req.user.id },
+            orderBy: { createdAt: 'desc' },
+            take: 50
+        });
+        
+        // Count unread
+        const unreadCount = await prisma.notification.count({
+            where: { userId: req.user.id, isRead: false }
+        });
+
+        res.json({ notifications, unreadCount });
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+});
+
+app.put('/api/notifications/read-all', authenticate, async (req, res) => {
+    try {
+        await prisma.notification.updateMany({
+            where: { userId: req.user.id, isRead: false },
+            data: { isRead: true }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to mark all as read' });
+    }
+});
+
+app.put('/api/notifications/:id/read', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Use updateMany to ensure userId matches (security) without an extra read
+        const result = await prisma.notification.updateMany({
+            where: { id, userId: req.user.id },
+            data: { isRead: true }
+        });
+        
+        if (result.count === 0) {
+             return res.status(404).json({ error: 'Notification not found or not owned by user' });
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update notification' });
+    }
+});
 
 export default app;
