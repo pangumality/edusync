@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { 
   Users, 
   GraduationCap, 
@@ -29,9 +29,9 @@ ChartJS.register(
   Legend
 );
 
-const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
-  return (
-    <div className="rounded-xl overflow-hidden flex flex-col bg-white shadow-soft">
+const StatCard = ({ icon: Icon, title, count, tint, buttonLabel, link }) => {
+  const CardContent = (
+    <div className="rounded-xl overflow-hidden flex flex-col bg-white shadow-soft h-full hover:shadow-md transition-shadow cursor-pointer">
       <div className={`p-3 flex items-center justify-center text-text-base font-medium ${tint}`}>
         <Icon size={20} className="mr-2" />
         {buttonLabel}
@@ -42,6 +42,8 @@ const StatCard = ({ icon: Icon, title, count, tint, buttonLabel }) => {
       </div>
     </div>
   );
+
+  return link ? <Link to={link}>{CardContent}</Link> : CardContent;
 };
 
 const Dashboard = () => {
@@ -106,6 +108,7 @@ const Dashboard = () => {
           count={stats.students} 
           tint="bg-brand-500 text-white" 
           buttonLabel="Manage Students"
+          link="/students"
         />
         {(!currentUser || currentUser.role !== 'teacher') && (
           <StatCard 
@@ -114,6 +117,7 @@ const Dashboard = () => {
             count={stats.teachers} 
             tint="bg-danger text-white" 
             buttonLabel="Manage Teachers"
+            link="/teachers"
           />
         )}
         <StatCard 
@@ -122,6 +126,7 @@ const Dashboard = () => {
           count={stats.classes} 
           tint="bg-success text-white" 
           buttonLabel={currentUser?.role === 'student' ? 'Subjects' : 'Classes'} 
+          link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
         />
         {(!currentUser || currentUser.role !== 'teacher') && (
           <StatCard 
@@ -130,6 +135,7 @@ const Dashboard = () => {
             count={stats.parents} 
             tint="bg-purple text-white" 
             buttonLabel="Finance"
+            link="/finance"
           />
         )}
       </div>

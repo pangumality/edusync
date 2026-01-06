@@ -30,6 +30,7 @@ import Newsletter from './pages/Newsletter';
 import Leaves from './pages/Leaves';
 import TimeTable from './pages/TimeTable';
 import Certificates from './pages/Certificates';
+import NoticeBoard from './pages/NoticeBoard';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="notices" element={<NoticeBoard />} />
           <Route path="newsletters" element={<Newsletter />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="timetable" element={<TimeTable />} />

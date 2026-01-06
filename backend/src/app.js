@@ -9,6 +9,10 @@ import { authenticate } from './middleware/authMiddleware.js';
 import { requirePermission } from './middleware/rbacMiddleware.js';
 import { PERMISSIONS, ROLES } from './config/rbac.js';
 import { logAudit } from './utils/auditLogger.js';
+import hostelRoutes from './routes/hostelRoutes.js';
+import libraryRoutes from './routes/libraryRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
@@ -43,6 +47,10 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
+
+app.use('/api/hostels', hostelRoutes);
+app.use('/api/books', libraryRoutes);
+app.use('/api/notices', noticeRoutes);
 
 // Routes
 app.get('/', (req, res) => {
@@ -2567,6 +2575,32 @@ app.post('/api/newsletters', authenticate, requirePermission(PERMISSIONS.NEWSLET
     }
 });
 
+app.put('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+        const { title, content } = req.body;
+
+        const existing = await prisma.newsletter.findFirst({
+            where: { id, schoolId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Newsletter not found' });
+        }
+
+        const updated = await prisma.newsletter.update({
+            where: { id },
+            data: { title, content }
+        });
+        
+        res.json(updated);
+    } catch (error) {
+        console.error('Failed to update newsletter:', error);
+        res.status(500).json({ error: 'Failed to update newsletter' });
+    }
+});
+
 app.delete('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
     try {
         const { id } = req.params;
@@ -2975,5 +3009,7 @@ createElearningCrud('syllabus', 'syllabus');
 createElearningCrud('subjectGallery', 'gallery');
 createElearningCrud('subjectActivity', 'activities');
 createElearningCrud('dateSheet', 'datesheet');
+
+
 
 export default app;
