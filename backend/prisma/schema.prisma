@@ -235,7 +235,9 @@ model School {
   hostels       Hostel[]
   books         Book[]
   notices       Notice[]
-  eventGalleries Gallery[]
+  sports        Sport[]
+  sportEvents   SportEvent[]
+  inventoryItems InventoryItem[]
 
   @@map("School")
 }
@@ -255,7 +257,7 @@ model Gallery {
   @@map("Gallery")
 }
 
-model LeaveRequest {
+model Book {
   id          String      @id
   schoolId    String
   title       String
@@ -418,11 +420,6 @@ model Student {
   grade             String?
   healthCondition   String?
   religion          String?
-  grade            String?
-  dateOfBirth      DateTime?
-  bloodGroup       String?
-  healthCondition  String?
-  religion         String?
   attendanceRecords AttendanceRecord[]
   certificates      Certificate[]
   examResults       ExamResult[]
@@ -431,6 +428,7 @@ model Student {
   payments          Payment[]
   hostelAllocations HostelAllocation[]
   bookIssues        BookIssue[]
+  sportTeams        SportTeamMember[]
   klass             Class?             @relation(fields: [classId], references: [id])
   school            School             @relation(fields: [schoolId], references: [id])
   user              User               @relation(fields: [userId], references: [id])
@@ -487,12 +485,13 @@ model User {
   issuedCertificates  Certificate[]
   conversations       ConversationParticipant[]
   createdGroupStudies GroupStudy[]
+  coachedTeams        SportTeam[]
   sentMessages        Message[]
-  Notification        Notification[]
+  notifications       Notification[]
+  inventoryTransactions InventoryTransaction[]
   parent              Parent?
   student             Student?
   teacher             Teacher?
-  notifications Notification[]
   school              School                    @relation(fields: [schoolId], references: [id])
 
   @@map("User")
@@ -615,27 +614,113 @@ model DateSheet {
   @@map("DateSheet")
 }
 
-model Gallery {
-  id          String   @id
+model Notice {
+  id          String   @id @default(uuid())
   schoolId    String
   title       String
-  description String?
-  imageUrl    String
-  date        DateTime @default(now())
-  category    String?
+  content     String
+  audience    NoticeAudience @default(ALL)
   createdAt   DateTime @default(now())
-  School      School   @relation(fields: [schoolId], references: [id])
+  school      School   @relation(fields: [schoolId], references: [id])
+
+  @@map("Notice")
 }
 
-model Notification {
-  id           String   @id
-  userId       String
-  activityId   String
-  activityType String
-  message      String
-  isRead       Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  User         User     @relation(fields: [userId], references: [id])
+model Sport {
+  id          String   @id @default(uuid())
+  schoolId    String
+  name        String
+  category    String?
+  createdAt   DateTime @default(now())
+  school      School   @relation(fields: [schoolId], references: [id])
+  teams       SportTeam[]
+  events      SportEvent[]
+
+  @@map("Sport")
+}
+
+model SportTeam {
+  id          String   @id @default(uuid())
+  sportId     String
+  name        String
+  coachId     String?
+  createdAt   DateTime @default(now())
+  sport       Sport    @relation(fields: [sportId], references: [id])
+  coach       User?    @relation(fields: [coachId], references: [id])
+  players     SportTeamMember[]
+  matches     SportMatch[]
+
+  @@map("SportTeam")
+}
+
+model InventoryItem {
+  id          String   @id @default(uuid())
+  schoolId    String
+  name        String
+  category    String?
+  quantity    Int      @default(0)
+  unit        String?
+  minStock    Int      @default(0)
+  location    String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  school      School   @relation(fields: [schoolId], references: [id])
+  transactions InventoryTransaction[]
+
+  @@map("InventoryItem")
+}
+
+model InventoryTransaction {
+  id          String   @id @default(uuid())
+  itemId      String
+  userId      String
+  type        InventoryTransactionType
+  quantity    Int
+  notes       String?
+  date        DateTime @default(now())
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("InventoryTransaction")
+}
+
+model SportTeamMember {
+  id          String   @id @default(uuid())
+  teamId      String
+  studentId   String
+  role        String?
+  joinedAt    DateTime @default(now())
+  team        SportTeam @relation(fields: [teamId], references: [id])
+  student     Student   @relation(fields: [studentId], references: [id])
+
+  @@map("SportTeamMember")
+}
+
+model SportEvent {
+  id          String   @id @default(uuid())
+  schoolId    String
+  sportId     String?
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  school      School   @relation(fields: [schoolId], references: [id])
+  sport       Sport?   @relation(fields: [sportId], references: [id])
+  
+  @@map("SportEvent")
+}
+
+model SportMatch {
+  id          String   @id @default(uuid())
+  teamId      String
+  opponent    String
+  date        DateTime
+  result      String?
+  location    String?
+  team        SportTeam @relation(fields: [teamId], references: [id])
+
+  @@map("SportMatch")
 }
 
 enum LeaveType {
@@ -684,4 +769,17 @@ enum Gender {
   male
   female
   other
+}
+
+enum NoticeAudience {
+  ALL
+  STUDENTS
+  TEACHERS
+  PARENTS
+}
+
+enum InventoryTransactionType {
+  IN
+  OUT
+  ADJUSTMENT
 }

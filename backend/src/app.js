@@ -17,6 +17,9 @@ import hostelRoutes from './routes/hostelRoutes.js';
 import libraryRoutes from './routes/libraryRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
+import sportsRoutes from './routes/sportsRoutes.js';
+import groupStudyRoutes from './routes/groupStudyRoutes.js';
+import inventoryRoutes from './routes/inventoryRoutes.js';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
@@ -58,6 +61,9 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/hostels', hostelRoutes);
 app.use('/api/books', libraryRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/sports', sportsRoutes);
+app.use('/api/group-studies', groupStudyRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // Routes
 app.get('/', (req, res) => {
