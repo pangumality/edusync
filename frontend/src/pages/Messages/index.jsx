@@ -97,14 +97,61 @@ const ChatMessage = ({ message, isOwn, participants, currentUserId }) => {
   );
 };
 
-const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
+const ClassSelectorModal = ({ open, classes, onClose, onConfirm }) => {
+  if (!open) return null;
+  const [selected, setSelected] = React.useState([]);
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="font-bold text-gray-800">Select Classes</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <div className="p-4 space-y-2 max-h-[50vh] overflow-y-auto">
+          {classes.map(c => (
+            <label key={c.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.includes(c.id)}
+                onChange={(e)=>{
+                  if (e.target.checked) setSelected(prev => [...prev, c.id]);
+                  else setSelected(prev => prev.filter(id => id!==c.id));
+                }}
+              />
+              <span>{c.name}</span>
+            </label>
+          ))}
+          {classes.length === 0 && (
+            <div className="text-sm text-gray-500">No classes available.</div>
+          )}
+        </div>
+        <div className="p-4 border-t border-gray-100">
+          <button
+            disabled={selected.length===0}
+            onClick={()=>onConfirm(selected)}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [recipients, setRecipients] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isBroadcastMode, setIsBroadcastMode] = useState(false);
+  const [teacherClasses, setTeacherClasses] = useState([]);
+  const [broadcastChoice, setBroadcastChoice] = useState(null);
+  const [classSelectorOpen, setClassSelectorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       fetchRecipients();
+      if (currentUser?.role === 'teacher') fetchTeacherClasses();
     }
   }, [isOpen]);
 
@@ -120,6 +167,13 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
     }
   };
 
+  const fetchTeacherClasses = async () => {
+    try {
+      const { data } = await api.get('/teacher/classes');
+      setTeacherClasses(data || []);
+    } catch (e) {}
+  };
+
   const filteredUsers = recipients.filter(u => 
     `${u.firstName} ${u.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -133,7 +187,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
         <div className="p-4 border-b border-gray-100 flex justify-between items-center">
           <div>
             <h3 className="font-bold text-gray-800">New Message</h3>
-            <p className="text-xs text-gray-500">Select a recipient to start chatting</p>
+            <p className="text-xs text-gray-500">Select a recipient or use broadcast if available</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
         </div>
@@ -149,8 +203,15 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {(currentUser?.role === 'admin' || currentUser?.role === 'staff' || currentUser?.role === 'teacher') && (
+            <div className="mt-3 flex items-center justify-between">
+              <label className="text-sm text-gray-600">Broadcast</label>
+              <input type="checkbox" checked={isBroadcastMode} onChange={(e)=>setIsBroadcastMode(e.target.checked)} />
+            </div>
+          )}
         </div>
         
+        {!isBroadcastMode ? (
         <div className="overflow-y-auto p-2 space-y-1 min-h-[200px]">
           {loading ? (
              <div className="flex justify-center items-center h-full">
@@ -183,7 +244,78 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat }) => {
              </div>
           )}
         </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={()=>onStartBroadcast({ scope: 'school_admin_all' })}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+              >
+                Broadcast to all school admins
+              </button>
+            )}
+            {currentUser?.role === 'staff' && (
+              <div className="space-y-2">
+                <button
+                  onClick={()=>onStartBroadcast({ scope: 'teachers_all' })}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  Broadcast to all teachers
+                </button>
+                <button
+                  onClick={()=>onStartBroadcast({ scope: 'parents_all' })}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  Broadcast to all parents
+                </button>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-600">Broadcast to staff department</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={()=>onStartBroadcast({ scope: 'staff_department', department: 'finance' })} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Finance</button>
+                    <button onClick={()=>onStartBroadcast({ scope: 'staff_department', department: 'library' })} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Library</button>
+                    <button onClick={()=>onStartBroadcast({ scope: 'staff_department', department: 'transport' })} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Transport</button>
+                    <button onClick={()=>onStartBroadcast({ scope: 'staff_department', department: 'sports' })} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Sports</button>
+                    <button onClick={()=>onStartBroadcast({ scope: 'staff_department', department: 'exams' })} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg">Exams</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {currentUser?.role === 'teacher' && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <button
+                    className={`flex-1 px-3 py-2 rounded-lg ${broadcastChoice==='class_students'?'bg-blue-600 text-white':'bg-gray-100 text-gray-700'}`}
+                    onClick={()=>{
+                      setBroadcastChoice('class_students');
+                      setClassSelectorOpen(true);
+                    }}
+                  >
+                    Class students
+                  </button>
+                  <button
+                    className={`flex-1 px-3 py-2 rounded-lg ${broadcastChoice==='class_parents'?'bg-blue-600 text-white':'bg-gray-100 text-gray-700'}`}
+                    onClick={()=>{
+                      const classIds = (teacherClasses || []).map(c => c.id);
+                      onStartBroadcast({ scope: 'class_parents', classIds });
+                    }}
+                  >
+                    Class parents
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+      <ClassSelectorModal
+        open={classSelectorOpen}
+        classes={teacherClasses}
+        onClose={()=>setClassSelectorOpen(false)}
+        onConfirm={(classIds)=>{
+          setClassSelectorOpen(false);
+          onStartBroadcast({ scope: broadcastChoice, classIds });
+        }}
+      />
     </div>
   );
 };
@@ -362,6 +494,16 @@ export default function Messages() {
           } catch (error) {
               console.error(error);
           }
+      } else if (selectedConversation?.id === 'broadcast') {
+          try {
+              const body = { content: newMessage, ...(selectedConversation.opts||{}) };
+              const { data } = await api.post('/messages/broadcast', body);
+              setNewMessage('');
+              fetchConversations();
+          } catch (error) {
+              console.error('Broadcast failed', error);
+              alert('Broadcast failed');
+          }
       } else {
           handleSendMessage(e);
       }
@@ -428,15 +570,12 @@ export default function Messages() {
             <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
-                  {selectedConversation.name.charAt(0)}
+                  {(selectedConversation.id === 'broadcast' ? 'B' : (selectedConversation.name || 'Chat')[0])}
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    {selectedConversation.name}
+                    {selectedConversation.id === 'broadcast' ? 'Broadcast' : (selectedConversation.name || 'Chat')}
                   </h3>
-                  {/* <span className="flex items-center gap-1 text-xs text-green-500">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span> Online
-                  </span> */}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
@@ -448,6 +587,9 @@ export default function Messages() {
 
             {/* Messages Scroll Area */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+              {messages.length === 0 && (
+                <div className="text-center text-gray-400 py-12">No messages yet</div>
+              )}
               {messages.map(msg => (
                 <ChatMessage 
                   key={msg.id} 
@@ -495,6 +637,13 @@ export default function Messages() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
         onStartChat={startNewChat}
+        onStartBroadcast={(opts)=>{
+          setIsModalOpen(false);
+          setSelectedConversation({ id: 'broadcast', opts });
+          setMessages([]);
+          setParticipants([]);
+        }}
+        currentUser={currentUser}
       />
     </div>
   );
