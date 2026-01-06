@@ -13,6 +13,10 @@ import { getDepartmentStaff, setDepartmentStaff, listDepartments } from './confi
 import { createNotification, createBulkNotifications } from './utils/notification.js';
 import { upload } from './middleware/uploadMiddleware.js';
 import path from 'path';
+import hostelRoutes from './routes/hostelRoutes.js';
+import libraryRoutes from './routes/libraryRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
+import noticeRoutes from './routes/noticeRoutes.js';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
@@ -50,6 +54,10 @@ app.use(helmet({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+
+app.use('/api/hostels', hostelRoutes);
+app.use('/api/books', libraryRoutes);
+app.use('/api/notices', noticeRoutes);
 
 // Routes
 app.get('/', (req, res) => {
@@ -3133,6 +3141,32 @@ app.post('/api/newsletters', authenticate, requirePermission(PERMISSIONS.NEWSLET
     }
 });
 
+app.put('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId } = req.user;
+        const { title, content } = req.body;
+
+        const existing = await prisma.newsletter.findFirst({
+            where: { id, schoolId }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Newsletter not found' });
+        }
+
+        const updated = await prisma.newsletter.update({
+            where: { id },
+            data: { title, content }
+        });
+        
+        res.json(updated);
+    } catch (error) {
+        console.error('Failed to update newsletter:', error);
+        res.status(500).json({ error: 'Failed to update newsletter' });
+    }
+});
+
 app.delete('/api/newsletters/:id', authenticate, requirePermission(PERMISSIONS.NEWSLETTER_MANAGE), async (req, res) => {
     try {
         const { id } = req.params;
@@ -3744,5 +3778,7 @@ app.put('/api/notifications/:id/read', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to update notification' });
     }
 });
+
+
 
 export default app;

@@ -33,6 +33,7 @@ import Leaves from './pages/Leaves';
 import TimeTable from './pages/TimeTable';
 import Certificates from './pages/Certificates';
 import Profile from './pages/Profile';
+import NoticeBoard from './pages/NoticeBoard';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="notices" element={<NoticeBoard />} />
           <Route path="newsletters" element={<Newsletter />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="leaves" element={<Leaves />} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, Plus, Trash2, Calendar, Send } from 'lucide-react';
+import { Newspaper, Plus, Trash2, Calendar, Send, Pencil } from 'lucide-react';
 import api from '../../utils/api';
 import { useOutletContext } from 'react-router-dom';
 
@@ -10,6 +10,7 @@ const Newsletter = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', content: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Check if user can manage newsletters (Admin/Staff)
   // Assuming 'staff' role corresponds to School Admin in this context based on app logic
@@ -36,17 +37,29 @@ const Newsletter = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post('/newsletters', formData);
+      if (editingId) {
+        await api.put(`/newsletters/${editingId}`, formData);
+      } else {
+        await api.post('/newsletters', formData);
+      }
       setFormData({ title: '', content: '' });
       setShowForm(false);
+      setEditingId(null);
       fetchNewsletters();
     } catch (error) {
-      console.error('Failed to create newsletter:', error);
-      const msg = error.response?.data?.details || error.response?.data?.error || 'Failed to create newsletter';
+      console.error('Failed to save newsletter:', error);
+      const msg = error.response?.data?.details || error.response?.data?.error || 'Failed to save newsletter';
       alert(msg);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEdit = (newsletter) => {
+    setFormData({ title: newsletter.title, content: newsletter.content });
+    setEditingId(newsletter.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id) => {
@@ -72,7 +85,15 @@ const Newsletter = () => {
         </div>
         {canManage && (
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              if (showForm) {
+                setShowForm(false);
+                setEditingId(null);
+                setFormData({ title: '', content: '' });
+              } else {
+                setShowForm(true);
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
           >
             {showForm ? 'Cancel' : <><Plus size={20} /> Create Newsletter</>}
@@ -82,7 +103,7 @@ const Newsletter = () => {
 
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-in fade-in slide-in-from-top-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">New Announcement</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">{editingId ? 'Edit Announcement' : 'New Announcement'}</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -112,7 +133,7 @@ const Newsletter = () => {
                 disabled={submitting}
                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {submitting ? 'Publishing...' : <><Send size={18} /> Publish Newsletter</>}
+                {submitting ? 'Saving...' : <><Send size={18} /> {editingId ? 'Update Newsletter' : 'Publish Newsletter'}</>}
               </button>
             </div>
           </form>
@@ -131,13 +152,22 @@ const Newsletter = () => {
               <div className="flex justify-between items-start mb-3">
                 <h2 className="text-xl font-bold text-gray-800">{newsletter.title}</h2>
                 {canManage && (
-                  <button
-                    onClick={() => handleDelete(newsletter.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete Newsletter"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(newsletter)}
+                      className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                      title="Edit Newsletter"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(newsletter.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      title="Delete Newsletter"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
