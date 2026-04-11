@@ -12,10 +12,10 @@ console.log("Running seedAll()...");
 seedAll();
 
 console.log("Checking seeded data...");
-const admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
-const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-const parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
-const messages = JSON.parse(localStorage.getItem('conversations:doonites') || '[]');
+const admins = JSON.parse(localStorage.getItem('admins:edusync') || '[]');
+const teachers = JSON.parse(localStorage.getItem('teachers:edusync') || '[]');
+const parents = JSON.parse(localStorage.getItem('parents:edusync') || '[]');
+const messages = JSON.parse(localStorage.getItem('conversations:edusync') || '[]');
 
 console.log(`Admins: ${admins.length}`);
 console.log(`Teachers: ${teachers.length}`);

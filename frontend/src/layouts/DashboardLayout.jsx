@@ -109,6 +109,12 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const loadUser = () => {
+      const readList = (key) => JSON.parse(
+        localStorage.getItem(`${key}:edusync`) ||
+        localStorage.getItem(`${key}:doonites`) ||
+        '[]'
+      );
+
       const savedUserId = localStorage.getItem('current_demo_user_id');
       // Also check authToken
       const token = localStorage.getItem('authToken');
@@ -119,11 +125,11 @@ const DashboardLayout = () => {
 
       let foundUser = null;
       
-      const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-      const students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
-      const admins = JSON.parse(localStorage.getItem('admins:doonites') || '[]');
-      const librarians = JSON.parse(localStorage.getItem('librarians:doonites') || '[]');
-      const parents = JSON.parse(localStorage.getItem('parents:doonites') || '[]');
+      const teachers = readList('teachers');
+      const students = readList('students');
+      const admins = readList('admins');
+      const librarians = readList('librarians');
+      const parents = readList('parents');
       const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
       const allUsers = [...admins, ...teachers, ...librarians, ...students, ...parents];
@@ -343,7 +349,7 @@ const DashboardLayout = () => {
              <SchoolIcon size={18} className="text-white" />
            </div>
            <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
-             doonITes weBBed serVIces ERP
+             Edusync
            </h1>
         </div>
         <div className="flex items-center gap-6 relative">
@@ -475,7 +481,7 @@ const DashboardLayout = () => {
       </div>
       
       <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} School ERP. All rights reserved.
+        © {new Date().getFullYear()} Edusync. All rights reserved.
       </footer>
     </div>
   );

@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 async function startServer() {
   try {
     await prisma.$connect();
+    await prisma.$queryRaw`SELECT 1`;
     console.log('✅ Database connected successfully');
     
     const email = 'admin@system.com';

@@ -15,7 +15,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 function storageKey(date, klass) {
-  return `attendance:doonites:${date}:${klass}`;
+  return `attendance:edusync:${date}:${klass}`;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -93,15 +93,16 @@ export default function Attendance() {
   }, [klass]);
 
   const currentKey = storageKey(date, klass);
+  const legacyKey = `attendance:doonites:${date}:${klass}`;
   
   const currentStudents = students.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase())
   );
 
   useEffect(() => {
-    const saved = localStorage.getItem(currentKey);
+    const saved = localStorage.getItem(currentKey) || localStorage.getItem(legacyKey);
     setRecords(saved ? JSON.parse(saved) : {});
-  }, [currentKey]);
+  }, [currentKey, legacyKey]);
 
   useEffect(() => {
     localStorage.setItem(currentKey, JSON.stringify(records));

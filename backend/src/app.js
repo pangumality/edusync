@@ -52,7 +52,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('School ERP Backend is running');
+  res.send('Edusync Backend is running');
 });
 
 app.get('/api/health', (req, res) => {

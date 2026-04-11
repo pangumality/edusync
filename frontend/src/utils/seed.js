@@ -1,3 +1,22 @@
+const STORAGE_NAMESPACE = 'edusync';
+const LEGACY_NAMESPACE = 'doonites';
+
+function nsKey(key) {
+  return `${key}:${STORAGE_NAMESPACE}`;
+}
+
+function legacyKey(key) {
+  return `${key}:${LEGACY_NAMESPACE}`;
+}
+
+function getList(key) {
+  return JSON.parse(localStorage.getItem(nsKey(key)) || localStorage.getItem(legacyKey(key)) || '[]');
+}
+
+function setList(key, value) {
+  localStorage.setItem(nsKey(key), JSON.stringify(value));
+}
+
 export function seedClasses() {
   const classes = [
     { id: 'class-1', name: 'Grade 1', sections: ['A', 'B'] },
@@ -7,7 +26,7 @@ export function seedClasses() {
     { id: 'class-5', name: 'Grade 5', sections: ['A'] },
     { id: 'class-6', name: 'Grade 6', sections: ['A', 'B'] },
   ];
-  localStorage.setItem('classes:doonites', JSON.stringify(classes));
+  setList('classes', classes);
   return classes;
 }
 
@@ -26,11 +45,11 @@ export function seedTeachers() {
   const list = names.map((n, i) => ({
     id: uid(),
     name: n,
-    email: `${n.split(' ')[0].toLowerCase()}@doonites.com`,
+    email: `${n.split(' ')[0].toLowerCase()}@edusync.com`,
     role: 'TEACHER',
     subject: subjects[i % subjects.length],
   }));
-  localStorage.setItem('teachers:doonites', JSON.stringify(list));
+  setList('teachers', list);
   return list;
 }
 
@@ -38,7 +57,7 @@ export function seedStudents(classes) {
   const first = ['Amina','Daniel','Grace','Sam','Rahul','Yara','Chen','Maryam','Peter','Olivia','Kwame','Lara','Victor','Noah','Maya','Ivy','Jason','Kofi','Ama','Zara'];
   const last = ['Kora','Mensah','Okoro','Ndlovu','Patel','Hassan','Li','Ali','Kim','Adebayo','Darko','Owusu','Tetteh','Bello','Nwosu','Moyo','Doe','Boateng','Abebe','Sule'];
   const list = [];
-  const cls = classes || JSON.parse(localStorage.getItem('classes:doonites') || '[]');
+  const cls = classes || getList('classes');
   let idx = 0;
   for (const c of cls) {
     for (const sec of c.sections) {
@@ -56,7 +75,7 @@ export function seedStudents(classes) {
       }
     }
   }
-  localStorage.setItem('students:doonites', JSON.stringify(list));
+  setList('students', list);
   return list;
 }
 
@@ -68,28 +87,28 @@ export function seedParents(students) {
     role: 'PARENT',
     children: [student.id]
   }));
-  localStorage.setItem('parents:doonites', JSON.stringify(list));
+  setList('parents', list);
   return list;
 }
 
 export function seedStaff() {
   const admins = [
-    { id: uid(), name: 'Super Admin User', email: 'super@doonites.com', role: 'SUPER_ADMIN' },
-    { id: uid(), name: 'Admin User', email: 'admin@doonites.com', role: 'ADMIN' },
+    { id: uid(), name: 'Super Admin User', email: 'super@edusync.com', role: 'SUPER_ADMIN' },
+    { id: uid(), name: 'Admin User', email: 'admin@edusync.com', role: 'ADMIN' },
   ];
   const librarians = [
-    { id: uid(), name: 'Librarian User', email: 'library@doonites.com', role: 'LIBRARIAN' },
+    { id: uid(), name: 'Librarian User', email: 'library@edusync.com', role: 'LIBRARIAN' },
   ];
   
-  localStorage.setItem('admins:doonites', JSON.stringify(admins));
-  localStorage.setItem('librarians:doonites', JSON.stringify(librarians));
+  setList('admins', admins);
+  setList('librarians', librarians);
   
   return { admins, librarians };
 }
 
 export function seedMessages() {
-  const teachers = JSON.parse(localStorage.getItem('teachers:doonites') || '[]');
-  const students = JSON.parse(localStorage.getItem('students:doonites') || '[]');
+  const teachers = getList('teachers');
+  const students = getList('students');
   
   if (teachers.length === 0 || students.length === 0) return [];
 
@@ -137,7 +156,7 @@ export function seedMessages() {
     });
   }
 
-  localStorage.setItem('conversations:doonites', JSON.stringify(conversations));
+  setList('conversations', conversations);
   return conversations;
 }
 

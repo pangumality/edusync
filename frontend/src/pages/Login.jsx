@@ -122,7 +122,7 @@ const Login = () => {
       </div>
       
       <footer className="absolute bottom-2 left-0 right-0 text-center text-xs text-white/80 z-10">
-        © {new Date().getFullYear()} School ERP. All rights reserved.
+        © {new Date().getFullYear()} Edusync. All rights reserved.
       </footer>
     </div>
   );
