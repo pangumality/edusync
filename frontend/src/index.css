@@ -27,7 +27,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-indigo-400 transition-colors;
+  @apply bg-slate-300 rounded-full hover:bg-brand-400 transition-colors;
 }
 
 /* Smooth transitions for all interactive elements */

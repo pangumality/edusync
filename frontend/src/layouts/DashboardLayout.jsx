@@ -46,8 +46,8 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick, isCollapsed }) =>
       className={clsx(
         'group flex items-center gap-3 px-4 py-3 mb-1.5 rounded-xl border-none transition-all duration-300 relative overflow-hidden',
         active
-          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 transform scale-[1.02]'
-          : 'bg-transparent text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:pl-6',
+          ? 'bg-brand-600 text-white shadow-lg shadow-brand-200/60 transform scale-[1.02]'
+          : 'bg-transparent text-slate-600 hover:bg-brand-50 hover:text-brand-800 hover:pl-6',
         isCollapsed ? 'justify-center px-2' : ''
       )}
       title={isCollapsed ? label : ''}
@@ -59,12 +59,12 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick, isCollapsed }) =>
         size={20} 
         className={clsx(
           'transition-colors duration-300',
-          active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'
+          active ? 'text-white' : 'text-slate-400 group-hover:text-brand-700'
         )} 
       />
       {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden tracking-wide">{label}</span>}
       {!isCollapsed && !active && (
-         <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" />
+         <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-brand-400" />
       )}
     </Link>
   );
@@ -226,7 +226,7 @@ const DashboardLayout = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
         {/* Mobile Header - Curved */}
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white pt-6 pb-16 px-6 rounded-b-[40px] shadow-xl relative z-10 transition-all duration-300">
+        <div className="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 text-white pt-6 pb-16 px-6 rounded-b-[40px] shadow-xl relative z-10 transition-all duration-300">
           <div className="absolute inset-0 bg-white/10 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/20 to-transparent"></div>
           <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center gap-3">
@@ -266,7 +266,7 @@ const DashboardLayout = () => {
             
             {/* Drawer Content */}
             <div className="relative bg-white w-[80%] max-w-sm h-full shadow-2xl flex flex-col animate-slide-in">
-              <div className="p-4 bg-[#0f172a] text-white flex justify-between items-center">
+              <div className="p-4 bg-sidebar-bg text-white flex justify-between items-center">
                 <span className="font-bold text-lg">Menu</span>
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-white/10 rounded">
                   <X size={24} />
@@ -292,7 +292,7 @@ const DashboardLayout = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 mb-4 hover:bg-gray-100 p-2 rounded-lg -mx-2 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
+                  <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-800 font-bold">
                     {currentUser?.firstName?.[0] || 'U'}
                   </div>
                   <div>
@@ -321,7 +321,7 @@ const DashboardLayout = () => {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a] text-white h-16 flex items-center justify-between px-8 shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-sidebar-bg text-white h-16 flex items-center justify-between px-8 shadow-lg z-50">
           <Link to="/" className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
             <Home size={24} />
           </Link>
@@ -343,12 +343,12 @@ const DashboardLayout = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Navigation Bar */}
-      <header className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white h-16 flex items-center justify-between px-6 shadow-md z-20 sticky top-0">
+      <header className="bg-gradient-to-r from-sidebar-bg via-brand-950 to-sidebar-bg text-white h-16 flex items-center justify-between px-6 shadow-md z-20 sticky top-0">
         <div className="flex items-center gap-4">
-           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/30">
              <SchoolIcon size={18} className="text-white" />
            </div>
-           <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
+           <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-brand-100 to-brand-300">
              Edusync
            </h1>
         </div>
@@ -373,7 +373,7 @@ const DashboardLayout = () => {
                    {unreadCount > 0 && (
                      <button 
                        onClick={markAllAsRead}
-                       className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                       className="text-xs text-brand-700 hover:text-brand-800 flex items-center gap-1"
                      >
                        <CheckCheck size={14} /> Mark all read
                      </button>
@@ -392,7 +392,7 @@ const DashboardLayout = () => {
                          onClick={() => handleNotificationClick(notification)}
                          className={clsx(
                            "p-3 cursor-pointer hover:bg-gray-50 transition-colors",
-                           !notification.isRead ? "bg-blue-50/50" : ""
+                           !notification.isRead ? "bg-brand-50/70" : ""
                          )}
                        >
                          <div className="flex justify-between items-start gap-2">
@@ -402,7 +402,7 @@ const DashboardLayout = () => {
                            {!notification.isRead && (
                              <button 
                                onClick={(e) => markAsRead(notification.id, e)}
-                               className="text-gray-400 hover:text-blue-600"
+                               className="text-gray-400 hover:text-brand-700"
                                title="Mark as read"
                              >
                                <Check size={14} />
@@ -421,7 +421,7 @@ const DashboardLayout = () => {
            </div>
 
            <Link to="/profile" className="flex items-center gap-2 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors">
-             <User size={20} className="text-purple-400" />
+             <User size={20} className="text-brand-300" />
              <span className="text-sm font-medium">
                {currentUser ? `${currentUser.firstName} (${currentUser.role})` : 'Loading...'}
              </span>
@@ -439,17 +439,17 @@ const DashboardLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-            "bg-white border-r border-indigo-50/50 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10 relative",
+            "bg-white border-r border-brand-100 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
           {/* Decorative background blob */}
-          <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-brand-50/60 to-transparent pointer-events-none" />
           
           <div className={clsx("p-4 flex items-center relative z-10", isCollapsed ? "justify-center" : "justify-between")}>
-             {!isCollapsed && <h3 className="text-indigo-900/50 font-bold text-xs uppercase tracking-wider mb-2 px-2">Main Menu</h3>}
+             {!isCollapsed && <h3 className="text-slate-900/50 font-bold text-xs uppercase tracking-wider mb-2 px-2">Main Menu</h3>}
              <button 
                 onClick={() => setIsCollapsed(!isCollapsed)} 
-                className="p-1.5 hover:bg-indigo-50 text-indigo-400 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-brand-50 text-brand-700 rounded-lg transition-colors"
              >
                 {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
              </button>
