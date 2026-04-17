@@ -143,7 +143,7 @@ export default function Gallery() {
         {canManage && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
+            className="ui-btn ui-btn-primary"
           >
             <Upload size={20} />
             Upload Photo
@@ -235,13 +235,13 @@ export default function Gallery() {
               required
               value={formData.title}
               onChange={e => setFormData({...formData, title: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ui-input"
               placeholder="Event title"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Upload Images</label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer relative bg-slate-50 hover:bg-blue-50/50"
+            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-brand-400 transition-colors cursor-pointer relative bg-slate-50 hover:bg-brand-50/40"
               onClick={() => document.getElementById('fileInput').click()}
             >
               <input 
@@ -292,7 +292,7 @@ export default function Gallery() {
               value={formData.imageUrl}
               onChange={e => setFormData({...formData, imageUrl: e.target.value})}
               placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="ui-input text-sm"
               disabled={files.length > 0}
             />
           </div>
@@ -302,7 +302,7 @@ export default function Gallery() {
               rows="3"
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ui-textarea"
               placeholder="Describe the event..."
             />
           </div>
@@ -312,7 +312,7 @@ export default function Gallery() {
               <select
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="ui-input bg-white"
               >
                 <option value="">Select...</option>
                 <option value="Sports">Sports</option>
@@ -329,7 +329,7 @@ export default function Gallery() {
                 required
                 value={formData.date}
                 onChange={e => setFormData({...formData, date: e.target.value})}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="ui-input"
               />
             </div>
           </div>
@@ -337,13 +337,13 @@ export default function Gallery() {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors font-medium"
+              className="ui-btn ui-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 font-medium"
+              className="ui-btn ui-btn-primary"
             >
               Post Photo
             </button>

@@ -41,7 +41,7 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
       </div>
     );
   }
@@ -61,25 +61,25 @@ const Profile = () => {
 
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+        <div className="h-32 bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700"></div>
         <div className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-12 mb-6">
             <div className="relative group">
               <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg">
-                <div className="w-full h-full rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 text-3xl font-bold">
+                <div className="w-full h-full rounded-xl bg-brand-50 flex items-center justify-center text-brand-700 text-3xl font-bold">
                   {user.firstName?.[0] || 'U'}
                 </div>
               </div>
-              <button className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-md text-slate-500 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-md text-slate-500 hover:text-brand-700 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Camera size={16} />
               </button>
             </div>
             <div className="flex gap-3">
-              <span className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-medium border border-indigo-100 capitalize">
+              <span className="bg-brand-50 text-brand-800 px-4 py-1.5 rounded-full text-sm font-medium border border-brand-100 capitalize">
                 {user.role}
               </span>
               {user.isActive && (
-                <span className="bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-sm font-medium border border-emerald-100">
+                <span className="bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-sm font-medium border border-green-100">
                   Active
                 </span>
               )}
@@ -103,7 +103,7 @@ const Profile = () => {
         {/* Personal Information */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <User className="text-indigo-500" size={20} />
+            <User className="text-brand-700" size={20} />
             Personal Information
           </h3>
           <div className="space-y-4">
@@ -136,7 +136,7 @@ const Profile = () => {
         {/* Academic/Work Information */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <School className="text-pink-500" size={20} />
+            <School className="text-accent" size={20} />
             {user.role === 'student' ? 'Academic Information' : 'Work Information'}
           </h3>
           <div className="space-y-4">

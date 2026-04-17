@@ -94,7 +94,7 @@ const Schools = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="animate-spin text-blue-500" size={40} />
+        <Loader2 className="animate-spin text-brand-600" size={40} />
       </div>
     );
   }
@@ -103,7 +103,7 @@ const Schools = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <SchoolIcon className="text-blue-600" />
+          <SchoolIcon className="text-brand-700" />
           Manage Schools
         </h1>
         <button 
@@ -112,7 +112,7 @@ const Schools = () => {
             setFormData({ name: '', code: '', address: '', phone: '', email: '', website: '', adminEmail: '' });
             setShowModal(true);
           }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
+          className="ui-btn ui-btn-primary"
         >
           <Plus size={20} />
           Add School
@@ -127,8 +127,8 @@ const Schools = () => {
             className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
           >
             <div className="flex justify-between items-start mb-4">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <SchoolIcon className="text-blue-600" size={24} />
+              <div className="bg-brand-50 p-3 rounded-lg border border-brand-100">
+                <SchoolIcon className="text-brand-700" size={24} />
               </div>
               <div className="flex gap-2">
                 <button 
@@ -136,7 +136,7 @@ const Schools = () => {
                     e.stopPropagation();
                     handleEdit(school);
                   }}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                  className="p-2 text-gray-400 hover:text-brand-700 hover:bg-brand-50 rounded-full transition-colors"
                 >
                   <Edit2 size={18} />
                 </button>
@@ -196,7 +196,7 @@ const Schools = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ui-input"
                   placeholder="e.g. The Asian School"
                 />
               </div>
@@ -209,7 +209,7 @@ const Schools = () => {
                   value={formData.code}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ui-input"
                   placeholder="e.g. TAS001"
                 />
               </div>
@@ -221,7 +221,7 @@ const Schools = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="ui-input"
                 />
               </div>
 
@@ -233,7 +233,7 @@ const Schools = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="ui-input"
                   />
                 </div>
                 <div>
@@ -243,26 +243,26 @@ const Schools = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="ui-input"
                   />
                 </div>
               </div>
 
               {!editingSchool && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-bold text-blue-800 mb-2">School Admin Account</h3>
+                <div className="bg-brand-50 p-4 rounded-lg border border-brand-100">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2">School Admin Account</h3>
                   <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-1">Admin Email *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Admin Email *</label>
                     <input
                       type="email"
                       name="adminEmail"
                       value={formData.adminEmail || ''}
                       onChange={handleInputChange}
                       required={!editingSchool}
-                      className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="ui-input"
                       placeholder="admin@school.com"
                     />
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-brand-700 mt-1">
                       Default password will be: <strong>School@admin</strong>
                     </p>
                   </div>
@@ -273,14 +273,14 @@ const Schools = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="ui-btn ui-btn-secondary flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex justify-center items-center"
+                  className="ui-btn ui-btn-primary flex-1 flex justify-center items-center disabled:opacity-50"
                 >
                   {submitting ? <Loader2 className="animate-spin" size={20} /> : 'Save School'}
                 </button>

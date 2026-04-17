@@ -95,7 +95,7 @@ export default function GroupStudies() {
         
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          className="ui-btn ui-btn-primary"
         >
           <Plus size={20} />
           New Group
@@ -110,12 +110,12 @@ export default function GroupStudies() {
             <div key={study.id} className="bg-white p-6 rounded-xl shadow-soft border border-gray-100 flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                  <div className="p-3 bg-brand-50 text-brand-700 rounded-lg">
                     <Users size={24} />
                   </div>
                   {(currentUser?.role === 'admin' || currentUser?.id === study.creatorId) && (
                     <div className="flex gap-2">
-                        <button onClick={() => handleEdit(study)} className="text-blue-400 hover:text-blue-600">
+                        <button onClick={() => handleEdit(study)} className="text-slate-400 hover:text-brand-700">
                             <Edit2 size={18} />
                         </button>
                         <button onClick={() => handleDelete(study.id)} className="text-red-400 hover:text-red-600">
@@ -145,7 +145,7 @@ export default function GroupStudies() {
                 </div>
               </div>
               
-              <button className="mt-4 w-full py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors">
+              <button className="mt-4 w-full py-2 border border-brand-600 text-brand-700 rounded-lg hover:bg-brand-50 transition-colors font-semibold">
                 Join Group
               </button>
             </div>
@@ -155,7 +155,7 @@ export default function GroupStudies() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="ui-card p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit Study Group' : 'Create Study Group'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -164,7 +164,7 @@ export default function GroupStudies() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="ui-input"
                   required
                 />
               </div>
@@ -173,7 +173,7 @@ export default function GroupStudies() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg h-24"
+                  className="ui-textarea h-24"
                 />
               </div>
               <div className="mb-4">
@@ -182,7 +182,7 @@ export default function GroupStudies() {
                   type="datetime-local"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="ui-input"
                   required
                 />
               </div>
@@ -191,7 +191,7 @@ export default function GroupStudies() {
                 <select
                   value={formData.subjectId}
                   onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="ui-input"
                 >
                   <option value="">-- Select Subject --</option>
                   {subjects.map(s => (
@@ -204,13 +204,13 @@ export default function GroupStudies() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   {editingId ? 'Update' : 'Create'}
                 </button>

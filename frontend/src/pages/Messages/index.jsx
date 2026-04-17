@@ -33,7 +33,7 @@ const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) =>
     <div 
       onClick={() => onClick(conversation)}
       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-        isActive ? 'bg-blue-50 border-l-4 border-blue-500' : 'hover:bg-gray-50 border-l-4 border-transparent'
+        isActive ? 'bg-brand-50 border-l-4 border-brand-600' : 'hover:bg-gray-50 border-l-4 border-transparent'
       }`}
     >
       <div className="relative">
@@ -56,7 +56,7 @@ const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) =>
             {lastMsg ? lastMsg.content : 'No messages yet'}
             </p>
             {conversation.unreadCount > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                <span className="bg-brand-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                     {conversation.unreadCount}
                 </span>
             )}
@@ -81,12 +81,12 @@ const ChatMessage = ({ message, isOwn, participants, currentUserId }) => {
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
         isOwn 
-          ? 'bg-blue-600 text-white rounded-tr-none' 
+          ? 'bg-brand-600 text-white rounded-tr-none' 
           : 'bg-gray-100 text-gray-800 rounded-tl-none'
       }`}>
         {!isOwn && <p className="text-xs font-bold mb-1 text-gray-500">{message.sender?.firstName}</p>}
         <p className="text-sm">{message.content}</p>
-        <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOwn ? 'text-blue-200' : 'text-gray-400'}`}>
+        <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isOwn ? 'text-brand-200' : 'text-gray-400'}`}>
           {formatTime(message.sentAt)}
           {isOwn && (
              isRead ? <CheckCheck size={14} /> : <Check size={14} />
@@ -129,7 +129,7 @@ const ClassSelectorModal = ({ open, classes, onClose, onConfirm }) => {
           <button
             disabled={selected.length===0}
             onClick={()=>onConfirm(selected)}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+            className="ui-btn ui-btn-primary w-full disabled:opacity-50"
           >
             Confirm
           </button>
@@ -198,7 +198,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
             <input 
               type="text" 
               placeholder="Search by name or role..." 
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -215,7 +215,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
         <div className="overflow-y-auto p-2 space-y-1 min-h-[200px]">
           {loading ? (
              <div className="flex justify-center items-center h-full">
-               <Loader2 className="animate-spin text-blue-500" />
+               <Loader2 className="animate-spin text-brand-600" />
              </div>
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map(user => (
@@ -224,7 +224,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
                 onClick={() => onStartChat(user)}
                 className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center font-bold border border-brand-100">
                   {user.firstName.charAt(0)}
                 </div>
                 <div className="flex-1">
@@ -249,7 +249,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
             {currentUser?.role === 'admin' && (
               <button
                 onClick={()=>onStartBroadcast({ scope: 'school_admin_all' })}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+                className="ui-btn ui-btn-primary w-full"
               >
                 Broadcast to all school admins
               </button>
@@ -258,13 +258,13 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
               <div className="space-y-2">
                 <button
                   onClick={()=>onStartBroadcast({ scope: 'teachers_all' })}
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  className="ui-btn ui-btn-primary w-full"
                 >
                   Broadcast to all teachers
                 </button>
                 <button
                   onClick={()=>onStartBroadcast({ scope: 'parents_all' })}
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  className="ui-btn ui-btn-primary w-full"
                 >
                   Broadcast to all parents
                 </button>
@@ -284,7 +284,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <button
-                    className={`flex-1 px-3 py-2 rounded-lg ${broadcastChoice==='class_students'?'bg-blue-600 text-white':'bg-gray-100 text-gray-700'}`}
+                    className={`flex-1 px-3 py-2 rounded-lg font-semibold ${broadcastChoice==='class_students'?'bg-brand-600 text-white':'bg-gray-100 text-gray-700'}`}
                     onClick={()=>{
                       setBroadcastChoice('class_students');
                       setClassSelectorOpen(true);
@@ -293,7 +293,7 @@ const NewMessageModal = ({ isOpen, onClose, onStartChat, onStartBroadcast, curre
                     Class students
                   </button>
                   <button
-                    className={`flex-1 px-3 py-2 rounded-lg ${broadcastChoice==='class_parents'?'bg-blue-600 text-white':'bg-gray-100 text-gray-700'}`}
+                    className={`flex-1 px-3 py-2 rounded-lg font-semibold ${broadcastChoice==='class_parents'?'bg-brand-600 text-white':'bg-gray-100 text-gray-700'}`}
                     onClick={()=>{
                       const classIds = (teacherClasses || []).map(c => c.id);
                       onStartBroadcast({ scope: 'class_parents', classIds });
@@ -511,7 +511,7 @@ export default function Messages() {
 
   if (!currentUser) return (
     <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-      <Loader2 className="animate-spin text-blue-500" size={32} />
+      <Loader2 className="animate-spin text-brand-600" size={32} />
     </div>
   );
 
@@ -524,7 +524,7 @@ export default function Messages() {
             <h2 className="text-xl font-bold text-gray-800">Messages</h2>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+              className="p-2 bg-brand-50 text-brand-700 rounded-full hover:bg-brand-100 transition-colors border border-brand-100"
             >
               <Plus size={20} />
             </button>
@@ -535,7 +535,7 @@ export default function Messages() {
             <input 
               type="text" 
               placeholder="Search messages..." 
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 text-sm"
             />
           </div>
         </div>
@@ -556,7 +556,7 @@ export default function Messages() {
           ) : (
             <div className="text-center p-8 text-gray-400">
               <p>No conversations.</p>
-              <button onClick={() => setIsModalOpen(true)} className="text-blue-500 hover:underline mt-2">Start a chat</button>
+              <button onClick={() => setIsModalOpen(true)} className="text-brand-700 hover:underline mt-2">Start a chat</button>
             </div>
           )}
         </div>
@@ -610,12 +610,12 @@ export default function Messages() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..." 
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400"
                 />
                 <button 
                   type="submit" 
                   disabled={!newMessage.trim()}
-                  className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-brand-600 text-white p-3 rounded-xl hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={20} />
                 </button>

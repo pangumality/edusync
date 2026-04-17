@@ -82,7 +82,7 @@ const Certificates = () => {
       transfer_certificate: 'bg-red-50 text-red-700 border-red-200',
       progress_card: 'bg-blue-50 text-blue-700 border-blue-200',
       medical_certificate: 'bg-green-50 text-green-700 border-green-200',
-      migration_certificate: 'bg-purple-50 text-purple-700 border-purple-200',
+      migration_certificate: 'bg-brand-50 text-brand-800 border-brand-200',
       report_card: 'bg-yellow-50 text-yellow-700 border-yellow-200'
     };
     return colors[type] || 'bg-gray-50 text-gray-700 border-gray-200';
@@ -98,7 +98,7 @@ const Certificates = () => {
         {canManage && (
           <button
             onClick={() => setShowIssueModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={20} /> Issue Certificate
           </button>
@@ -107,7 +107,7 @@ const Certificates = () => {
 
       {showIssueModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="ui-card max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Issue New Certificate</h2>
             <form onSubmit={handleIssue} className="space-y-4">
               <div>
@@ -116,7 +116,7 @@ const Certificates = () => {
                   required
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="ui-input"
                 >
                   {CERT_TYPES.map(type => (
                     <option key={type.value} value={type.value}>{type.label}</option>
@@ -132,7 +132,7 @@ const Certificates = () => {
                     placeholder="Search student..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full border rounded-lg p-2 pl-8 mb-2"
+                    className="ui-input pl-8 mb-2"
                   />
                   <Search size={16} className="absolute top-3 left-2.5 text-gray-400" />
                 </div>
@@ -140,7 +140,7 @@ const Certificates = () => {
                   required
                   value={formData.studentId}
                   onChange={(e) => setFormData({...formData, studentId: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="w-full border rounded-lg p-2 bg-white"
                   size={5}
                 >
                   {filteredStudents.map(s => (
@@ -156,7 +156,7 @@ const Certificates = () => {
                 <textarea
                   value={formData.remarks}
                   onChange={(e) => setFormData({...formData, remarks: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="ui-textarea"
                   rows={3}
                   placeholder="Additional details to appear on certificate..."
                 />
@@ -166,13 +166,13 @@ const Certificates = () => {
                 <button
                   type="button"
                   onClick={() => setShowIssueModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   Issue Document
                 </button>
@@ -191,7 +191,7 @@ const Certificates = () => {
             
             <div className="flex items-start gap-4 mb-4">
               <div className="p-3 bg-gray-100 rounded-lg">
-                <Award size={32} className="text-teal-600" />
+                <Award size={32} className="text-brand-700" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-900">
@@ -222,7 +222,7 @@ const Certificates = () => {
               )}
             </div>
 
-            <button className="w-full flex items-center justify-center gap-2 py-2 border border-teal-600 text-teal-600 rounded-lg hover:bg-teal-50 transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 py-2 border border-brand-600 text-brand-700 rounded-lg hover:bg-brand-50 transition-colors font-semibold">
               <Download size={18} /> Download PDF
             </button>
           </div>

@@ -128,7 +128,7 @@ export default function ElearningItemForm() {
     return (
         <div className="p-8 text-center">
             <h2 className="text-xl text-red-600">Invalid Item Type</h2>
-            <button onClick={() => navigate(-1)} className="mt-4 text-indigo-600 hover:underline">Go Back</button>
+            <button onClick={() => navigate(-1)} className="mt-4 text-brand-700 hover:underline">Go Back</button>
         </div>
     );
   }
@@ -136,13 +136,13 @@ export default function ElearningItemForm() {
   if (initialLoading) {
     return (
         <div className="flex items-center justify-center min-h-screen">
-            <Loader className="animate-spin text-indigo-600" size={32} />
+            <Loader className="animate-spin text-brand-600" size={32} />
         </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-surface-50 p-6">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -180,7 +180,7 @@ export default function ElearningItemForm() {
                   <textarea
                     value={formData[field.name] || ''}
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all h-40 resize-none"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 transition-all h-40 resize-none"
                     required={field.required}
                     placeholder={`Enter ${field.label.toLowerCase()}...`}
                   />
@@ -196,7 +196,7 @@ export default function ElearningItemForm() {
                             newQuestions[index] = e.target.value;
                             setFormData({ ...formData, [field.name]: newQuestions });
                           }}
-                          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 transition-all"
                           placeholder={`Question ${index + 1}`}
                         />
                         <button
@@ -216,7 +216,7 @@ export default function ElearningItemForm() {
                       onClick={() => {
                         setFormData({ ...formData, [field.name]: [...(formData[field.name] || []), ''] });
                       }}
-                      className="flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-700"
+                      className="flex items-center gap-2 text-sm text-brand-700 font-semibold hover:text-brand-800"
                     >
                       <Plus size={16} /> Add Question
                     </button>
@@ -226,7 +226,7 @@ export default function ElearningItemForm() {
                     <select
                       value={formData[field.name] || ''}
                       onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none bg-white"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 transition-all appearance-none bg-white"
                       required={field.required}
                     >
                       <option value="">Select Class...</option>
@@ -243,7 +243,7 @@ export default function ElearningItemForm() {
                     type={field.type || 'text'}
                     value={formData[field.name] || ''}
                     onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 transition-all"
                     required={field.required}
                     placeholder={`Enter ${field.label.toLowerCase()}...`}
                   />
@@ -255,14 +255,14 @@ export default function ElearningItemForm() {
               <button
                 type="button"
                 onClick={() => navigate(`/e-learning/${subjectId}`)}
-                className="px-6 py-2.5 text-gray-600 font-medium hover:bg-gray-50 rounded-lg transition-colors"
+                className="ui-btn ui-btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ui-btn ui-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <Loader size={18} className="animate-spin" />

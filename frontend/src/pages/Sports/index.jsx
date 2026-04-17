@@ -104,7 +104,7 @@ const Sports = () => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pb-2 px-4 capitalize font-medium ${
-              activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'
+              activeTab === tab ? 'border-b-2 border-brand-600 text-brand-700' : 'text-gray-500'
             }`}
           >
             {tab}
@@ -122,7 +122,7 @@ const Sports = () => {
                 <h3 className="text-lg font-bold">Sports</h3>
                 <button
                   onClick={() => setIsSportModalOpen(true)}
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
+                  className="ui-btn ui-btn-primary px-3 py-1.5 text-sm"
                 >
                   <Plus size={16} /> Add Sport
                 </button>
@@ -154,7 +154,7 @@ const Sports = () => {
                 <h3 className="text-lg font-bold">Teams</h3>
                 <button
                   onClick={() => setIsTeamModalOpen(true)}
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
+                  className="ui-btn ui-btn-primary px-3 py-1.5 text-sm"
                 >
                   <Plus size={16} /> Add Team
                 </button>
@@ -187,7 +187,7 @@ const Sports = () => {
                 <h3 className="text-lg font-bold">Upcoming Events</h3>
                 <button
                   onClick={() => setIsEventModalOpen(true)}
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm"
+                  className="ui-btn ui-btn-primary px-3 py-1.5 text-sm"
                 >
                   <Plus size={16} /> Add Event
                 </button>
@@ -209,7 +209,7 @@ const Sports = () => {
                           </span>
                         )}
                         {event.sport && (
-                          <span className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs">
+                          <span className="flex items-center gap-1 bg-brand-50 text-brand-700 px-2 py-0.5 rounded text-xs border border-brand-100">
                             {event.sport.name}
                           </span>
                         )}
@@ -229,20 +229,20 @@ const Sports = () => {
           <input
             type="text"
             placeholder="Sport Name"
-            className="w-full border p-2 rounded"
+            className="ui-input"
             required
             value={newSport.name}
             onChange={e => setNewSport({...newSport, name: e.target.value})}
           />
           <select
-            className="w-full border p-2 rounded"
+            className="ui-input"
             value={newSport.category}
             onChange={e => setNewSport({...newSport, category: e.target.value})}
           >
             <option value="Team">Team Sport</option>
             <option value="Individual">Individual Sport</option>
           </select>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Save</button>
+          <button type="submit" className="ui-btn ui-btn-primary w-full">Save</button>
         </form>
       </Modal>
 
@@ -252,13 +252,13 @@ const Sports = () => {
           <input
             type="text"
             placeholder="Team Name (e.g. U-16 Boys)"
-            className="w-full border p-2 rounded"
+            className="ui-input"
             required
             value={newTeam.name}
             onChange={e => setNewTeam({...newTeam, name: e.target.value})}
           />
           <select
-            className="w-full border p-2 rounded"
+            className="ui-input"
             required
             value={newTeam.sportId}
             onChange={e => setNewTeam({...newTeam, sportId: e.target.value})}
@@ -266,7 +266,7 @@ const Sports = () => {
             <option value="">Select Sport</option>
             {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Save</button>
+          <button type="submit" className="ui-btn ui-btn-primary w-full">Save</button>
         </form>
       </Modal>
 
@@ -276,14 +276,14 @@ const Sports = () => {
           <input
             type="text"
             placeholder="Event Title"
-            className="w-full border p-2 rounded"
+            className="ui-input"
             required
             value={newEvent.title}
             onChange={e => setNewEvent({...newEvent, title: e.target.value})}
           />
           <input
             type="date"
-            className="w-full border p-2 rounded"
+            className="ui-input"
             required
             value={newEvent.startDate}
             onChange={e => setNewEvent({...newEvent, startDate: e.target.value})}
@@ -291,19 +291,19 @@ const Sports = () => {
           <input
             type="text"
             placeholder="Location"
-            className="w-full border p-2 rounded"
+            className="ui-input"
             value={newEvent.location}
             onChange={e => setNewEvent({...newEvent, location: e.target.value})}
           />
           <select
-            className="w-full border p-2 rounded"
+            className="ui-input"
             value={newEvent.sportId}
             onChange={e => setNewEvent({...newEvent, sportId: e.target.value})}
           >
             <option value="">Select Sport (Optional)</option>
             {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Save</button>
+          <button type="submit" className="ui-btn ui-btn-primary w-full">Save</button>
         </form>
       </Modal>
     </div>

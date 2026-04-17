@@ -82,7 +82,7 @@ const NoticeBoard = () => {
         {canManage && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={20} />
             Add Notice
@@ -144,7 +144,7 @@ const NoticeBoard = () => {
               required
               value={newNotice.title}
               onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="ui-input"
               placeholder="Notice Title"
             />
           </div>
@@ -153,7 +153,7 @@ const NoticeBoard = () => {
             <select
               value={newNotice.audience}
               onChange={(e) => setNewNotice({ ...newNotice, audience: e.target.value })}
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="ui-input"
             >
               <option value="ALL">All</option>
               <option value="STUDENTS">Students Only</option>
@@ -168,7 +168,7 @@ const NoticeBoard = () => {
               rows={4}
               value={newNotice.content}
               onChange={(e) => setNewNotice({ ...newNotice, content: e.target.value })}
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+              className="ui-textarea resize-none"
               placeholder="Write your notice here..."
             />
           </div>
@@ -176,13 +176,13 @@ const NoticeBoard = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="ui-btn ui-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="ui-btn ui-btn-primary"
             >
               Post Notice
             </button>

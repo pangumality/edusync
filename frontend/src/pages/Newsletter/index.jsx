@@ -73,7 +73,7 @@ const Newsletter = () => {
         {canManage && (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="ui-btn ui-btn-primary"
           >
             {showForm ? 'Cancel' : <><Plus size={20} /> Create Newsletter</>}
           </button>
@@ -89,7 +89,7 @@ const Newsletter = () => {
               <input
                 type="text"
                 required
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="ui-input"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., End of Term Exam Schedule"
@@ -100,7 +100,7 @@ const Newsletter = () => {
               <textarea
                 required
                 rows={6}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="ui-textarea"
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder="Write your announcement here..."
@@ -110,7 +110,7 @@ const Newsletter = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="ui-btn ui-btn-primary disabled:opacity-50"
               >
                 {submitting ? 'Publishing...' : <><Send size={18} /> Publish Newsletter</>}
               </button>
@@ -150,7 +150,7 @@ const Newsletter = () => {
                   minute: '2-digit'
                 })}</span>
               </div>
-              <div className="prose prose-teal max-w-none text-gray-600 whitespace-pre-wrap">
+              <div className="prose prose-slate max-w-none text-gray-600 whitespace-pre-wrap">
                 {newsletter.content}
               </div>
             </div>

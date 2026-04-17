@@ -31,7 +31,7 @@ export default function StudentExams() {
         <div className="text-center py-12 text-gray-500">Loading exams...</div>
       ) : exams.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
-          <div className="p-4 bg-blue-50 text-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+          <div className="p-4 bg-brand-50 text-brand-700 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border border-brand-100">
             <FileText size={32} />
           </div>
           <h3 className="text-lg font-semibold text-gray-800">No Exams Available</h3>
@@ -47,7 +47,7 @@ export default function StudentExams() {
                     <h3 className="font-bold text-lg text-gray-800">{paper.subject?.name}</h3>
                     <p className="text-sm text-gray-500">{paper.exam?.name} ({paper.exam?.term})</p>
                   </div>
-                  <div className={`p-2 rounded-lg ${paper.submitted ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                  <div className={`p-2 rounded-lg ${paper.submitted ? 'bg-green-50 text-green-600' : 'bg-brand-50 text-brand-700 border border-brand-100'}`}>
                     {paper.submitted ? <CheckCircle size={20} /> : <FileText size={20} />}
                   </div>
                 </div>
@@ -71,7 +71,7 @@ export default function StudentExams() {
                     </div>
                     <button
                         onClick={() => navigate(`/student/exams/${paper.id}/take`)}
-                        className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-brand-600 text-brand-700 rounded-lg hover:bg-brand-50 transition-colors font-medium text-sm"
                     >
                         <RotateCw size={16} />
                         Retake Exam
@@ -80,7 +80,7 @@ export default function StudentExams() {
                 ) : (
                   <button
                     onClick={() => navigate(`/student/exams/${paper.id}/take`)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
                   >
                     <PlayCircle size={18} />
                     Start Exam

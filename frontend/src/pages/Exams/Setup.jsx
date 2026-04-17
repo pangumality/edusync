@@ -130,14 +130,14 @@ export default function ExamSetup() {
         <div className="flex gap-2">
             <button
             onClick={() => saveSetup('draft')}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+            className="ui-btn ui-btn-secondary"
             >
             <Save size={18} />
             Save Draft
             </button>
             <button
             onClick={() => saveSetup('published')}
-            className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg ${status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+            className={`ui-btn text-white ${status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-brand-600 hover:bg-brand-700'}`}
             >
             <Send size={18} />
             {status === 'published' ? 'Update & Publish' : 'Publish Exam'}
@@ -151,7 +151,7 @@ export default function ExamSetup() {
         <select
             value={subjectId}
             onChange={(e) => setSubjectId(e.target.value)}
-            className="w-full md:w-1/3 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full md:w-1/3 ui-input"
             disabled={loading}
         >
             <option value="">-- Select Subject --</option>
@@ -209,7 +209,7 @@ export default function ExamSetup() {
                 <h3 className="font-semibold text-gray-700">Questions</h3>
                 <button
                     onClick={addQuestion}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="ui-btn ui-btn-primary px-3 py-1.5 text-sm"
                 >
                     <Plus size={16} />
                     Add Question

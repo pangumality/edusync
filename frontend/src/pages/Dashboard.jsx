@@ -117,16 +117,16 @@ const Dashboard = () => {
             Math.round(stats.revenue / 100)
         ],
         backgroundColor: [
-          'rgba(59, 130, 246, 0.8)', // Blue
-          'rgba(244, 63, 94, 0.8)',  // Rose
-          'rgba(16, 185, 129, 0.8)', // Emerald
-          'rgba(139, 92, 246, 0.8)'  // Violet
+          'rgba(124, 58, 237, 0.82)',
+          'rgba(6, 182, 212, 0.82)',
+          'rgba(245, 158, 11, 0.82)',
+          'rgba(100, 116, 139, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(59, 130, 246, 1)',
-          'rgba(244, 63, 94, 1)',
-          'rgba(16, 185, 129, 1)',
-          'rgba(139, 92, 246, 1)'
+          'rgba(124, 58, 237, 1)',
+          'rgba(6, 182, 212, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(100, 116, 139, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -141,16 +141,16 @@ const Dashboard = () => {
         label: 'School Statistics',
         data: [stats.students, stats.teachers, stats.classes, stats.parents],
         backgroundColor: [
-          'rgba(59, 130, 246, 0.8)', // Blue
-          'rgba(244, 63, 94, 0.8)',  // Rose
-          'rgba(16, 185, 129, 0.8)', // Emerald
-          'rgba(139, 92, 246, 0.8)'  // Violet
+          'rgba(124, 58, 237, 0.82)',
+          'rgba(6, 182, 212, 0.82)',
+          'rgba(245, 158, 11, 0.82)',
+          'rgba(100, 116, 139, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(59, 130, 246, 1)',
-          'rgba(244, 63, 94, 1)',
-          'rgba(16, 185, 129, 1)',
-          'rgba(139, 92, 246, 1)'
+          'rgba(124, 58, 237, 1)',
+          'rgba(6, 182, 212, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(100, 116, 139, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -178,9 +178,9 @@ const Dashboard = () => {
             icon={Building2} 
             title="Total Schools" 
             count={stats.schools} 
-            colorFrom="from-blue-500"
-            colorTo="to-cyan-400"
-            iconColor="shadow-blue-500/40"
+            colorFrom="from-brand-600"
+            colorTo="to-accent"
+            iconColor="shadow-brand-700/30"
             buttonLabel="Manage"
             link="/schools"
           />
@@ -188,9 +188,9 @@ const Dashboard = () => {
             icon={Users} 
             title="Total Users" 
             count={stats.users} 
-            colorFrom="from-rose-500"
-            colorTo="to-pink-500"
-            iconColor="shadow-rose-500/40"
+            colorFrom="from-brand-700"
+            colorTo="to-brand-500"
+            iconColor="shadow-brand-700/30"
             buttonLabel="View All"
             // link="/users" // Assuming a users page exists or we just show count
           />
@@ -198,9 +198,9 @@ const Dashboard = () => {
             icon={DollarSign} 
             title="Total Revenue" 
             count={`$${stats.revenue.toLocaleString()}`}
-            colorFrom="from-emerald-500"
-            colorTo="to-teal-400"
-            iconColor="shadow-emerald-500/40"
+            colorFrom="from-accent"
+            colorTo="to-brand-500"
+            iconColor="shadow-brand-700/25"
             buttonLabel="Finance"
             link="/finance"
           />
@@ -208,9 +208,9 @@ const Dashboard = () => {
             icon={MessageSquare} 
             title="Total Messages" 
             count={stats.messages} 
-            colorFrom="from-violet-500"
-            colorTo="to-purple-500"
-            iconColor="shadow-violet-500/40"
+            colorFrom="from-brand-600"
+            colorTo="to-brand-800"
+            iconColor="shadow-brand-700/30"
             buttonLabel="View Logs"
             // link="/logs"
           />
@@ -221,9 +221,9 @@ const Dashboard = () => {
             icon={GraduationCap} 
             title="Total Students" 
             count={stats.students} 
-            colorFrom="from-blue-500"
-            colorTo="to-cyan-400"
-            iconColor="shadow-blue-500/40"
+            colorFrom="from-brand-600"
+            colorTo="to-accent"
+            iconColor="shadow-brand-700/30"
             buttonLabel="View All"
             link="/students"
           />
@@ -232,9 +232,9 @@ const Dashboard = () => {
               icon={Users} 
               title="Total Teachers" 
               count={stats.teachers} 
-              colorFrom="from-rose-500"
-              colorTo="to-pink-500"
-              iconColor="shadow-rose-500/40"
+              colorFrom="from-brand-700"
+              colorTo="to-brand-500"
+              iconColor="shadow-brand-700/30"
               buttonLabel="View All"
               link="/teachers"
             />
@@ -243,9 +243,9 @@ const Dashboard = () => {
             icon={Home} 
             title="Total Classes" 
             count={stats.classes} 
-            colorFrom="from-emerald-500"
-            colorTo="to-teal-400"
-            iconColor="shadow-emerald-500/40"
+            colorFrom="from-accent"
+            colorTo="to-brand-500"
+            iconColor="shadow-brand-700/25"
             buttonLabel={currentUser?.role === 'student' ? 'My Subjects' : 'View All'} 
             link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
           />
@@ -254,9 +254,9 @@ const Dashboard = () => {
               icon={CreditCard} 
               title="Total Parents" 
               count={stats.parents} 
-              colorFrom="from-violet-500"
-              colorTo="to-purple-500"
-              iconColor="shadow-violet-500/40"
+              colorFrom="from-brand-600"
+              colorTo="to-brand-800"
+              iconColor="shadow-brand-700/30"
               buttonLabel="Finance"
               link="/finance"
             />
@@ -266,10 +266,10 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {currentUser?.role === 'admin' && (
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <div className="lg:col-span-2 ui-card ui-card-muted p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                <div className="p-2 bg-brand-50 text-brand-700 rounded-lg">
                   <BarChart2 size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-slate-700">Statistics Overview</h3>
@@ -310,13 +310,13 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${!(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') ? 'lg:col-span-3' : ''}`}>
+        <div className={`ui-card ui-card-muted p-6 ${!(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') ? 'lg:col-span-3' : ''}`}>
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📅</span>
               <h3 className="font-bold text-slate-700">Events Calendar</h3>
             </div>
-            <button className="text-indigo-500 text-sm font-medium hover:text-indigo-700 transition-colors">View All</button>
+            <button className="text-brand-700 text-sm font-semibold hover:text-brand-800 transition-colors">View All</button>
           </div>
           
           <div className="text-center mb-6">
@@ -340,13 +340,13 @@ const Dashboard = () => {
                {/* Days 1-31 */}
                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                  <div key={day} className={`h-20 border-r border-b border-slate-100 last:border-r-0 p-1 relative hover:bg-slate-50 transition-colors group`}>
-                   <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${day === 30 ? 'bg-indigo-500 text-white shadow-md shadow-indigo-200' : 'text-slate-600'}`}>
+                   <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${day === 30 ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25' : 'text-slate-600'}`}>
                      {day}
                    </span>
                    {day === 30 && (
                      <div className="mt-1">
                        <div className="h-1.5 w-full bg-rose-400 rounded-full mb-0.5"></div>
-                       <div className="h-1.5 w-2/3 bg-emerald-400 rounded-full"></div>
+                       <div className="h-1.5 w-2/3 bg-accent rounded-full"></div>
                      </div>
                    )}
                  </div>

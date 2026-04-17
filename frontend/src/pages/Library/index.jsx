@@ -143,7 +143,7 @@ const Library = () => {
         </div>
         <button
           onClick={openAddBook}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="ui-btn ui-btn-primary"
         >
           <Plus size={20} /> Add Book
         </button>
@@ -153,21 +153,21 @@ const Library = () => {
       <div className="flex gap-4 border-b border-gray-200">
         <button
           className={`pb-3 px-4 font-medium transition-colors relative ${
-            activeTab === 'inventory' ? 'text-teal-600' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'inventory' ? 'text-brand-700' : 'text-gray-500 hover:text-gray-700'
           }`}
           onClick={() => setActiveTab('inventory')}
         >
           Books Inventory
-          {activeTab === 'inventory' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>}
+          {activeTab === 'inventory' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600"></div>}
         </button>
         <button
           className={`pb-3 px-4 font-medium transition-colors relative ${
-            activeTab === 'issued' ? 'text-teal-600' : 'text-gray-500 hover:text-gray-700'
+            activeTab === 'issued' ? 'text-brand-700' : 'text-gray-500 hover:text-gray-700'
           }`}
           onClick={() => setActiveTab('issued')}
         >
           Issued Books
-          {activeTab === 'issued' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600"></div>}
+          {activeTab === 'issued' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-600"></div>}
         </button>
       </div>
 
@@ -205,14 +205,14 @@ const Library = () => {
                       <button 
                         onClick={() => openIssueModal(book)}
                         disabled={book.available === 0}
-                        className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="p-2 text-brand-700 hover:bg-brand-50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
                         title="Issue Book"
                       >
                         <User size={18} />
                       </button>
                       <button 
                         onClick={() => openEditBook(book)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        className="p-2 text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg"
                         title="Edit"
                       >
                         <Pencil size={18} />
@@ -277,7 +277,7 @@ const Library = () => {
                     <td className="px-6 py-4 text-right">
                       <button 
                         onClick={() => handleReturn(issue.id)}
-                        className="flex items-center gap-1 ml-auto px-3 py-1 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 text-sm font-medium transition-colors"
+                        className="flex items-center gap-1 ml-auto px-3 py-1 bg-brand-50 text-brand-800 rounded-lg hover:bg-brand-100 text-sm font-medium transition-colors border border-brand-100"
                       >
                         <RotateCcw size={14} /> Return
                       </button>
@@ -305,7 +305,7 @@ const Library = () => {
             <input
               type="text"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={bookFormData.title}
               onChange={e => setBookFormData({...bookFormData, title: e.target.value})}
             />
@@ -315,7 +315,7 @@ const Library = () => {
             <input
               type="text"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={bookFormData.author}
               onChange={e => setBookFormData({...bookFormData, author: e.target.value})}
             />
@@ -325,7 +325,7 @@ const Library = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">ISBN (Optional)</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="ui-input"
                 value={bookFormData.isbn}
                 onChange={e => setBookFormData({...bookFormData, isbn: e.target.value})}
               />
@@ -334,7 +334,7 @@ const Library = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="ui-input"
                 value={bookFormData.category}
                 onChange={e => setBookFormData({...bookFormData, category: e.target.value})}
                 placeholder="e.g. Science, Fiction"
@@ -347,7 +347,7 @@ const Library = () => {
               type="number"
               min="1"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={bookFormData.quantity}
               onChange={e => setBookFormData({...bookFormData, quantity: parseInt(e.target.value)})}
             />
@@ -356,13 +356,13 @@ const Library = () => {
             <button
               type="button"
               onClick={() => setIsBookModalOpen(false)}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="ui-btn ui-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              className="ui-btn ui-btn-primary"
             >
               {editingBook ? 'Update Book' : 'Add Book'}
             </button>
@@ -377,7 +377,7 @@ const Library = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Book</label>
             <select
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={issueFormData.bookId}
               onChange={e => setIssueFormData({...issueFormData, bookId: e.target.value})}
             >
@@ -391,7 +391,7 @@ const Library = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Student</label>
             <select
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={issueFormData.studentId}
               onChange={e => setIssueFormData({...issueFormData, studentId: e.target.value})}
             >
@@ -408,7 +408,7 @@ const Library = () => {
             <input
               type="date"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="ui-input"
               value={issueFormData.dueDate}
               onChange={e => setIssueFormData({...issueFormData, dueDate: e.target.value})}
             />
@@ -417,13 +417,13 @@ const Library = () => {
             <button
               type="button"
               onClick={() => setIsIssueModalOpen(false)}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="ui-btn ui-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              className="ui-btn ui-btn-primary"
             >
               Issue Book
             </button>

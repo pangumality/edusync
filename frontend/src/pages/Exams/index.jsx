@@ -191,7 +191,7 @@ export default function Exams() {
           <button
             onClick={() => setActiveTab('exams')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'exams' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'exams' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             Exams
@@ -199,7 +199,7 @@ export default function Exams() {
           <button
             onClick={() => setActiveTab('results')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'results' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'results' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             Results Entry
@@ -213,7 +213,7 @@ export default function Exams() {
             <h3 className="font-semibold text-gray-700">Exam Schedule</h3>
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              className="ui-btn ui-btn-primary px-3 py-1.5 text-sm"
             >
               <Plus size={16} />
               New Exam
@@ -251,7 +251,7 @@ export default function Exams() {
                             <button 
                             title="Setup Questions"
                             onClick={() => navigate(`/exams/${exam.id}/setup`)}
-                            className="text-blue-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50"
+                            className="text-slate-400 hover:text-brand-700 p-1 rounded hover:bg-brand-50"
                             >
                             <FileText size={18} />
                             </button>
@@ -280,7 +280,7 @@ export default function Exams() {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Select Exam</label>
                 <select 
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                   value={selectedExam}
                   onChange={e => setSelectedExam(e.target.value)}
                 >
@@ -296,7 +296,7 @@ export default function Exams() {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Select Class</label>
                 <select 
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                   value={selectedClass}
                   onChange={e => setSelectedClass(e.target.value)}
                 >
@@ -308,7 +308,7 @@ export default function Exams() {
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Select Subject</label>
                 <select 
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                   value={selectedSubject}
                   onChange={e => setSelectedSubject(e.target.value)}
                 >
@@ -324,7 +324,7 @@ export default function Exams() {
                <p className="text-gray-500 mb-4">No exams have been created yet.</p>
                <button 
                  onClick={openCreateModal}
-                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                 className="ui-btn ui-btn-primary"
                >
                  Create First Exam
                </button>
@@ -384,7 +384,7 @@ export default function Exams() {
                                 step="0.5"
                                 value={results[student.id] || ''}
                                 onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                                className="w-full border border-gray-200 rounded px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                className="w-full border border-gray-200 rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 outline-none transition-all"
                                 placeholder="Enter score"
                               />
                             </td>
@@ -402,7 +402,7 @@ export default function Exams() {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="ui-card w-full max-w-md p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-4">{editingExamId ? 'Edit Exam Details' : 'Create New Exam'}</h3>
             <form onSubmit={handleCreateExam} className="space-y-4">
               <div>
@@ -412,7 +412,7 @@ export default function Exams() {
                   required
                   value={newExam.name}
                   onChange={e => setNewExam({...newExam, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                   placeholder="e.g. Mid-Term 2024"
                 />
               </div>
@@ -423,7 +423,7 @@ export default function Exams() {
                   required
                   value={newExam.term}
                   onChange={e => setNewExam({...newExam, term: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                   placeholder="e.g. Spring"
                 />
               </div>
@@ -434,20 +434,20 @@ export default function Exams() {
                   required
                   value={newExam.year}
                   onChange={e => setNewExam({...newExam, year: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="ui-input"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   {editingExamId ? 'Update Exam' : 'Create Exam'}
                 </button>

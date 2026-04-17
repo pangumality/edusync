@@ -59,7 +59,7 @@ export default function Hostel() {
         <h2 className="text-2xl font-bold text-gray-800">Hostels</h2>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          className="ui-btn ui-btn-primary"
         >
           + Add Hostel
         </button>
@@ -81,7 +81,7 @@ export default function Hostel() {
                   <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
                     hostel.type === 'BOYS' ? 'bg-blue-100 text-blue-700' :
                     hostel.type === 'GIRLS' ? 'bg-pink-100 text-pink-700' :
-                    'bg-purple-100 text-purple-700'
+                    'bg-brand-100 text-brand-800'
                   }`}>
                     {hostel.type}
                   </span>
@@ -115,7 +115,7 @@ export default function Hostel() {
             <input
               type="text"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+              className="ui-input"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
             />
@@ -123,7 +123,7 @@ export default function Hostel() {
           <div>
             <label className="block text-sm font-medium text-gray-700">Type</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+              className="ui-input"
               value={formData.type}
               onChange={(e) => setFormData({...formData, type: e.target.value})}
             >
@@ -136,7 +136,7 @@ export default function Hostel() {
             <label className="block text-sm font-medium text-gray-700">Capacity</label>
             <input
               type="number"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+              className="ui-input"
               value={formData.capacity}
               onChange={(e) => setFormData({...formData, capacity: e.target.value})}
             />
@@ -145,7 +145,7 @@ export default function Hostel() {
             <label className="block text-sm font-medium text-gray-700">Address</label>
             <input
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+              className="ui-input"
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
             />
@@ -154,7 +154,7 @@ export default function Hostel() {
             <label className="block text-sm font-medium text-gray-700">Warden Name</label>
             <input
               type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+              className="ui-input"
               value={formData.warden}
               onChange={(e) => setFormData({...formData, warden: e.target.value})}
             />
@@ -163,13 +163,13 @@ export default function Hostel() {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="ui-btn ui-btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+              className="ui-btn ui-btn-primary"
             >
               Create Hostel
             </button>
@@ -279,7 +279,7 @@ function HostelDetails({ hostelId, onBack }) {
 
     return (
         <div className="space-y-6">
-            <button onClick={onBack} className="text-indigo-600 hover:text-indigo-800 mb-4">
+            <button onClick={onBack} className="text-brand-700 hover:text-brand-800 mb-4">
                 &larr; Back to Hostels
             </button>
             
@@ -290,7 +290,7 @@ function HostelDetails({ hostelId, onBack }) {
                 </div>
                 <button
                     onClick={() => setIsAddRoomOpen(true)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    className="ui-btn ui-btn-primary"
                 >
                     + Add Room
                 </button>
@@ -339,7 +339,7 @@ function HostelDetails({ hostelId, onBack }) {
                         {room.allocations.length < room.capacity && (
                             <button
                                 onClick={() => setIsAllocating(room.id)}
-                                className="w-full py-2 border border-dashed border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 text-sm"
+                                className="w-full py-2 border border-dashed border-brand-200 text-brand-700 rounded-lg hover:bg-brand-50 text-sm font-semibold"
                             >
                                 + Allocate Student
                             </button>
@@ -356,7 +356,7 @@ function HostelDetails({ hostelId, onBack }) {
                         <input
                             type="text"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={roomData.roomNumber}
                             onChange={(e) => setRoomData({...roomData, roomNumber: e.target.value})}
                         />
@@ -365,7 +365,7 @@ function HostelDetails({ hostelId, onBack }) {
                         <label className="block text-sm font-medium text-gray-700">Floor</label>
                         <input
                             type="number"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={roomData.floor}
                             onChange={(e) => setRoomData({...roomData, floor: e.target.value})}
                         />
@@ -375,7 +375,7 @@ function HostelDetails({ hostelId, onBack }) {
                         <input
                             type="number"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={roomData.capacity}
                             onChange={(e) => setRoomData({...roomData, capacity: e.target.value})}
                         />
@@ -385,13 +385,13 @@ function HostelDetails({ hostelId, onBack }) {
                         <input
                             type="text"
                             placeholder="e.g. AC, Non-AC"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={roomData.type}
                             onChange={(e) => setRoomData({...roomData, type: e.target.value})}
                         />
                     </div>
                     <div className="flex justify-end pt-4">
-                        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md">Add Room</button>
+                        <button type="submit" className="ui-btn ui-btn-primary">Add Room</button>
                     </div>
                 </form>
             </Modal>
@@ -403,7 +403,7 @@ function HostelDetails({ hostelId, onBack }) {
                         <label className="block text-sm font-medium text-gray-700">Student</label>
                         <select
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={allocData.studentId}
                             onChange={(e) => setAllocData({...allocData, studentId: e.target.value})}
                         >
@@ -418,13 +418,13 @@ function HostelDetails({ hostelId, onBack }) {
                         <input
                             type="date"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
+                            className="ui-input"
                             value={allocData.startDate}
                             onChange={(e) => setAllocData({...allocData, startDate: e.target.value})}
                         />
                     </div>
                     <div className="flex justify-end pt-4">
-                        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md">Allocate</button>
+                        <button type="submit" className="ui-btn ui-btn-primary">Allocate</button>
                     </div>
                 </form>
             </Modal>
