@@ -91,7 +91,7 @@ export default function TakeExam() {
           <h1 className="text-xl font-bold text-gray-800">{paper.subject?.name} - {paper.exam?.name}</h1>
           <p className="text-sm text-gray-500">Total Marks: {paper.totalMarks}</p>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xl font-bold ${timeLeft < 300 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xl font-bold ${timeLeft < 300 ? 'bg-red-50 text-red-600' : 'bg-brand-50 text-brand-700 border border-brand-100'}`}>
           <Clock size={24} />
           {formatTime(timeLeft)}
         </div>
@@ -99,11 +99,11 @@ export default function TakeExam() {
 
       {/* Instructions */}
       {paper.instructions && (
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
-          <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={20} />
+        <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 flex gap-3">
+          <AlertCircle className="text-brand-700 shrink-0 mt-0.5" size={20} />
           <div>
-            <h4 className="font-semibold text-blue-800">Instructions</h4>
-            <p className="text-blue-700 text-sm whitespace-pre-wrap">{paper.instructions}</p>
+            <h4 className="font-semibold text-slate-900">Instructions</h4>
+            <p className="text-slate-700 text-sm whitespace-pre-wrap">{paper.instructions}</p>
           </div>
         </div>
       )}
@@ -128,7 +128,7 @@ export default function TakeExam() {
                     key={optIndex} 
                     className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
                       answers[q.id] === String(optIndex) 
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                        ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500/30' 
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -138,7 +138,7 @@ export default function TakeExam() {
                       value={optIndex}
                       checked={answers[q.id] === String(optIndex)}
                       onChange={(e) => handleAnswer(q.id, e.target.value)}
-                      className="w-4 h-4 text-blue-600"
+                      className="w-4 h-4 text-brand-600"
                     />
                     <span className="text-gray-700">{opt}</span>
                   </label>
@@ -153,7 +153,7 @@ export default function TakeExam() {
                         key={opt}
                         className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-lg border cursor-pointer ${
                           answers[q.id] === opt 
-                            ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                            ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500/30' 
                             : 'border-gray-200 hover:bg-gray-50'
                         }`}
                       >
@@ -163,7 +163,7 @@ export default function TakeExam() {
                           value={opt}
                           checked={answers[q.id] === opt}
                           onChange={(e) => handleAnswer(q.id, e.target.value)}
-                          className="w-4 h-4 text-blue-600"
+                          className="w-4 h-4 text-brand-600"
                         />
                         <span className="font-medium">{opt}</span>
                       </label>
@@ -175,7 +175,7 @@ export default function TakeExam() {
               <textarea
                 value={answers[q.id] || ''}
                 onChange={(e) => handleAnswer(q.id, e.target.value)}
-                className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32"
+                className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400 outline-none h-32"
                 placeholder="Type your answer here..."
               />
             )}

@@ -8,7 +8,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
       active 
-        ? 'bg-indigo-600 text-white' 
+        ? 'bg-brand-600 text-white' 
         : 'bg-white text-gray-600 hover:bg-gray-50'
     }`}
   >
@@ -117,7 +117,7 @@ const GenericCrud = ({
         {canManage && (
           <button
             onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={18} />
             Add {title}
@@ -134,7 +134,7 @@ const GenericCrud = ({
               {renderItem(item)}
               {canManage && (
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(item)} className="p-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
+                  <button onClick={() => handleEdit(item)} className="p-1 bg-brand-50 text-brand-700 rounded hover:bg-brand-100">
                     <Edit2 size={14} />
                   </button>
                   <button onClick={() => handleDelete(item.id)} className="p-1 bg-red-50 text-red-600 rounded hover:bg-red-100">
@@ -149,7 +149,7 @@ const GenericCrud = ({
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="ui-card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{editingItem ? `Edit ${title}` : `Add ${title}`}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               {fields.map((field) => (
@@ -159,14 +159,14 @@ const GenericCrud = ({
                     <textarea
                       value={formData[field.name] || ''}
                       onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg h-24"
+                      className="ui-textarea h-24"
                       required={field.required}
                     />
                   ) : field.type === 'select' ? (
                     <select
                       value={formData[field.name] || ''}
                       onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="ui-input"
                       required={field.required}
                     >
                       <option value="">Select...</option>
@@ -181,7 +181,7 @@ const GenericCrud = ({
                       type={field.type || 'text'}
                       value={formData[field.name] || ''}
                       onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="ui-input"
                       required={field.required}
                     />
                   )}
@@ -191,13 +191,13 @@ const GenericCrud = ({
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   Save
                 </button>
@@ -334,7 +334,7 @@ export default function Subject() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700 rounded-2xl p-6 text-white">
         <div className="flex items-center gap-3 mb-6">
           <Link to="/e-learning" className="p-2 bg-white/10 hover:bg-white/20 rounded-full">
             <ArrowLeft size={20} className="text-white" />
@@ -364,10 +364,10 @@ export default function Subject() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search notes..."
-                  className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-md"
+                  className="ui-input w-full max-w-md"
                 />
                 {canManage && (
-                  <button onClick={() => { setEditingNoteId(null); setNewNote({title:'', content:''}); setShowNoteModal(true); }} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                  <button onClick={() => { setEditingNoteId(null); setNewNote({title:'', content:''}); setShowNoteModal(true); }} className="ui-btn ui-btn-primary">
                     <Plus size={18} /> Add Note
                   </button>
                 )}
@@ -388,12 +388,12 @@ export default function Subject() {
                  <div key={note.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 relative group">
                    <div className="flex justify-between items-start mb-2">
                      <h3 className="font-semibold text-gray-800">{note.title}</h3>
-                     <button onClick={() => speakNote(note)} className="text-indigo-600 hover:text-indigo-800"><Volume2 size={18}/></button>
+                     <button onClick={() => speakNote(note)} className="text-brand-700 hover:text-brand-800"><Volume2 size={18}/></button>
                    </div>
                    <p className="text-gray-600 text-sm line-clamp-3 whitespace-pre-wrap">{note.content}</p>
                    {canManage && (
                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-1 rounded shadow-sm">
-                        <button onClick={() => { setEditingNoteId(note.id); setNewNote({title: note.title, content: note.content}); setShowNoteModal(true); }} className="p-1 text-blue-600"><Edit2 size={14}/></button>
+                        <button onClick={() => { setEditingNoteId(note.id); setNewNote({title: note.title, content: note.content}); setShowNoteModal(true); }} className="p-1 text-brand-700"><Edit2 size={14}/></button>
                         <button onClick={() => handleNoteDelete(note.id)} className="p-1 text-red-600"><Trash2 size={14}/></button>
                       </div>
                    )}
@@ -403,14 +403,14 @@ export default function Subject() {
              
              {showNoteModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+                  <div className="ui-card p-6 w-full max-w-2xl">
                     <h2 className="text-xl font-bold mb-4">{editingNoteId ? 'Edit Note' : 'Add Note'}</h2>
                     <form onSubmit={handleNoteSubmit}>
-                      <input className="w-full mb-4 px-3 py-2 border rounded-lg" placeholder="Title" value={newNote.title} onChange={e => setNewNote({...newNote, title: e.target.value})} required />
-                      <textarea className="w-full mb-4 px-3 py-2 border rounded-lg h-32" placeholder="Content" value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} required />
+                      <input className="ui-input w-full mb-4" placeholder="Title" value={newNote.title} onChange={e => setNewNote({...newNote, title: e.target.value})} required />
+                      <textarea className="ui-textarea w-full mb-4 h-32" placeholder="Content" value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} required />
                       <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => setShowNoteModal(false)} className="px-4 py-2 text-gray-600">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+                        <button type="button" onClick={() => setShowNoteModal(false)} className="ui-btn ui-btn-secondary">Cancel</button>
+                        <button type="submit" className="ui-btn ui-btn-primary">Save</button>
                       </div>
                     </form>
                   </div>
@@ -528,7 +528,7 @@ export default function Subject() {
               <div className="flex justify-between">
                 <h3 className="text-lg font-semibold">Exams</h3>
                 {canManage && (
-                  <button onClick={() => setShowExamModal(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg">
+                  <button onClick={() => setShowExamModal(true)} className="ui-btn ui-btn-primary">
                     <Plus size={18} /> Create Exam
                   </button>
                 )}
@@ -542,22 +542,22 @@ export default function Subject() {
                         <div className="font-semibold">{exam.name}</div>
                         <div className="text-sm text-gray-500">{exam.term} - {exam.year}</div>
                       </div>
-                      <Link to={`/exams/${exam.id}/setup?subjectId=${subjectId}`} className="text-indigo-600 hover:underline">Manage</Link>
+                      <Link to={`/exams/${exam.id}/setup?subjectId=${subjectId}`} className="text-brand-700 hover:underline">Manage</Link>
                    </div>
                  ))}
               </div>
               
               {showExamModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                  <div className="ui-card p-6 w-full max-w-md">
                     <h2 className="text-xl font-bold mb-4">Create Exam</h2>
                     <form onSubmit={handleCreateExam} className="space-y-4">
-                      <input className="w-full px-3 py-2 border rounded-lg" placeholder="Exam Name" value={newExam.name} onChange={e => setNewExam({...newExam, name: e.target.value})} required />
-                      <input className="w-full px-3 py-2 border rounded-lg" placeholder="Term" value={newExam.term} onChange={e => setNewExam({...newExam, term: e.target.value})} required />
-                      <input className="w-full px-3 py-2 border rounded-lg" type="number" placeholder="Year" value={newExam.year} onChange={e => setNewExam({...newExam, year: parseInt(e.target.value)})} required />
+                      <input className="ui-input w-full" placeholder="Exam Name" value={newExam.name} onChange={e => setNewExam({...newExam, name: e.target.value})} required />
+                      <input className="ui-input w-full" placeholder="Term" value={newExam.term} onChange={e => setNewExam({...newExam, term: e.target.value})} required />
+                      <input className="ui-input w-full" type="number" placeholder="Year" value={newExam.year} onChange={e => setNewExam({...newExam, year: parseInt(e.target.value)})} required />
                       <div className="flex justify-end gap-2">
-                         <button type="button" onClick={() => setShowExamModal(false)} className="px-4 py-2 text-gray-600">Cancel</button>
-                         <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Create</button>
+                         <button type="button" onClick={() => setShowExamModal(false)} className="ui-btn ui-btn-secondary">Cancel</button>
+                         <button type="submit" className="ui-btn ui-btn-primary">Create</button>
                       </div>
                     </form>
                   </div>

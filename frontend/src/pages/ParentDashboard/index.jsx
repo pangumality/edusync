@@ -77,7 +77,7 @@ const ParentDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
       </div>
     );
   }
@@ -109,19 +109,19 @@ const ParentDashboard = () => {
               className={clsx(
                 "flex items-center gap-3 px-5 py-3 rounded-xl border transition-all duration-300 whitespace-nowrap group",
                 selectedChild?.id === child.id
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-transparent shadow-lg shadow-blue-200 scale-105"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:shadow-md"
+                  ? "bg-gradient-to-r from-brand-700 to-brand-500 text-white border-transparent shadow-lg shadow-brand-800/20 scale-105"
+                  : "bg-white/80 backdrop-blur text-slate-700 border-slate-200 hover:border-brand-200 hover:shadow-md"
               )}
             >
               <div className={clsx(
                 "p-1.5 rounded-full transition-colors",
-                selectedChild?.id === child.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-500"
+                selectedChild?.id === child.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-700"
               )}>
                 <User size={16} />
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm leading-none mb-1">{child.name}</div>
-                <div className={clsx("text-xs font-medium", selectedChild?.id === child.id ? "text-blue-100" : "text-slate-400")}>
+                <div className={clsx("text-xs font-medium", selectedChild?.id === child.id ? "text-brand-100" : "text-slate-400")}>
                   Class {child.class}
                 </div>
               </div>
@@ -132,18 +132,18 @@ const ParentDashboard = () => {
 
       {loadingDetails ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Academic Overview Card */}
           <Link to="/subjects" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-400 opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-600 to-accent opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg text-white shadow-lg shadow-blue-500/30">
+                <div className="p-2.5 bg-gradient-to-br from-brand-600 to-accent rounded-lg text-white shadow-lg shadow-brand-700/25">
                   <BookOpen size={20} />
                 </div>
                 Academic Overview
@@ -162,7 +162,7 @@ const ParentDashboard = () => {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Enrolled Subjects</p>
                 <div className="flex flex-wrap gap-2">
                   {childData.overview?.subjects?.map(sub => (
-                    <span key={sub.id} className="px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-md border border-blue-100">
+                    <span key={sub.id} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-md border border-brand-100">
                       {sub.name}
                     </span>
                   )) || <span className="text-slate-400 text-sm">No subjects enrolled</span>}
@@ -173,11 +173,11 @@ const ParentDashboard = () => {
 
           {/* Attendance Card */}
           <Link to="/attendance" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-400 opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-accent to-brand-500 opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-lg text-white shadow-lg shadow-emerald-500/30">
+                <div className="p-2.5 bg-gradient-to-br from-accent to-brand-500 rounded-lg text-white shadow-lg shadow-brand-700/20">
                   <Calendar size={20} />
                 </div>
                 Attendance
@@ -185,7 +185,7 @@ const ParentDashboard = () => {
               <span className={clsx(
                 "px-3 py-1 rounded-full text-xs font-bold shadow-sm border",
                 (childData.attendance?.percentage || 0) >= 75 
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                  ? "bg-green-50 text-green-700 border-green-100" 
                   : "bg-rose-50 text-rose-600 border-rose-100"
               )}>
                 {childData.attendance?.percentage?.toFixed(1) || 0}%
@@ -215,7 +215,7 @@ const ParentDashboard = () => {
                     <span className="text-slate-600 font-medium">{new Date(record.date).toLocaleDateString()}</span>
                     <span className={clsx(
                       "text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide",
-                      record.status === 'present' ? "bg-emerald-100 text-emerald-700" :
+                      record.status === 'present' ? "bg-green-100 text-green-700" :
                       record.status === 'absent' ? "bg-rose-100 text-rose-700" :
                       "bg-amber-100 text-amber-700"
                     )}>
@@ -229,11 +229,11 @@ const ParentDashboard = () => {
 
           {/* Fees Card */}
           <Link to="/finance" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-500 to-purple-500 opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-600 to-accent opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg text-white shadow-lg shadow-violet-500/30">
+                <div className="p-2.5 bg-gradient-to-br from-brand-600 to-accent rounded-lg text-white shadow-lg shadow-brand-700/25">
                   <CreditCard size={20} />
                 </div>
                 Fees Status
@@ -243,16 +243,16 @@ const ParentDashboard = () => {
                   <AlertCircle size={14} /> Due
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <span className="flex items-center gap-1.5 text-green-700 text-xs font-bold bg-green-50 px-3 py-1 rounded-full border border-green-100">
                   <CheckCircle size={14} /> Paid
                 </span>
               )}
             </div>
             
             <div className="space-y-5 relative">
-              <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-5 rounded-xl border border-violet-100 flex justify-between items-center">
-                <span className="text-violet-700 font-bold text-sm">Outstanding</span>
-                <span className="text-2xl font-black text-violet-800">
+              <div className="bg-gradient-to-r from-brand-50 to-white p-5 rounded-xl border border-brand-100 flex justify-between items-center">
+                <span className="text-brand-800 font-bold text-sm">Outstanding</span>
+                <span className="text-2xl font-black text-slate-900">
                   ${childData.fees?.outstanding?.toLocaleString() || 0}
                 </span>
               </div>
@@ -285,7 +285,7 @@ const ParentDashboard = () => {
                 </div>
                 Recent Results
               </h3>
-              <span className="text-sm text-indigo-600 hover:text-indigo-700 font-bold bg-indigo-50 px-4 py-2 rounded-lg hover:bg-indigo-100 transition-colors">View All Results</span>
+              <span className="text-sm text-brand-700 hover:text-brand-800 font-bold bg-brand-50 px-4 py-2 rounded-lg hover:bg-brand-100 transition-colors">View All Results</span>
             </div>
             
             {childData.results?.length > 0 ? (
@@ -303,23 +303,23 @@ const ParentDashboard = () => {
                   <tbody>
                     {childData.results.map((result, idx) => (
                       <tr key={idx} className="bg-slate-50 hover:bg-white hover:shadow-md transition-all duration-200 group">
-                        <td className="px-4 py-4 font-bold text-slate-700 rounded-l-xl border-y border-l border-slate-100 group-hover:border-indigo-100">{result.examName}</td>
-                        <td className="px-4 py-4 font-medium text-slate-600 border-y border-slate-100 group-hover:border-indigo-100">{result.subjectName}</td>
-                        <td className="px-4 py-4 font-bold text-slate-800 border-y border-slate-100 group-hover:border-indigo-100">
+                        <td className="px-4 py-4 font-bold text-slate-700 rounded-l-xl border-y border-l border-slate-100 group-hover:border-brand-100">{result.examName}</td>
+                        <td className="px-4 py-4 font-medium text-slate-600 border-y border-slate-100 group-hover:border-brand-100">{result.subjectName}</td>
+                        <td className="px-4 py-4 font-bold text-slate-800 border-y border-slate-100 group-hover:border-brand-100">
                           {result.marksObtained}<span className="text-slate-400 text-xs font-normal">/{result.totalMarks}</span>
                         </td>
-                        <td className="px-4 py-4 border-y border-slate-100 group-hover:border-indigo-100">
+                        <td className="px-4 py-4 border-y border-slate-100 group-hover:border-brand-100">
                           <span className={clsx(
                             "px-2.5 py-1 rounded-md text-xs font-bold shadow-sm border",
-                            result.grade === 'A' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                            result.grade === 'B' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                            result.grade === 'A' ? "bg-green-50 text-green-700 border-green-100" :
+                            result.grade === 'B' ? "bg-brand-50 text-brand-700 border-brand-100" :
                             result.grade === 'C' ? "bg-amber-50 text-amber-600 border-amber-100" :
                             "bg-rose-50 text-rose-600 border-rose-100"
                           )}>
                             {result.grade}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-slate-400 text-right rounded-r-xl border-y border-r border-slate-100 group-hover:border-indigo-100 font-medium">{new Date(result.date).toLocaleDateString()}</td>
+                        <td className="px-4 py-4 text-slate-400 text-right rounded-r-xl border-y border-r border-slate-100 group-hover:border-brand-100 font-medium">{new Date(result.date).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>

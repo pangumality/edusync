@@ -96,7 +96,7 @@ const TimeTable = () => {
               <select
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="border rounded-lg px-3 py-2 bg-white"
+                className="ui-input max-w-xs"
               >
                 <option value="">Select Class...</option>
                 {classes.map(c => (
@@ -105,7 +105,7 @@ const TimeTable = () => {
               </select>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                className="ui-btn ui-btn-primary"
               >
                 <Plus size={20} /> Add Period
               </button>
@@ -116,7 +116,7 @@ const TimeTable = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="ui-card max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Add Time Table Period</h2>
             <form onSubmit={handleAddPeriod} className="space-y-4">
               <div>
@@ -125,7 +125,7 @@ const TimeTable = () => {
                   required
                   value={formData.classId}
                   onChange={(e) => setFormData({...formData, classId: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="ui-input"
                 >
                   <option value="">Select Class</option>
                   {classes.map(c => (
@@ -140,7 +140,7 @@ const TimeTable = () => {
                     required
                     value={formData.subjectId}
                     onChange={(e) => setFormData({...formData, subjectId: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   >
                     <option value="">Select Subject</option>
                     {subjects.map(s => (
@@ -154,7 +154,7 @@ const TimeTable = () => {
                     required
                     value={formData.teacherId}
                     onChange={(e) => setFormData({...formData, teacherId: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   >
                     <option value="">Select Teacher</option>
                     {teachers.map(t => (
@@ -169,7 +169,7 @@ const TimeTable = () => {
                   required
                   value={formData.dayOfWeek}
                   onChange={(e) => setFormData({...formData, dayOfWeek: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="ui-input"
                 >
                   {WORK_DAYS.map(day => (
                     <option key={day} value={day}>{DAYS[day]}</option>
@@ -184,7 +184,7 @@ const TimeTable = () => {
                     required
                     value={formData.startTime}
                     onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ const TimeTable = () => {
                     required
                     value={formData.endTime}
                     onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   />
                 </div>
               </div>
@@ -203,13 +203,13 @@ const TimeTable = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   Add to Schedule
                 </button>
@@ -221,7 +221,7 @@ const TimeTable = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {WORK_DAYS.map(day => (
-          <div key={day} className="bg-white rounded-xl shadow-sm border p-4">
+          <div key={day} className="ui-card ui-card-muted p-4">
             <h3 className="font-bold text-lg mb-3 pb-2 border-b text-center text-gray-700">
               {DAYS[day]}
             </h3>
@@ -230,10 +230,10 @@ const TimeTable = () => {
                 <p className="text-sm text-gray-400 text-center italic py-4">No classes</p>
               ) : (
                 getPeriodsForDay(day).map(period => (
-                  <div key={period.id} className="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:shadow-sm transition-shadow">
+                  <div key={period.id} className="bg-brand-50 p-3 rounded-xl border border-brand-100 hover:shadow-sm transition-shadow">
                     <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-blue-900">{period.subject?.name}</span>
-                      <span className="text-xs bg-white px-1.5 py-0.5 rounded text-blue-600 font-mono border border-blue-200">
+                      <span className="font-bold text-slate-900">{period.subject?.name}</span>
+                      <span className="text-xs bg-white px-1.5 py-0.5 rounded text-brand-700 font-mono border border-brand-200">
                         {period.startTime}
                       </span>
                     </div>
@@ -242,7 +242,7 @@ const TimeTable = () => {
                       {period.teacher?.user?.firstName} {period.teacher?.user?.lastName?.charAt(0)}.
                     </div>
                     {isTeacher && (
-                      <div className="text-xs text-gray-500 mt-1 pt-1 border-t border-blue-100">
+                      <div className="text-xs text-gray-500 mt-1 pt-1 border-t border-brand-100">
                         Class: {period.klass?.name}
                       </div>
                     )}

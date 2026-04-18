@@ -110,7 +110,7 @@ const Leaves = () => {
         {isStudent && (
           <button
             onClick={() => setShowApplyModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={20} /> Apply Leave
           </button>
@@ -119,7 +119,7 @@ const Leaves = () => {
 
       {showApplyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="ui-card max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Apply for Leave</h2>
             <form onSubmit={handleApply} className="space-y-4">
               <div>
@@ -127,7 +127,7 @@ const Leaves = () => {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="w-full border rounded-lg p-2"
+                  className="ui-input"
                 >
                   <option value="full_day">Full Day</option>
                   <option value="half_day">Half Day (Gate Pass)</option>
@@ -143,7 +143,7 @@ const Leaves = () => {
                     required
                     value={formData.startDate}
                     onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   />
                 </div>
                 <div>
@@ -153,7 +153,7 @@ const Leaves = () => {
                     required
                     value={formData.endDate}
                     onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-input"
                   />
                 </div>
               </div>
@@ -169,7 +169,7 @@ const Leaves = () => {
                       setFormData({ ...formData, reason: '' });
                     }
                   }}
-                  className="w-full border rounded-lg p-2 mb-2"
+                  className="ui-input mb-2"
                   required
                 >
                   <option value="" disabled>Select a reason</option>
@@ -184,7 +184,7 @@ const Leaves = () => {
                     placeholder="Please specify your reason..."
                     value={formData.reason}
                     onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                    className="w-full border rounded-lg p-2"
+                    className="ui-textarea"
                     rows={3}
                   />
                 )}
@@ -193,13 +193,13 @@ const Leaves = () => {
                 <button
                   type="button"
                   onClick={() => setShowApplyModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="ui-btn ui-btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                  className="ui-btn ui-btn-primary"
                 >
                   Submit Application
                 </button>

@@ -224,7 +224,7 @@ const DashboardLayout = () => {
   // Handle Mobile Header
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
+      <div className="min-h-screen bg-surface-50 flex flex-col relative overflow-hidden">
         {/* Mobile Header - Curved */}
         <div className="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 text-white pt-6 pb-16 px-6 rounded-b-[40px] shadow-xl relative z-10 transition-all duration-300">
           <div className="absolute inset-0 bg-white/10 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/20 to-transparent"></div>
@@ -314,7 +314,7 @@ const DashboardLayout = () => {
           {location.pathname === '/' ? (
             <MobileDashboardHome />
           ) : (
-             <div className="bg-white rounded-t-3xl min-h-full p-4 shadow-inner">
+             <div className="bg-white/90 backdrop-blur rounded-t-3xl min-h-full p-4 shadow-inner border border-white/60">
                <Outlet />
              </div>
           )}
@@ -341,11 +341,11 @@ const DashboardLayout = () => {
 
   // Desktop Layout
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-surface-50 flex flex-col font-sans">
       {/* Top Navigation Bar */}
       <header className="bg-gradient-to-r from-sidebar-bg via-brand-950 to-sidebar-bg text-white h-16 flex items-center justify-between px-6 shadow-md z-20 sticky top-0">
         <div className="flex items-center gap-4">
-           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/30">
+           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent flex items-center justify-center shadow-lg shadow-brand-500/30">
              <SchoolIcon size={18} className="text-white" />
            </div>
            <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-brand-100 to-brand-300">
@@ -421,7 +421,7 @@ const DashboardLayout = () => {
            </div>
 
            <Link to="/profile" className="flex items-center gap-2 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors">
-             <User size={20} className="text-brand-300" />
+             <User size={20} className="text-brand-200" />
              <span className="text-sm font-medium">
                {currentUser ? `${currentUser.firstName} (${currentUser.role})` : 'Loading...'}
              </span>
@@ -439,7 +439,7 @@ const DashboardLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-            "bg-white border-r border-brand-100 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10 relative",
+            "bg-white/80 backdrop-blur border-r border-surface-200 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
           {/* Decorative background blob */}

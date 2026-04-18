@@ -88,13 +88,13 @@ const SchoolDetails = () => {
 
       {/* Hero Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-32"></div>
+        <div className="bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700 h-32"></div>
         <div className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-12 mb-6">
             <div className="bg-white p-4 rounded-2xl shadow-lg">
-              <School size={48} className="text-blue-600" />
+              <School size={48} className="text-brand-700" />
             </div>
-            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-mono font-medium">
+            <span className="bg-brand-50 text-brand-800 px-3 py-1 rounded-full text-sm font-mono font-medium border border-brand-100">
               Code: {school.code}
             </span>
           </div>
@@ -117,7 +117,7 @@ const SchoolDetails = () => {
             {school.website && (
               <div className="flex items-center gap-2">
                 <Globe size={18} />
-                <a href={school.website} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+                <a href={school.website} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
                   {school.website}
                 </a>
               </div>
@@ -138,19 +138,19 @@ const SchoolDetails = () => {
           icon={GraduationCap} 
           title="Students" 
           value={school.stats?.students || 0}
-          color="bg-blue-500"
+          color="bg-brand-600"
         />
         <StatCard 
           icon={Users} 
           title="Teachers" 
           value={school.stats?.teachers || 0}
-          color="bg-emerald-500"
+          color="bg-accent"
         />
         <StatCard 
           icon={Home} 
           title="Classes" 
           value={school.stats?.classes || 0}
-          color="bg-violet-500"
+          color="bg-brand-800"
         />
       </div>
 

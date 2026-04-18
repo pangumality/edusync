@@ -50,12 +50,12 @@ function SubjectTopics({ subjectId }) {
   };
   
   return (
-    <div className="border border-gray-100 rounded-lg p-3">
+    <div className="border border-gray-100 rounded-xl p-3 bg-white/70">
       <div className="flex justify-between items-center mb-2">
         <div className="text-sm text-gray-700">Topics for this subject</div>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setForm({ title: '', content: '' }); }}
-          className="px-2 py-1 text-xs bg-indigo-600 text-white rounded-md"
+          className="ui-btn ui-btn-primary px-2 py-1 text-xs"
         >
           Add Topic
         </button>
@@ -216,7 +216,7 @@ function AddStudentInline({ classId, onUpdated }) {
       <button
         onClick={add}
         disabled={saving || !name.trim()}
-        className="text-xs px-2 py-1 bg-indigo-600 text-white rounded-md disabled:opacity-50"
+                className="text-xs px-2 py-1 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50"
       >
         Add
       </button>
@@ -347,7 +347,7 @@ const Subjects = () => {
         {canManage && (
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={20} />
             Add Subject
@@ -366,7 +366,7 @@ const Subjects = () => {
               onClick={() => { if (canAccess) openEditModal(subject); }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                <div className="p-2 bg-brand-50 text-brand-700 rounded-lg">
                   <BookOpen size={24} />
                 </div>
                 <h3 className="font-semibold text-gray-800">{subject.name}</h3>
@@ -375,7 +375,7 @@ const Subjects = () => {
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={(e) => { e.stopPropagation(); openEditModal(subject); }}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors"
                   >
                     <Edit2 size={18} />
                   </button>
@@ -412,7 +412,7 @@ const Subjects = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="ui-input"
                   placeholder="e.g. Mathematics"
                   required
                 />
@@ -425,7 +425,7 @@ const Subjects = () => {
                     <select
                       value={formData.teacherUserId}
                       onChange={(e) => setFormData({ ...formData, teacherUserId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="ui-input"
                       required
                     >
                       <option value="">Select teacher</option>
@@ -447,7 +447,7 @@ const Subjects = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="ui-btn ui-btn-primary disabled:opacity-50"
                   disabled={!editingSubject && teachers.length === 0}
                 >
                   {editingSubject ? 'Save Changes' : 'Create Subject'}

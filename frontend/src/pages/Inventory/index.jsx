@@ -129,12 +129,12 @@ export default function Inventory() {
               placeholder="Search items..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="ui-input pl-10"
             />
           </div>
           <button 
             onClick={() => { setEditingItem(null); setItemForm({ name: '', category: '', quantity: 0, unit: 'pcs', minStock: 5, location: '' }); setShowItemModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="ui-btn ui-btn-primary"
           >
             <Plus size={18} /> Add Item
           </button>
@@ -192,7 +192,7 @@ export default function Inventory() {
                         </button>
                         <button 
                           onClick={() => openEdit(item)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          className="p-1 text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded"
                           title="Edit"
                         >
                           <Edit2 size={18} />
@@ -224,33 +224,33 @@ export default function Inventory() {
         <form onSubmit={handleCreateOrUpdate} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Item Name</label>
-            <input type="text" required className="w-full border p-2 rounded" value={itemForm.name} onChange={e => setItemForm({...itemForm, name: e.target.value})} />
+            <input type="text" required className="ui-input" value={itemForm.name} onChange={e => setItemForm({...itemForm, name: e.target.value})} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Category</label>
-              <input type="text" className="w-full border p-2 rounded" value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} />
+              <input type="text" className="ui-input" value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location</label>
-              <input type="text" className="w-full border p-2 rounded" value={itemForm.location} onChange={e => setItemForm({...itemForm, location: e.target.value})} />
+              <input type="text" className="ui-input" value={itemForm.location} onChange={e => setItemForm({...itemForm, location: e.target.value})} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
-              <input type="number" required className="w-full border p-2 rounded" value={itemForm.quantity} onChange={e => setItemForm({...itemForm, quantity: e.target.value})} />
+              <input type="number" required className="ui-input" value={itemForm.quantity} onChange={e => setItemForm({...itemForm, quantity: e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Unit</label>
-              <input type="text" className="w-full border p-2 rounded" value={itemForm.unit} onChange={e => setItemForm({...itemForm, unit: e.target.value})} />
+              <input type="text" className="ui-input" value={itemForm.unit} onChange={e => setItemForm({...itemForm, unit: e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Min Stock</label>
-              <input type="number" className="w-full border p-2 rounded" value={itemForm.minStock} onChange={e => setItemForm({...itemForm, minStock: e.target.value})} />
+              <input type="number" className="ui-input" value={itemForm.minStock} onChange={e => setItemForm({...itemForm, minStock: e.target.value})} />
             </div>
           </div>
-          <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">Save Item</button>
+          <button type="submit" className="ui-btn ui-btn-primary w-full">Save Item</button>
         </form>
       </Modal>
 
@@ -282,7 +282,7 @@ export default function Inventory() {
               type="number" 
               min="1"
               required 
-              className="w-full border p-2 rounded" 
+              className="ui-input" 
               value={transForm.quantity} 
               onChange={e => setTransForm({...transForm, quantity: e.target.value})} 
             />
@@ -290,13 +290,13 @@ export default function Inventory() {
           <div>
             <label className="block text-sm font-medium mb-1">Notes (Optional)</label>
             <textarea 
-              className="w-full border p-2 rounded" 
+              className="ui-textarea" 
               rows="3"
               value={transForm.notes} 
               onChange={e => setTransForm({...transForm, notes: e.target.value})} 
             />
           </div>
-          <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">Confirm Transaction</button>
+          <button type="submit" className="ui-btn ui-btn-primary w-full">Confirm Transaction</button>
         </form>
       </Modal>
     </div>

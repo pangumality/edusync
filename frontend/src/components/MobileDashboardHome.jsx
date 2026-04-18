@@ -42,7 +42,7 @@ const MobileDashboardHome = ({ currentUser }) => {
   ];
 
   return (
-    <div className="bg-slate-50 min-h-[calc(100vh-140px)] pb-24">
+    <div className="bg-surface-50 min-h-[calc(100vh-140px)] pb-24">
       <div className="p-4 grid grid-cols-3 gap-3">
         {menuItems.map((item, index) => {
           if (item.excludedRoles && currentUser && item.excludedRoles.includes(currentUser.role)) return null;
@@ -51,15 +51,15 @@ const MobileDashboardHome = ({ currentUser }) => {
             <Link 
               key={index} 
               to={item.to}
-              className="flex flex-col items-center justify-center bg-white p-3 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 h-28 active:scale-95 transition-all duration-200 group relative overflow-hidden"
+              className="flex flex-col items-center justify-center bg-white/90 backdrop-blur p-3 rounded-2xl shadow-[0_2px_10px_-6px_rgba(15,23,42,0.35)] border border-surface-200 h-28 active:scale-95 transition-all duration-200 group relative overflow-hidden"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-50/70 via-white/30 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
-              <div className="p-2.5 rounded-xl bg-slate-50 text-slate-600 mb-2 group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-indigo-500/30 transition-all duration-300 relative z-10">
+              <div className="p-2.5 rounded-xl bg-surface-100 text-slate-700 mb-2 group-hover:bg-brand-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand-700/25 transition-all duration-300 relative z-10">
                 <item.icon size={24} strokeWidth={2} />
               </div>
               
-              <span className="text-[11px] font-bold text-center text-slate-600 leading-tight group-hover:text-indigo-600 transition-colors relative z-10">
+              <span className="text-[11px] font-extrabold text-center text-slate-700 leading-tight group-hover:text-brand-700 transition-colors relative z-10">
                 {item.label}
               </span>
             </Link>
