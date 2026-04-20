@@ -210,7 +210,8 @@ const Leaves = () => {
       )}
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
@@ -287,6 +288,7 @@ const Leaves = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

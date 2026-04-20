@@ -184,10 +184,10 @@ export default function Exams() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h1 className="text-2xl font-bold text-gray-800">Exam Management</h1>
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setActiveTab('exams')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${

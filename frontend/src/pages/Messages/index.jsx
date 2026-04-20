@@ -516,9 +516,9 @@ export default function Messages() {
   );
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex gap-6">
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-4 md:gap-6">
       {/* Sidebar */}
-      <div className="w-80 bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden">
+      <div className="w-full md:w-80 bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">Messages</h2>
@@ -563,11 +563,11 @@ export default function Messages() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden">
+      <div className="flex-1 bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden min-h-[60vh] md:min-h-0">
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white z-10">
+            <div className="h-16 border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
                   {(selectedConversation.id === 'broadcast' ? 'B' : (selectedConversation.name || 'Chat')[0])}
@@ -578,7 +578,7 @@ export default function Messages() {
                   </h3>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="flex items-center gap-1 sm:gap-2 text-gray-400">
                 <button className="p-2 hover:bg-gray-50 rounded-full"><Phone size={20} /></button>
                 <button className="p-2 hover:bg-gray-50 rounded-full"><Video size={20} /></button>
                 <button className="p-2 hover:bg-gray-50 rounded-full"><MoreVertical size={20} /></button>
@@ -586,7 +586,7 @@ export default function Messages() {
             </div>
 
             {/* Messages Scroll Area */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50/50">
               {messages.length === 0 && (
                 <div className="text-center text-gray-400 py-12">No messages yet</div>
               )}

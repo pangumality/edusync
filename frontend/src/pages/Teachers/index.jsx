@@ -139,23 +139,23 @@ export default function Teachers() {
       )}
 
       <div className="bg-white rounded-xl shadow-soft p-6">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
           <button
-            className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50"
+            className="ui-btn ui-btn-primary px-3 py-2 disabled:opacity-50"
             onClick={startAdd}
             disabled={loading}
           >
             {loading ? 'Processing...' : 'Add Teacher'}
           </button>
           <button
-            className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+            className="ui-btn ui-btn-secondary px-3 py-2"
             onClick={fetchTeachers}
           >
             Refresh
           </button>
           <input
             type="text"
-            className="ml-auto w-64 border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+            className="w-full sm:ml-auto sm:w-64 border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -185,16 +185,16 @@ export default function Teachers() {
               value={form.subject}
               onChange={(e) => setForm({ ...form, subject: e.target.value })}
             />
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <button
-                className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50"
+                className="ui-btn ui-btn-primary px-3 py-2 disabled:opacity-50"
                 onClick={save}
                 disabled={loading}
               >
                 Save
               </button>
               <button
-                className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                className="ui-btn ui-btn-secondary px-3 py-2"
                 onClick={cancelEdit}
                 disabled={loading}
               >

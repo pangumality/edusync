@@ -193,7 +193,7 @@ const ParentDashboard = () => {
             </div>
             
             <div className="space-y-5 relative">
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <div className="text-xl font-black text-slate-800">{childData.attendance?.summary?.present || 0}</div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Present</div>

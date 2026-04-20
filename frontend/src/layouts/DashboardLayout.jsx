@@ -265,7 +265,7 @@ const DashboardLayout = () => {
             />
             
             {/* Drawer Content */}
-            <div className="relative bg-white w-[80%] max-w-sm h-full shadow-2xl flex flex-col animate-slide-in">
+            <div className="relative bg-white w-4/5 max-w-sm h-full shadow-2xl flex flex-col animate-slide-in">
               <div className="p-4 bg-sidebar-bg text-white flex justify-between items-center">
                 <span className="font-bold text-lg">Menu</span>
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-white/10 rounded">
@@ -321,7 +321,7 @@ const DashboardLayout = () => {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-sidebar-bg text-white h-16 flex items-center justify-between px-8 shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-sidebar-bg text-white h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg z-50">
           <Link to="/" className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
             <Home size={24} />
           </Link>
