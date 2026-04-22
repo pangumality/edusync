@@ -187,7 +187,7 @@ const ParentDashboard = () => {
                 "px-3 py-1 rounded-full text-xs font-bold shadow-sm border",
                 (childData.attendance?.percentage || 0) >= 75 
                   ? "bg-green-50 text-green-700 border-green-100" 
-                  : "bg-rose-50 text-rose-600 border-rose-100"
+                  : "bg-danger/10 text-danger border-danger/20"
               )}>
                 {childData.attendance?.percentage?.toFixed(1) || 0}%
               </span>
@@ -217,8 +217,8 @@ const ParentDashboard = () => {
                     <span className={clsx(
                       "text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide",
                       record.status === 'present' ? "bg-green-100 text-green-700" :
-                      record.status === 'absent' ? "bg-rose-100 text-rose-700" :
-                      "bg-amber-100 text-amber-700"
+                      record.status === 'absent' ? "bg-danger/10 text-danger" :
+                      "bg-sidebar-bg-2/15 text-sidebar-bg"
                     )}>
                       {record.status}
                     </span>
@@ -230,17 +230,17 @@ const ParentDashboard = () => {
 
           {/* Fees Card */}
           <Link to="/finance" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-300 to-yellow-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-amber-200 text-amber-700 rounded-lg border border-amber-300 shadow-lg shadow-amber-500/25">
-                  <CreditCard size={20} className="text-amber-900" />
+                <div className="p-2.5 bg-sidebar-bg-2/20 text-sidebar-bg rounded-lg border border-sidebar-bg-2/30 shadow-lg shadow-sidebar-bg-2/20">
+                  <CreditCard size={20} className="text-sidebar-bg" />
                 </div>
                 Fees Status
               </h3>
               {childData.fees?.outstanding > 0 ? (
-                <span className="flex items-center gap-1.5 text-rose-500 text-xs font-bold bg-rose-50 px-3 py-1 rounded-full border border-rose-100">
+                <span className="flex items-center gap-1.5 text-danger text-xs font-bold bg-danger/10 px-3 py-1 rounded-full border border-danger/20">
                   <AlertCircle size={14} /> Due
                 </span>
               ) : (
@@ -279,15 +279,15 @@ const ParentDashboard = () => {
 
           {/* Results Card */}
           <Link to="/exams" className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-fuchsia-400 to-pink-400 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-400 to-brand-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-fuchsia-200 text-fuchsia-700 rounded-lg border border-fuchsia-300 shadow-lg shadow-fuchsia-500/25 relative z-10">
-                  <Award size={20} className="text-fuchsia-900" />
+                <div className="p-2.5 bg-brand-200 text-brand-700 rounded-lg border border-brand-300 shadow-lg shadow-brand-700/20 relative z-10">
+                  <Award size={20} className="text-brand-700" />
                 </div>
                 Recent Results
               </h3>
-              <span className="text-sm text-fuchsia-900 font-bold bg-fuchsia-100 px-4 py-2 rounded-lg border border-fuchsia-200 transition-colors relative z-10">View All Results</span>
+              <span className="text-sm text-brand-800 font-bold bg-brand-100 px-4 py-2 rounded-lg border border-brand-200 transition-colors relative z-10">View All Results</span>
             </div>
             
             {childData.results?.length > 0 ? (
@@ -315,8 +315,8 @@ const ParentDashboard = () => {
                             "px-2.5 py-1 rounded-md text-xs font-bold shadow-sm border",
                             result.grade === 'A' ? "bg-green-50 text-green-700 border-green-100" :
                             result.grade === 'B' ? "bg-brand-50 text-brand-700 border-brand-100" :
-                            result.grade === 'C' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                            "bg-rose-50 text-rose-600 border-rose-100"
+                            result.grade === 'C' ? "bg-sidebar-bg-2/15 text-sidebar-bg border-sidebar-bg-2/30" :
+                            "bg-danger/10 text-danger border-danger/20"
                           )}>
                             {result.grade}
                           </span>

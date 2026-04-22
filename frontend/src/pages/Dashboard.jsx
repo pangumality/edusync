@@ -128,16 +128,16 @@ const Dashboard = () => {
             Math.round(stats.revenue / 100)
         ],
         backgroundColor: [
-          'rgba(124, 58, 237, 0.82)',
-          'rgba(6, 182, 212, 0.82)',
-          'rgba(245, 158, 11, 0.82)',
-          'rgba(100, 116, 139, 0.82)'
+          'rgba(36, 144, 255, 0.82)',
+          'rgba(20, 179, 198, 0.82)',
+          'rgba(22, 163, 74, 0.82)',
+          'rgba(20, 71, 166, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(124, 58, 237, 1)',
-          'rgba(6, 182, 212, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(100, 116, 139, 1)'
+          'rgba(36, 144, 255, 1)',
+          'rgba(20, 179, 198, 1)',
+          'rgba(22, 163, 74, 1)',
+          'rgba(20, 71, 166, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -152,16 +152,16 @@ const Dashboard = () => {
         label: 'School Statistics',
         data: [stats.students, stats.teachers, stats.classes, stats.parents],
         backgroundColor: [
-          'rgba(124, 58, 237, 0.82)',
-          'rgba(6, 182, 212, 0.82)',
-          'rgba(245, 158, 11, 0.82)',
-          'rgba(100, 116, 139, 0.82)'
+          'rgba(36, 144, 255, 0.82)',
+          'rgba(20, 179, 198, 0.82)',
+          'rgba(22, 163, 74, 0.82)',
+          'rgba(20, 71, 166, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(124, 58, 237, 1)',
-          'rgba(6, 182, 212, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(100, 116, 139, 1)'
+          'rgba(36, 144, 255, 1)',
+          'rgba(20, 179, 198, 1)',
+          'rgba(22, 163, 74, 1)',
+          'rgba(20, 71, 166, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -213,11 +213,11 @@ const Dashboard = () => {
             icon={DollarSign} 
             title="Total Revenue" 
             count={`ZMW ${Number(stats.revenue || 0).toLocaleString('en-ZM')}`}
-            accentFrom="from-amber-300"
-            accentTo="to-yellow-300"
-            iconBg="bg-amber-200 border border-amber-300"
-            iconText="text-amber-900"
-            iconShadow="shadow-lg shadow-amber-500/20"
+            accentFrom="from-success/35"
+            accentTo="to-success/15"
+            iconBg="bg-success/20 border border-success/30"
+            iconText="text-success"
+            iconShadow="shadow-lg shadow-success/20"
             buttonLabel="Finance"
             link="/finance"
           />
@@ -225,11 +225,11 @@ const Dashboard = () => {
             icon={MessageSquare} 
             title="Total Messages" 
             count={stats.messages} 
-            accentFrom="from-fuchsia-400"
-            accentTo="to-pink-400"
-            iconBg="bg-fuchsia-200 border border-fuchsia-300"
-            iconText="text-fuchsia-900"
-            iconShadow="shadow-lg shadow-rose-500/20"
+            accentFrom="from-sidebar-bg-mid"
+            accentTo="to-sidebar-bg-2"
+            iconBg="bg-sidebar-bg-2/20 border border-sidebar-bg-2/30"
+            iconText="text-sidebar-bg-2"
+            iconShadow="shadow-lg shadow-sidebar-bg-2/20"
             buttonLabel="Messages"
             link="/messages"
           />
@@ -266,11 +266,11 @@ const Dashboard = () => {
             icon={Home} 
             title="Total Classes" 
             count={stats.classes} 
-            accentFrom="from-amber-300"
-            accentTo="to-yellow-300"
-            iconBg="bg-amber-200 border border-amber-300"
-            iconText="text-amber-900"
-            iconShadow="shadow-lg shadow-amber-500/20"
+            accentFrom="from-sidebar-bg-mid"
+            accentTo="to-sidebar-bg-2"
+            iconBg="bg-sidebar-bg-2/20 border border-sidebar-bg-2/30"
+            iconText="text-sidebar-bg"
+            iconShadow="shadow-lg shadow-sidebar-bg-2/20"
             buttonLabel={currentUser?.role === 'student' ? 'My Subjects' : 'View All'} 
             link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
           />
@@ -279,11 +279,11 @@ const Dashboard = () => {
               icon={CreditCard} 
               title="Total Parents" 
               count={stats.parents} 
-              accentFrom="from-fuchsia-400"
-              accentTo="to-pink-400"
-              iconBg="bg-fuchsia-200 border border-fuchsia-300"
-              iconText="text-fuchsia-900"
-              iconShadow="shadow-lg shadow-rose-500/20"
+              accentFrom="from-success/35"
+              accentTo="to-success/15"
+              iconBg="bg-success/20 border border-success/30"
+              iconText="text-success"
+              iconShadow="shadow-lg shadow-success/20"
               buttonLabel="Finance"
               link="/finance"
             />
@@ -379,8 +379,8 @@ const Dashboard = () => {
                    </span>
                    {day === 30 && (
                      <div className="mt-1">
-                       <div className="h-1.5 w-full bg-rose-400 rounded-full mb-0.5"></div>
-                       <div className="h-1.5 w-2/3 bg-accent rounded-full"></div>
+                      <div className="h-1.5 w-full bg-sidebar-bg-mid rounded-full mb-0.5"></div>
+                      <div className="h-1.5 w-2/3 bg-success rounded-full"></div>
                      </div>
                    )}
                  </div>
