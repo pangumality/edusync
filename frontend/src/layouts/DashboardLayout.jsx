@@ -267,7 +267,7 @@ const DashboardLayout = () => {
             
             {/* Drawer Content */}
             <div className="relative bg-white w-4/5 max-w-sm h-full shadow-2xl flex flex-col animate-slide-in">
-              <div className="p-4 bg-sidebar-bg text-white flex justify-between items-center">
+              <div className="p-4 bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 text-white flex justify-between items-center">
                 <span className="font-bold text-lg">Menu</span>
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-white/10 rounded">
                   <X size={24} />
@@ -322,7 +322,7 @@ const DashboardLayout = () => {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-sidebar-bg text-white h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 text-white h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg z-50">
           <Link to="/" className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
             <Home size={24} />
           </Link>
@@ -443,7 +443,7 @@ const DashboardLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-            "bg-gradient-to-b from-sidebar-bg to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
+            "bg-gradient-to-b from-brand-900 via-brand-800 to-brand-700 text-white border-r border-white/10 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
           <div className={clsx("p-4 flex items-center relative z-10", isCollapsed ? "justify-center" : "justify-between")}>
