@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 import api from '../../utils/api';
 
 function uid() {
@@ -6,6 +8,8 @@ function uid() {
 }
 
 export default function Teachers() {
+  const [searchParams] = useSearchParams();
+  const schoolId = searchParams.get('schoolId') || undefined;
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', subject: '' });
@@ -21,7 +25,7 @@ export default function Teachers() {
   const fetchTeachers = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/teachers');
+      const response = await api.get('/teachers', { params: { schoolId } });
       setList(response.data);
       setError('');
     } catch (err) {
@@ -41,7 +45,7 @@ export default function Teachers() {
     setAssignClassId('');
     setAssignSubjectId('');
     try {
-      const clsRes = await api.get('/classes');
+      const clsRes = await api.get('/classes', { params: { schoolId } });
       setClasses(clsRes.data);
       setAssignModalOpen(true);
     } catch (err) {
@@ -244,10 +248,12 @@ export default function Teachers() {
                         </button>
                         */}
                         <button
-                          className="px-3 py-1 rounded-md bg-gray-600 text-white hover:bg-gray-700"
+                          className="p-2 rounded-md bg-gray-600 text-white hover:bg-gray-700"
                           onClick={() => remove(t.id)}
+                          aria-label="Delete"
+                          title="Delete"
                         >
-                          Delete
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>

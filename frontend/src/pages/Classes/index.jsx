@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { Trash2, X } from 'lucide-react';
 import api from '../../utils/api';
 
 export default function Classes() {
+  const { currentUser } = useOutletContext() || {};
+  const canManage = ['admin', 'staff'].includes(currentUser?.role);
+  const [searchParams] = useSearchParams();
+  const schoolId = searchParams.get('schoolId') || undefined;
   const [list, setList] = useState([]);
   const [name, setName] = useState('');
   const [sectionName, setSectionName] = useState('');
@@ -9,7 +15,7 @@ export default function Classes() {
 
   const loadClasses = async () => {
     try {
-      const { data } = await api.get('/classes');
+      const { data } = await api.get('/classes', { params: { schoolId } });
       setList(data);
     } catch (err) {
       console.error(err);
@@ -22,28 +28,33 @@ export default function Classes() {
   }, []);
 
   const addClass = async () => {
+    if (!canManage) return;
     if (!name.trim()) return;
     try {
-      await api.post('/classes', { name: name.trim(), sections: [] });
+      await api.post('/classes', { name: name.trim(), sections: [], schoolId });
       setName('');
       loadClasses();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to add class');
+      const data = err.response?.data;
+      alert(data?.details ? `${data.error}: ${data.details}` : (data?.error || data || 'Failed to add class'));
     }
   };
 
   const deleteClass = async (id) => {
+    if (!canManage) return;
     if (!window.confirm('Are you sure? This cannot be undone.')) return;
     try {
       await api.delete(`/classes/${id}`);
       if (selectedId === id) setSelectedId(null);
       loadClasses();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete class');
+      const data = err.response?.data;
+      alert(data?.details ? `${data.error}: ${data.details}` : (data?.error || data || 'Failed to delete class'));
     }
   };
 
   const addSection = async () => {
+    if (!canManage) return;
     if (!selectedId || !sectionName.trim()) return;
     const klass = list.find(c => c.id === selectedId);
     if (!klass) return;
@@ -60,11 +71,13 @@ export default function Classes() {
       setSectionName('');
       loadClasses();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to add section');
+      const data = err.response?.data;
+      alert(data?.details ? `${data.error}: ${data.details}` : (data?.error || data || 'Failed to add section'));
     }
   };
 
   const removeSection = async (id, sec) => {
+    if (!canManage) return;
     if (!window.confirm(`Remove section ${sec}?`)) return;
     const klass = list.find(c => c.id === id);
     if (!klass) return;
@@ -77,7 +90,8 @@ export default function Classes() {
       });
       loadClasses();
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to remove section');
+      const data = err.response?.data;
+      alert(data?.details ? `${data.error}: ${data.details}` : (data?.error || data || 'Failed to remove section'));
     }
   };
 
@@ -96,10 +110,12 @@ export default function Classes() {
                 placeholder="Class name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={!canManage}
               />
               <button
-                className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
+                className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={addClass}
+                disabled={!canManage}
               >
                 Add
               </button>
@@ -130,10 +146,12 @@ export default function Classes() {
                 placeholder="Section name"
                 value={sectionName}
                 onChange={(e) => setSectionName(e.target.value)}
+                disabled={!canManage}
               />
               <button
-                className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={addSection}
+                disabled={!canManage}
               >
                 Add Section
               </button>
@@ -160,10 +178,13 @@ export default function Classes() {
                         <span key={sec} className="px-2 py-1 rounded-md border border-gray-300 text-gray-700">
                           {sec}
                           <button
-                            className="ml-2 text-xs text-gray-600 hover:underline"
+                            className="ml-2 inline-flex items-center justify-center text-gray-600 hover:text-gray-900"
                             onClick={() => removeSection(c.id, sec)}
+                            aria-label="Remove"
+                            title="Remove"
+                            disabled={!canManage}
                           >
-                            Remove
+                            <X size={14} />
                           </button>
                         </span>
                       ))}
@@ -174,10 +195,13 @@ export default function Classes() {
                   </td>
                   <td className="px-4 py-2 border-b">
                     <button
-                      className="px-3 py-1 rounded-md bg-gray-600 text-white hover:bg-gray-700"
+                      className="p-2 rounded-md bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => deleteClass(c.id)}
+                      aria-label="Delete"
+                      title="Delete"
+                      disabled={!canManage}
                     >
-                      Delete
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

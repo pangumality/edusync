@@ -44,27 +44,27 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick, isCollapsed }) =>
       to={to}
       onClick={onClick}
       className={clsx(
-        'group flex items-center gap-3 px-4 py-3 mb-1.5 rounded-xl border-none transition-all duration-300 relative overflow-hidden',
+        'group flex items-center gap-3 px-4 py-3 mb-1.5 rounded-xl border border-transparent transition-all duration-300 relative overflow-hidden',
         active
-          ? 'bg-brand-600 text-white shadow-lg shadow-brand-200/60 transform scale-[1.02]'
-          : 'bg-transparent text-slate-600 hover:bg-brand-50 hover:text-brand-800 hover:pl-6',
+          ? 'bg-white/10 text-white shadow-lg shadow-black/20'
+          : 'bg-transparent text-white/75 hover:bg-white/5 hover:text-white',
         isCollapsed ? 'justify-center px-2' : ''
       )}
       title={isCollapsed ? label : ''}
     >
       {!isCollapsed && active && (
-        <span className="absolute left-0 top-0 bottom-0 w-1 bg-white/30" />
+        <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
       )}
       <Icon 
         size={20} 
         className={clsx(
           'transition-colors duration-300',
-          active ? 'text-white' : 'text-slate-400 group-hover:text-brand-700'
+          active ? 'text-accent' : 'text-white/70 group-hover:text-white'
         )} 
       />
       {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden tracking-wide">{label}</span>}
       {!isCollapsed && !active && (
-         <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-brand-400" />
+         <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-white/40" />
       )}
     </Link>
   );
@@ -82,6 +82,7 @@ const MENU_ITEMS = [
   { icon: Users, label: 'Teachers', to: '/teachers', excludedRoles: ['student','teacher','parent'] },
   { icon: GraduationCap, label: 'Students', to: '/students', excludedRoles: ['student','parent'] },
   { icon: Home, label: 'Classes', to: '/classes', allowedRoles: ['teacher','admin','staff'] },
+  { icon: Users, label: 'Users', to: '/users', allowedRoles: ['admin','staff'] },
   { icon: SchoolIcon, label: 'Schools', to: '/schools', allowedRoles: ['admin'] },
   { icon: BookOpen, label: 'Exams', to: '/exams', excludedRoles: ['student','parent'] },
   { icon: FileText, label: 'My Exams', to: '/student/exams', allowedRoles: ['student'] },
@@ -341,26 +342,29 @@ const DashboardLayout = () => {
 
   // Desktop Layout
   return (
-    <div className="min-h-screen bg-surface-50 flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       {/* Top Navigation Bar */}
-      <header className="bg-gradient-to-r from-sidebar-bg via-brand-950 to-sidebar-bg text-white h-16 flex items-center justify-between px-6 shadow-md z-20 sticky top-0">
+      <header className="bg-white/85 backdrop-blur h-16 flex items-center justify-between px-6 shadow-sm border-b border-surface-200 z-20 sticky top-0">
         <div className="flex items-center gap-4">
-           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent flex items-center justify-center shadow-lg shadow-brand-500/30">
-             <SchoolIcon size={18} className="text-white" />
+           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 shadow-lg shadow-brand-700/20 flex items-center justify-center overflow-hidden">
+             <img src="/systemlogo.jpg" alt="Edusync" className="w-full h-full object-cover" />
            </div>
-           <h1 className="text-lg font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-brand-100 to-brand-300">
-             Edusync
-           </h1>
+           <div>
+             <h1 className="text-base font-semibold text-slate-900 tracking-tight">Dashboard</h1>
+             <div className="text-[11px] text-slate-500 font-medium">
+               {currentUser ? `${currentUser.firstName} · ${currentUser.role}` : 'Loading...'}
+             </div>
+           </div>
         </div>
         <div className="flex items-center gap-6 relative">
            <div className="relative">
              <button 
-               className="relative hover:text-gray-300 focus:outline-none"
+              className="relative text-slate-700 hover:text-slate-900 focus:outline-none"
                onClick={() => setShowNotifications(!showNotifications)}
              >
-               <Bell size={20} className={unreadCount > 0 ? "text-yellow-500" : "text-gray-400"} />
+               <Bell size={20} className={unreadCount > 0 ? "text-accent" : "text-slate-400"} />
                {unreadCount > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                 <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center text-white">
                    {unreadCount}
                  </span>
                )}
@@ -420,18 +424,18 @@ const DashboardLayout = () => {
              )}
            </div>
 
-           <Link to="/profile" className="flex items-center gap-2 hover:bg-white/10 px-2 py-1 rounded-lg transition-colors">
-             <User size={20} className="text-brand-200" />
-             <span className="text-sm font-medium">
-               {currentUser ? `${currentUser.firstName} (${currentUser.role})` : 'Loading...'}
+           <Link to="/profile" className="flex items-center gap-2 hover:bg-surface-100 px-2 py-1 rounded-lg transition-colors">
+             <User size={20} className="text-brand-700" />
+             <span className="text-sm font-medium text-slate-700">
+               {currentUser ? currentUser.firstName : 'Loading...'}
              </span>
            </Link>
-           <Link to="/messages" className="flex items-center gap-1 hover:text-gray-300">
+           <Link to="/messages" className="flex items-center gap-1 text-slate-700 hover:text-slate-900">
              <MessageSquare size={20} />
-             <span className="text-sm">Messages</span>
+             <span className="text-sm font-medium">Messages</span>
            </Link>
-           <button onClick={handleLogout} className="flex items-center gap-1 hover:text-red-400">
-             <span className="text-sm">Logout</span>
+           <button onClick={handleLogout} className="flex items-center gap-1 text-slate-700 hover:text-red-600">
+             <span className="text-sm font-medium">Logout</span>
            </button>
         </div>
       </header>
@@ -439,17 +443,24 @@ const DashboardLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-            "bg-white/80 backdrop-blur border-r border-surface-200 overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10 relative",
+            "bg-gradient-to-b from-sidebar-bg to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
-          {/* Decorative background blob */}
-          <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-brand-50/60 to-transparent pointer-events-none" />
-          
           <div className={clsx("p-4 flex items-center relative z-10", isCollapsed ? "justify-center" : "justify-between")}>
-             {!isCollapsed && <h3 className="text-slate-900/50 font-bold text-xs uppercase tracking-wider mb-2 px-2">Main Menu</h3>}
+             {!isCollapsed && (
+               <div className="flex items-center gap-3 px-2">
+                 <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shadow-lg shadow-black/20">
+                   <img src="/systemlogo.jpg" alt="Edusync" className="w-full h-full object-cover" />
+                 </div>
+                 <div>
+                   <div className="text-sm font-semibold tracking-wide">Edusync</div>
+                   <div className="text-[11px] text-white/60">Navigation</div>
+                 </div>
+               </div>
+             )}
              <button 
                 onClick={() => setIsCollapsed(!isCollapsed)} 
-                className="p-1.5 hover:bg-brand-50 text-brand-700 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-white/10 text-white/80 rounded-lg transition-colors"
              >
                 {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
              </button>

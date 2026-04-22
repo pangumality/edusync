@@ -80,15 +80,19 @@ function SubjectTopics({ subjectId }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => { setEditingId(n.id); setForm({ title: n.title, content: n.content }); setShowForm(true); }}
-                  className="px-2 py-1 text-xs border border-gray-300 rounded-md"
+                  className="p-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                  aria-label="Edit"
+                  title="Edit"
                 >
-                  Edit
+                  <Edit2 size={16} />
                 </button>
                 <button
                   onClick={() => remove(n.id)}
-                  className="px-2 py-1 text-xs bg-red-600 text-white rounded-md"
+                  className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  aria-label="Delete"
+                  title="Delete"
                 >
-                  Delete
+                  <Trash2 size={16} />
                 </button>
               </div>
             </li>

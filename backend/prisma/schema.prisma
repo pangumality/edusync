@@ -68,6 +68,7 @@ model Class {
   id                String              @id
   schoolId          String
   name              String
+  sections          String[]            @default([])
   attendanceSessions AttendanceSession[]
   school            School              @relation(fields: [schoolId], references: [id])
   classSubjects ClassSubject[]

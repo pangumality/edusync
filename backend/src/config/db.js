@@ -39,7 +39,7 @@ const getPoolConfig = () => {
 
     return {
       host: 'localhost',
-      port: 5433,
+      port: 5434,
       user: 'postgres',
       password: 'postgres',
       database: 'schoolerp',

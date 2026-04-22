@@ -1,10 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Award, FileText, Download, Plus, Search } from 'lucide-react';
+import { pdf } from '@react-pdf/renderer';
 import api from '../../utils/api';
+import CertificatePdf from '../../pdf/CertificatePdf';
+import ReportCardPdf from '../../pdf/ReportCardPdf';
+import { downloadBlob } from '../../pdf/download';
+
+const decodeBase64Url = (value) => {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (base64.length % 4)) % 4;
+  const padded = base64 + '='.repeat(padLength);
+  return atob(padded);
+};
+
+const getTokenSchoolId = () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) return undefined;
+  const parts = token.split('.');
+  if (parts.length < 2) return undefined;
+  try {
+    const payload = JSON.parse(decodeBase64Url(parts[1]));
+    return payload?.schoolId ? String(payload.schoolId) : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 const Certificates = () => {
   const { currentUser } = useOutletContext();
+  const tokenSchoolId = getTokenSchoolId();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -14,19 +39,18 @@ const Certificates = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     studentId: '',
-    type: 'progress_card',
+    type: 'PROGRESS_CARD',
     remarks: ''
   });
 
   const canManage = ['admin', 'staff'].includes(currentUser?.role);
 
   const CERT_TYPES = [
-    { value: 'transfer_certificate', label: 'Transfer Certificate (TC)' },
-    { value: 'progress_card', label: 'Progress Card' },
-    { value: 'medical_certificate', label: 'Medical Certificate' },
-    { value: 'migration_certificate', label: 'Migration Certificate' },
-    { value: 'report_card', label: 'Report Card' },
-    { value: 'character_certificate', label: 'Character Certificate' }
+    { value: 'TC', label: 'Transfer Certificate (TC)' },
+    { value: 'PROGRESS_CARD', label: 'Progress Card' },
+    { value: 'MEDICAL', label: 'Medical Certificate' },
+    { value: 'MIGRATION', label: 'Migration Certificate' },
+    { value: 'REPORT_CARD', label: 'Report Card' }
   ];
 
   useEffect(() => {
@@ -35,6 +59,13 @@ const Certificates = () => {
       fetchStudents();
     }
   }, []);
+
+  useEffect(() => {
+    if (!canManage) return;
+    if (formData.studentId) return;
+    if (!students.length) return;
+    setFormData((f) => ({ ...f, studentId: students[0].id }));
+  }, [canManage, students, formData.studentId]);
 
   const fetchCertificates = async () => {
     try {
@@ -49,7 +80,11 @@ const Certificates = () => {
 
   const fetchStudents = async () => {
     try {
-      const response = await api.get('/students');
+      const params = {};
+      if (currentUser?.role === 'admin' && tokenSchoolId) {
+        params.schoolId = tokenSchoolId;
+      }
+      const response = await api.get('/students', { params });
       setStudents(response.data);
     } catch (error) {
       console.error('Failed to fetch students');
@@ -61,31 +96,84 @@ const Certificates = () => {
     try {
       await api.post('/certificates', {
         ...formData,
-        metadata: { remarks: formData.remarks }
+        metadata: { remarks: formData.remarks, generalComment: formData.remarks }
       });
       setShowIssueModal(false);
       fetchCertificates();
       alert('Certificate issued successfully!');
     } catch (error) {
-      alert('Failed to issue certificate');
+      const message = error?.response?.data?.error || 'Failed to issue certificate';
+      alert(message);
     }
   };
 
-  const filteredStudents = students.filter(s => 
-    s.user?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.user?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.admissionNo?.includes(searchTerm)
-  );
+  const filteredStudents = students.filter((s) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return `${s.firstName || ''} ${s.lastName || ''} ${s.email || ''} ${s.phone || ''} ${s.rollNumber || ''}`
+      .toLowerCase()
+      .includes(term);
+  });
 
   const getCertificateColor = (type) => {
     const colors = {
-      transfer_certificate: 'bg-red-50 text-red-700 border-red-200',
-      progress_card: 'bg-blue-50 text-blue-700 border-blue-200',
-      medical_certificate: 'bg-green-50 text-green-700 border-green-200',
-      migration_certificate: 'bg-brand-50 text-brand-800 border-brand-200',
-      report_card: 'bg-yellow-50 text-yellow-700 border-yellow-200'
+      TC: 'bg-red-50 text-red-700 border-red-200',
+      PROGRESS_CARD: 'bg-blue-50 text-blue-700 border-blue-200',
+      MEDICAL: 'bg-green-50 text-green-700 border-green-200',
+      MIGRATION: 'bg-brand-50 text-brand-800 border-brand-200',
+      REPORT_CARD: 'bg-yellow-50 text-yellow-700 border-yellow-200'
     };
     return colors[type] || 'bg-gray-50 text-gray-700 border-gray-200';
+  };
+
+  const downloadCertificatePdf = async (cert) => {
+    const label = CERT_TYPES.find((t) => t.value === cert.type)?.label || cert.type;
+    const studentName = `${cert.student?.user?.firstName || ''} ${cert.student?.user?.lastName || ''}`.trim();
+    const reference = cert.referenceNumber || cert.id;
+    const remarks = cert.metadata?.remarks || '';
+    const issuerName = cert.issuer ? `${cert.issuer.firstName} ${cert.issuer.lastName}`.trim() : '';
+    const schoolName = cert.school?.name || '';
+    const logoUrl = `${window.location.origin}/systemlogo.jpg`;
+
+    if (cert.type === 'REPORT_CARD') {
+      const { data } = await api.get(`/certificates/${cert.id}/report-card-data`);
+      const doc = (
+        <ReportCardPdf
+          schoolName={data?.certificate?.schoolName || schoolName}
+          logoUrl={logoUrl}
+          referenceNumber={data?.certificate?.referenceNumber || reference}
+          issuedAt={data?.certificate?.issuedAt || cert.issuedAt}
+          issuerName={data?.certificate?.issuerName || issuerName}
+          studentName={data?.certificate?.studentName || studentName}
+          className={data?.certificate?.className || ''}
+          comment={data?.certificate?.comment || ''}
+          subjects={data?.subjects || []}
+        />
+      );
+      const blob = await pdf(doc).toBlob();
+      const safeRef = String(reference || 'download').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60);
+      downloadBlob(blob, `report-card-${safeRef}.pdf`);
+      return;
+    }
+
+    const doc = (
+      <CertificatePdf
+        typeLabel={label}
+        typeCode={cert.type}
+        referenceNumber={reference}
+        issuedAt={cert.issuedAt}
+        studentName={studentName}
+        remarks={remarks}
+        issuerName={issuerName}
+        schoolName={schoolName}
+        logoUrl={logoUrl}
+      />
+    );
+
+    const blob = await pdf(doc).toBlob();
+    const safeRef = String(reference || 'download').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60);
+    const safeLabel = String(label || 'certificate').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60);
+    downloadBlob(blob, `${safeLabel}-${safeRef}.pdf`);
   };
 
   return (
@@ -141,18 +229,22 @@ const Certificates = () => {
                   value={formData.studentId}
                   onChange={(e) => setFormData({...formData, studentId: e.target.value})}
                   className="w-full border rounded-lg p-2 bg-white"
-                  size={5}
                 >
+                  <option value="" disabled>
+                    Select student
+                  </option>
                   {filteredStudents.map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.user?.firstName} {s.user?.lastName} ({s.admissionNo})
+                      {s.firstName} {s.lastName} ({s.rollNumber})
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Remarks / Details</label>
+                <label className="block text-sm font-medium mb-1">
+                  {formData.type === 'REPORT_CARD' ? 'General Comment' : 'Remarks / Details'}
+                </label>
                 <textarea
                   value={formData.remarks}
                   onChange={(e) => setFormData({...formData, remarks: e.target.value})}
@@ -186,7 +278,7 @@ const Certificates = () => {
         {certificates.map(cert => (
           <div key={cert.id} className="bg-white rounded-xl shadow-sm border p-6 relative overflow-hidden group">
             <div className={`absolute top-0 right-0 px-3 py-1 text-xs font-bold rounded-bl-lg border-b border-l ${getCertificateColor(cert.type)}`}>
-              {cert.type.replace(/_/g, ' ').toUpperCase()}
+              {(CERT_TYPES.find((t) => t.value === cert.type)?.label || String(cert.type)).toUpperCase()}
             </div>
             
             <div className="flex items-start gap-4 mb-4">
@@ -208,6 +300,14 @@ const Certificates = () => {
                   {cert.student?.user?.firstName} {cert.student?.user?.lastName}
                 </span>
               </div>
+              {cert.issuer && (
+                <div className="flex justify-between">
+                  <span>Issued By:</span>
+                  <span className="font-medium text-gray-900">
+                    {cert.issuer.firstName} {cert.issuer.lastName}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Date:</span>
                 <span className="font-medium">
@@ -222,7 +322,18 @@ const Certificates = () => {
               )}
             </div>
 
-            <button className="w-full flex items-center justify-center gap-2 py-2 border border-brand-600 text-brand-700 rounded-lg hover:bg-brand-50 transition-colors font-semibold">
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 py-2 border border-brand-600 text-brand-700 rounded-lg hover:bg-brand-50 transition-colors font-semibold"
+              onClick={async () => {
+                try {
+                  await downloadCertificatePdf(cert);
+                } catch (e) {
+                  console.error(e);
+                  alert('Failed to generate PDF');
+                }
+              }}
+            >
               <Download size={18} /> Download PDF
             </button>
           </div>

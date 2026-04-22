@@ -124,8 +124,10 @@ app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL
 
 app.get('/api/classes', authenticate, async (req, res) => {
   try {
-    const { schoolId, role, id: userId } = req.user;
-    let where = { schoolId };
+    const { schoolId: userSchoolId, role, id: userId } = req.user;
+    const targetSchoolId =
+      role === ROLES.SUPER_ADMIN ? (req.query.schoolId ? String(req.query.schoolId) : undefined) : userSchoolId;
+    const where = targetSchoolId ? { schoolId: targetSchoolId } : {};
 
     if (role === 'teacher') {
         const teacher = await prisma.teacher.findUnique({ where: { userId } });
@@ -160,6 +162,7 @@ app.get('/api/classes', authenticate, async (req, res) => {
     const formatted = classes.map(c => ({
       id: c.id,
       name: c.name,
+      sections: c.sections || [],
     }));
     res.json(formatted);
   } catch (error) {
@@ -168,12 +171,95 @@ app.get('/api/classes', authenticate, async (req, res) => {
   }
 });
 
+app.post('/api/classes', authenticate, requirePermission(PERMISSIONS.CLASS_CREATE), async (req, res) => {
+  try {
+    const { name, sections, schoolId: bodySchoolId } = req.body || {};
+    const { schoolId: userSchoolId, role } = req.user;
+    const schoolId =
+      role === ROLES.SUPER_ADMIN ? (bodySchoolId ? String(bodySchoolId) : undefined) : String(userSchoolId);
+    if (!schoolId) return res.status(400).json({ error: 'schoolId is required' });
+    if (!name || !String(name).trim()) return res.status(400).json({ error: 'Class name is required' });
+
+    const rawSections = Array.isArray(sections) ? sections : [];
+    const normalizedSections = [...new Set(rawSections.map((s) => String(s).trim()).filter(Boolean))];
+
+    const created = await prisma.class.create({
+      data: {
+        id: randomUUID(),
+        schoolId,
+        name: String(name).trim(),
+        sections: normalizedSections,
+      },
+    });
+
+    res.status(201).json({ id: created.id, name: created.name, sections: created.sections || [] });
+  } catch (error) {
+    console.error('Error creating class:', error);
+    res.status(500).json({ error: 'Failed to add class', details: error?.message });
+  }
+});
+
+app.put('/api/classes/:id', authenticate, requirePermission(PERMISSIONS.CLASS_UPDATE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, sections } = req.body || {};
+    const { schoolId, role } = req.user;
+
+    const klass = await prisma.class.findUnique({ where: { id: String(id) } });
+    if (!klass) return res.status(404).json({ error: 'Class not found' });
+    if (role !== ROLES.SUPER_ADMIN && klass.schoolId !== schoolId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const data = {};
+    if (name !== undefined) {
+      if (!String(name).trim()) return res.status(400).json({ error: 'Class name is required' });
+      data.name = String(name).trim();
+    }
+    if (sections !== undefined) {
+      const rawSections = Array.isArray(sections) ? sections : [];
+      data.sections = [...new Set(rawSections.map((s) => String(s).trim()).filter(Boolean))];
+    }
+
+    const updated = await prisma.class.update({
+      where: { id: String(id) },
+      data,
+    });
+
+    res.json({ id: updated.id, name: updated.name, sections: updated.sections || [] });
+  } catch (error) {
+    console.error('Error updating class:', error);
+    res.status(500).json({ error: 'Failed to update class', details: error?.message });
+  }
+});
+
+app.delete('/api/classes/:id', authenticate, requirePermission(PERMISSIONS.CLASS_DELETE), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { schoolId, role } = req.user;
+    const klass = await prisma.class.findUnique({ where: { id: String(id) } });
+    if (!klass) return res.status(404).json({ error: 'Class not found' });
+    if (role !== ROLES.SUPER_ADMIN && klass.schoolId !== schoolId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.class.delete({ where: { id: String(id) } });
+    res.json({ message: 'Class deleted' });
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    res.status(500).json({ error: 'Failed to delete class', details: error?.message });
+  }
+});
+
 app.get('/api/students', authenticate, requirePermission(PERMISSIONS.STUDENT_MANAGE), async (req, res) => {
-  const { classId } = req.query;
-  const { schoolId, role, id: userId } = req.user;
+  const { classId, schoolId: querySchoolId } = req.query;
+  const { schoolId: userSchoolId, role, id: userId } = req.user;
 
   try {
-    const where = { schoolId };
+    const where = role === ROLES.SUPER_ADMIN ? {} : { schoolId: userSchoolId };
+    if (role === ROLES.SUPER_ADMIN && querySchoolId) {
+      where.schoolId = String(querySchoolId);
+    }
     
     // Scoping for Teachers: Only show students in classes they teach
     if (role === 'teacher') {
@@ -824,6 +910,7 @@ app.get('/api/parents/children/:studentId/results', authenticate, requirePermiss
 // 5. Get Child Fees (Mocked for now as Payment model exists but fee structure might be complex)
 app.get('/api/parents/children/:studentId/fees', authenticate, requirePermission(PERMISSIONS.CHILD_VIEW_FEES), async (req, res) => {
     try {
+        const FEE_AMOUNT = 1200;
         const { studentId } = req.params;
         const { id: userId } = req.user;
         
@@ -838,13 +925,23 @@ app.get('/api/parents/children/:studentId/fees', authenticate, requirePermission
             orderBy: { paidAt: 'desc' }
         });
 
-        // Mocking outstanding
-        const outstanding = 5000; // Example
+        const totals = await prisma.payment.aggregate({
+            where: { studentId },
+            _sum: { amount: true }
+        });
+        const totalPaid = totals._sum.amount || 0;
+        const outstanding = Math.max(FEE_AMOUNT - totalPaid, 0);
         
         res.json({
-            history: payments,
+            history: payments.map(p => ({
+                id: p.id,
+                amount: p.amount,
+                method: p.method,
+                reference: p.reference,
+                date: p.paidAt
+            })),
             outstanding,
-            currency: 'KES'
+            currency: 'ZMW'
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch fees' });
@@ -1298,12 +1395,15 @@ app.delete('/api/schools/:id', authenticate, requirePermission(PERMISSIONS.SCHOO
 app.get('/api/teachers', authenticate, requirePermission(PERMISSIONS.TEACHER_MANAGE), async (req, res) => {
   try {
     const { schoolId, role } = req.user;
+    const { schoolId: querySchoolId } = req.query;
     
     let whereClause = { role: 'teacher' };
     
     // If not super admin, scope to school
     if (role !== ROLES.SUPER_ADMIN) {
       whereClause.schoolId = schoolId;
+    } else if (querySchoolId) {
+      whereClause.schoolId = String(querySchoolId);
     }
 
     const teachers = await prisma.user.findMany({
@@ -3219,7 +3319,7 @@ app.delete('/api/timetable/:id', authenticate, requirePermission(PERMISSIONS.TIM
 app.get('/api/certificates', authenticate, requirePermission(PERMISSIONS.CERTIFICATE_VIEW), async (req, res) => {
     try {
         const { schoolId, role, id: userId } = req.user;
-        let where = { schoolId };
+        let where = role === ROLES.SUPER_ADMIN ? {} : { schoolId };
         
         if (role === ROLES.STUDENT) {
             const student = await prisma.student.findUnique({ where: { userId } });
@@ -3232,12 +3332,125 @@ app.get('/api/certificates', authenticate, requirePermission(PERMISSIONS.CERTIFI
 
         const certs = await prisma.certificate.findMany({
             where,
-            include: { student: { include: { user: true } } },
+            include: {
+                school: { select: { id: true, name: true } },
+                issuer: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
+                student: {
+                    include: {
+                        user: { select: { id: true, firstName: true, lastName: true, email: true, role: true } }
+                    }
+                }
+            },
             orderBy: { issuedAt: 'desc' }
         });
         res.json(certs);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch certificates' });
+    }
+});
+
+app.get('/api/certificates/:id/report-card-data', authenticate, requirePermission(PERMISSIONS.CERTIFICATE_VIEW), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schoolId, role, id: userId } = req.user;
+
+        const cert = await prisma.certificate.findUnique({
+            where: { id: String(id) },
+            include: {
+                school: { select: { id: true, name: true } },
+                issuer: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
+                student: {
+                    include: {
+                        klass: true,
+                        user: { select: { id: true, firstName: true, lastName: true, email: true, role: true } }
+                    }
+                }
+            }
+        });
+        if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+        if (role !== ROLES.SUPER_ADMIN && cert.schoolId !== schoolId) return res.status(403).json({ error: 'Access denied' });
+
+        if (role === ROLES.STUDENT) {
+            const student = await prisma.student.findUnique({ where: { userId } });
+            if (!student || student.id !== cert.studentId) return res.status(403).json({ error: 'Access denied' });
+        } else if (role === ROLES.PARENT) {
+            const parent = await prisma.parent.findUnique({ where: { userId } });
+            if (!parent) return res.status(404).json({ error: 'Parent profile not found' });
+            const link = await prisma.parentStudents.findUnique({
+                where: { parentId_studentId: { parentId: parent.id, studentId: cert.studentId } }
+            });
+            if (!link) return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const scoreToGrade = (score) => {
+            const n = Number(score);
+            if (!Number.isFinite(n)) return null;
+            if (n >= 75) return 'A';
+            if (n >= 60) return 'B';
+            if (n >= 50) return 'C';
+            if (n >= 40) return 'D';
+            return 'F';
+        };
+
+        const classId = cert.student?.classId ? String(cert.student.classId) : null;
+        const classSubjects = classId
+            ? await prisma.classSubject.findMany({
+                where: { classId },
+                include: { subject: true }
+            })
+            : [];
+        const subjects = classSubjects
+            .map((cs) => cs.subject)
+            .filter(Boolean)
+            .map((s) => ({ id: s.id, name: s.name }));
+
+        const subjectIds = subjects.map((s) => s.id);
+        const results = subjectIds.length
+            ? await prisma.examResult.findMany({
+                where: { studentId: cert.studentId, subjectId: { in: subjectIds } },
+                orderBy: { submittedAt: 'desc' }
+            })
+            : [];
+
+        const latestBySubject = new Map();
+        results.forEach((r) => {
+            const sid = r.subjectId ? String(r.subjectId) : null;
+            if (!sid) return;
+            if (!latestBySubject.has(sid)) latestBySubject.set(sid, r);
+        });
+
+        const rows = subjects.map((s) => {
+            const r = latestBySubject.get(s.id);
+            const score = r?.score ?? null;
+            const grade = scoreToGrade(score);
+            return {
+                subjectId: s.id,
+                subjectName: s.name,
+                score,
+                grade
+            };
+        });
+
+        const issuerName = cert.issuer ? `${cert.issuer.firstName} ${cert.issuer.lastName}`.trim() : '';
+        const studentName = cert.student?.user ? `${cert.student.user.firstName} ${cert.student.user.lastName}`.trim() : '';
+
+        res.json({
+            certificate: {
+                id: cert.id,
+                type: cert.type,
+                referenceNumber: cert.referenceNumber,
+                issuedAt: cert.issuedAt,
+                schoolName: cert.school?.name || '',
+                issuerName,
+                studentName,
+                className: cert.student?.klass?.name || '',
+                comment: cert.metadata?.generalComment || cert.metadata?.remarks || ''
+            },
+            subjects: rows
+        });
+    } catch (error) {
+        console.error('Error building report card data:', error);
+        res.status(500).json({ error: 'Failed to build report card data' });
     }
 });
 

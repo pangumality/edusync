@@ -253,3 +253,14 @@
 [2026-01-06T22:02:50.620Z] User:29a0a3f3-902c-48a7-ac8c-cb8d91f8794d | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
 [2026-01-06T22:04:43.356Z] User:29a0a3f3-902c-48a7-ac8c-cb8d91f8794d | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
 [2026-01-06T22:05:38.487Z] User:d0504e55-744d-475d-a88b-8af7d1e63304 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-04-18T10:11:13.089Z] User:55f6344d-cade-4e28-b71b-d01050513004 | Action:ACCESS_DENIED | Resource:student:manage | IP:unknown | Details:"Role student missing permission"
+[2026-04-18T10:15:55.291Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-04-18T10:17:55.992Z] User:004e0c10-1366-46b9-8246-af19084fd6e5 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-04-18T11:01:04.133Z] User:004e0c10-1366-46b9-8246-af19084fd6e5 | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"Tytwo Ty","classId":"1ec864d7-ee95-496a-9695-879631fcf0e7"}
+[2026-04-18T11:10:12.882Z] User:004e0c10-1366-46b9-8246-af19084fd6e5 | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"B Flow","classId":"0e5eb744-c95d-4afa-84d4-567bd5e8fdc9"}
+[2026-04-18T18:40:54.410Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""
+[2026-04-18T18:42:39.699Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"priscar kaliye","classId":"35d29720-b080-481a-8e51-bb52d60005eb"}
+[2026-04-18T19:04:13.319Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:CREATE | Resource:teacher | IP:unknown | Details:{"id":"020f71ae-8b41-461e-8d95-8f3175ceb1d9","name":"Peter Chewe"}
+[2026-04-19T08:03:31.661Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"Haggai Kasalu","classId":"7a8e0cf0-64c9-4513-9959-2fcc6a98eacc"}
+[2026-04-19T14:34:17.878Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:CREATE | Resource:student | IP:unknown | Details:{"name":"sampa luchembe","classId":"5ec2983e-50cc-4ea5-bcd6-904461b9c8de"}
+[2026-04-20T05:07:28.830Z] User:8273d17e-78e3-4ab1-a2df-19d48ec98188 | Action:LOGIN_SUCCESS | Resource:auth | IP:unknown | Details:""

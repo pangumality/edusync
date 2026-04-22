@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Trash2 } from 'lucide-react';
 import api from '../../utils/api';
 import Modal from '../../components/Modal';
 
@@ -305,8 +306,13 @@ function HostelDetails({ hostelId, onBack }) {
                                 <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                                     {room.allocations.length}/{room.capacity}
                                 </span>
-                                <button onClick={() => handleDeleteRoom(room.id)} className="text-red-500 hover:text-red-700 text-xs">
-                                    Delete
+                                <button
+                                    onClick={() => handleDeleteRoom(room.id)}
+                                    className="text-red-500 hover:text-red-700"
+                                    aria-label="Delete"
+                                    title="Delete"
+                                >
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         </div>
