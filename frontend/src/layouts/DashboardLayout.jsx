@@ -267,7 +267,7 @@ const DashboardLayout = () => {
             
             {/* Drawer Content */}
             <div className="relative bg-white w-4/5 max-w-sm h-full shadow-2xl flex flex-col animate-slide-in">
-              <div className="p-4 bg-gradient-to-r from-sidebar-bg via-brand-700 to-sidebar-bg-2 text-white flex justify-between items-center relative overflow-hidden">
+              <div className="p-4 bg-gradient-to-r from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 text-white flex justify-between items-center relative overflow-hidden">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.20),transparent_55%)] opacity-70" />
                 <span className="font-bold text-lg">Menu</span>
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-white/10 rounded">
@@ -323,7 +323,7 @@ const DashboardLayout = () => {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-sidebar-bg via-brand-700 to-sidebar-bg-2 text-white h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg z-50 relative overflow-hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 text-white h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg z-50 relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.14),transparent_60%)] opacity-70" />
           <Link to="/" className="flex flex-col items-center gap-1 opacity-90 hover:opacity-100">
             <Home size={24} />
@@ -445,7 +445,7 @@ const DashboardLayout = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-            "bg-gradient-to-b from-sidebar-bg via-brand-700 to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
+            "bg-gradient-to-b from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)] opacity-70" />

@@ -334,7 +334,7 @@ export default function Subject() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 rounded-2xl p-6 text-white">
         <div className="flex items-center gap-3 mb-6">
           <Link to="/e-learning" className="p-2 bg-white/10 hover:bg-white/20 rounded-full">
             <ArrowLeft size={20} className="text-white" />

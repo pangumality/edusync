@@ -61,7 +61,7 @@ const Profile = () => {
 
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700"></div>
+        <div className="h-32 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700"></div>
         <div className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-12 mb-6">
             <div className="relative group">
