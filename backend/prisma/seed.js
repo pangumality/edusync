@@ -7,7 +7,9 @@ import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 const { Pool } = pg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const connectionString =
+  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5434/schoolerp';
+const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

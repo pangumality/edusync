@@ -16,6 +16,7 @@ import {
 import clsx from 'clsx';
 
 const ParentDashboard = () => {
+  const formatZMW = (value) => `ZMW ${Number(value || 0).toLocaleString('en-ZM')}`;
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,12 +140,12 @@ const ParentDashboard = () => {
           
           {/* Academic Overview Card */}
           <Link to="/subjects" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-600 to-accent opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-400 to-sky-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-brand-600 to-accent rounded-lg text-white shadow-lg shadow-brand-700/25">
-                  <BookOpen size={20} />
+                <div className="p-2.5 bg-cyan-200 text-cyan-700 rounded-lg border border-cyan-300 shadow-lg shadow-cyan-500/25">
+                  <BookOpen size={20} className="text-cyan-900" />
                 </div>
                 Academic Overview
               </h3>
@@ -162,7 +163,7 @@ const ParentDashboard = () => {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Enrolled Subjects</p>
                 <div className="flex flex-wrap gap-2">
                   {childData.overview?.subjects?.map(sub => (
-                    <span key={sub.id} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-md border border-brand-100">
+                    <span key={sub.id} className="px-2.5 py-1 bg-cyan-100 text-cyan-900 text-xs font-bold rounded-md border border-cyan-200">
                       {sub.name}
                     </span>
                   )) || <span className="text-slate-400 text-sm">No subjects enrolled</span>}
@@ -173,12 +174,12 @@ const ParentDashboard = () => {
 
           {/* Attendance Card */}
           <Link to="/attendance" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-accent to-brand-500 opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-accent to-brand-500 rounded-lg text-white shadow-lg shadow-brand-700/20">
-                  <Calendar size={20} />
+                <div className="p-2.5 bg-emerald-200 text-emerald-700 rounded-lg border border-emerald-300 shadow-lg shadow-emerald-500/25">
+                  <Calendar size={20} className="text-emerald-900" />
                 </div>
                 Attendance
               </h3>
@@ -229,12 +230,12 @@ const ParentDashboard = () => {
 
           {/* Fees Card */}
           <Link to="/finance" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-600 to-accent opacity-10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-300 to-yellow-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-brand-600 to-accent rounded-lg text-white shadow-lg shadow-brand-700/25">
-                  <CreditCard size={20} />
+                <div className="p-2.5 bg-amber-200 text-amber-700 rounded-lg border border-amber-300 shadow-lg shadow-amber-500/25">
+                  <CreditCard size={20} className="text-amber-900" />
                 </div>
                 Fees Status
               </h3>
@@ -253,7 +254,7 @@ const ParentDashboard = () => {
               <div className="bg-gradient-to-r from-brand-50 to-white p-5 rounded-xl border border-brand-100 flex justify-between items-center">
                 <span className="text-brand-800 font-bold text-sm">Outstanding</span>
                 <span className="text-2xl font-black text-slate-900">
-                  ${childData.fees?.outstanding?.toLocaleString() || 0}
+                  {formatZMW(childData.fees?.outstanding)}
                 </span>
               </div>
               
@@ -266,7 +267,7 @@ const ParentDashboard = () => {
                         <div className="font-bold text-slate-700">{tx.description || 'Fee Payment'}</div>
                         <div className="text-xs text-slate-400 font-medium">{new Date(tx.date).toLocaleDateString()}</div>
                       </div>
-                      <span className="font-bold text-slate-800 bg-white px-2 py-1 rounded border border-slate-100 shadow-sm">${tx.amount}</span>
+                      <span className="font-bold text-slate-800 bg-white px-2 py-1 rounded border border-slate-100 shadow-sm">{formatZMW(tx.amount)}</span>
                     </div>
                   ))
                 ) : (
@@ -277,15 +278,16 @@ const ParentDashboard = () => {
           </Link>
 
           {/* Results Card */}
-          <Link to="/exams" className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden block">
+          <Link to="/exams" className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-fuchsia-400 to-pink-400 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg text-white shadow-lg shadow-orange-500/30">
-                  <Award size={20} />
+                <div className="p-2.5 bg-fuchsia-200 text-fuchsia-700 rounded-lg border border-fuchsia-300 shadow-lg shadow-fuchsia-500/25 relative z-10">
+                  <Award size={20} className="text-fuchsia-900" />
                 </div>
                 Recent Results
               </h3>
-              <span className="text-sm text-brand-700 hover:text-brand-800 font-bold bg-brand-50 px-4 py-2 rounded-lg hover:bg-brand-100 transition-colors">View All Results</span>
+              <span className="text-sm text-fuchsia-900 font-bold bg-fuchsia-100 px-4 py-2 rounded-lg border border-fuchsia-200 transition-colors relative z-10">View All Results</span>
             </div>
             
             {childData.results?.length > 0 ? (

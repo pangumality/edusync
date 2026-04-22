@@ -33,41 +33,52 @@ ChartJS.register(
   Legend
 );
 
-const StatCard = ({ icon: Icon, title, count, colorFrom, colorTo, iconColor, buttonLabel, link }) => {
+const StatCard = ({
+  icon: Icon,
+  title,
+  count,
+  accentFrom,
+  accentTo,
+  iconBg,
+  iconText,
+  iconShadow,
+  buttonLabel,
+  link
+}) => {
   const CardContent = () => (
     <>
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colorFrom} ${colorTo} opacity-10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`} />
+      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${accentFrom} ${accentTo} opacity-55 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none`} />
       
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl bg-gradient-to-br ${colorFrom} ${colorTo} shadow-lg ${iconColor} text-white transform group-hover:scale-110 transition-transform duration-300`}>
-          <Icon size={24} />
-        </div>
-        {buttonLabel && (
-          <span className={`text-xs font-bold px-3 py-1 rounded-full bg-slate-50 text-slate-500 group-hover:bg-white group-hover:shadow-sm transition-all border border-slate-100`}>
-            {buttonLabel}
-          </span>
-        )}
+      <div className={`absolute top-6 right-6 p-3 rounded-xl ${iconBg} ${iconShadow} transform group-hover:scale-110 transition-transform duration-300`}>
+        <Icon size={22} className={iconText} />
       </div>
       
       <div>
         <h3 className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">{title}</h3>
         <span className="text-4xl font-black text-slate-800 tracking-tight">{count}</span>
+        {buttonLabel && (
+          <div className="mt-3">
+            <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-100">
+              {buttonLabel}
+            </span>
+          </div>
+        )}
       </div>
     </>
   );
 
   if (link) {
     return (
-      <Link to={link} className="group relative bg-white rounded-2xl p-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden block">
+      <Link to={link} className="group relative ui-card p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden block">
         <CardContent />
       </Link>
     );
   }
 
   return (
-    <div className="group relative bg-white rounded-2xl p-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+    <Link to="/" className="group relative ui-card p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden block">
       <CardContent />
-    </div>
+    </Link>
   );
 };
 
@@ -86,7 +97,7 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    if (currentUser?.role === 'admin' || currentUser?.role === 'super_admin') {
+    if (currentUser?.role && currentUser.role !== 'parent') {
       fetchStats();
     }
   }, [currentUser]);
@@ -178,9 +189,11 @@ const Dashboard = () => {
             icon={Building2} 
             title="Total Schools" 
             count={stats.schools} 
-            colorFrom="from-brand-600"
-            colorTo="to-accent"
-            iconColor="shadow-brand-700/30"
+            accentFrom="from-brand-400"
+            accentTo="to-brand-300"
+            iconBg="bg-brand-200 border border-brand-300"
+            iconText="text-brand-700"
+            iconShadow="shadow-lg shadow-brand-700/20"
             buttonLabel="Manage"
             link="/schools"
           />
@@ -188,19 +201,23 @@ const Dashboard = () => {
             icon={Users} 
             title="Total Users" 
             count={stats.users} 
-            colorFrom="from-brand-700"
-            colorTo="to-brand-500"
-            iconColor="shadow-brand-700/30"
+            accentFrom="from-cyan-400"
+            accentTo="to-sky-300"
+            iconBg="bg-cyan-200 border border-cyan-300"
+            iconText="text-cyan-900"
+            iconShadow="shadow-lg shadow-cyan-500/20"
             buttonLabel="View All"
-            // link="/users" // Assuming a users page exists or we just show count
+            link="/users"
           />
           <StatCard 
             icon={DollarSign} 
             title="Total Revenue" 
-            count={`$${stats.revenue.toLocaleString()}`}
-            colorFrom="from-accent"
-            colorTo="to-brand-500"
-            iconColor="shadow-brand-700/25"
+            count={`ZMW ${Number(stats.revenue || 0).toLocaleString('en-ZM')}`}
+            accentFrom="from-amber-300"
+            accentTo="to-yellow-300"
+            iconBg="bg-amber-200 border border-amber-300"
+            iconText="text-amber-900"
+            iconShadow="shadow-lg shadow-amber-500/20"
             buttonLabel="Finance"
             link="/finance"
           />
@@ -208,11 +225,13 @@ const Dashboard = () => {
             icon={MessageSquare} 
             title="Total Messages" 
             count={stats.messages} 
-            colorFrom="from-brand-600"
-            colorTo="to-brand-800"
-            iconColor="shadow-brand-700/30"
-            buttonLabel="View Logs"
-            // link="/logs"
+            accentFrom="from-fuchsia-400"
+            accentTo="to-pink-400"
+            iconBg="bg-fuchsia-200 border border-fuchsia-300"
+            iconText="text-fuchsia-900"
+            iconShadow="shadow-lg shadow-rose-500/20"
+            buttonLabel="Messages"
+            link="/messages"
           />
         </div>
       ) : (
@@ -221,9 +240,11 @@ const Dashboard = () => {
             icon={GraduationCap} 
             title="Total Students" 
             count={stats.students} 
-            colorFrom="from-brand-600"
-            colorTo="to-accent"
-            iconColor="shadow-brand-700/30"
+            accentFrom="from-brand-400"
+            accentTo="to-brand-300"
+            iconBg="bg-brand-200 border border-brand-300"
+            iconText="text-brand-700"
+            iconShadow="shadow-lg shadow-brand-700/20"
             buttonLabel="View All"
             link="/students"
           />
@@ -232,9 +253,11 @@ const Dashboard = () => {
               icon={Users} 
               title="Total Teachers" 
               count={stats.teachers} 
-              colorFrom="from-brand-700"
-              colorTo="to-brand-500"
-              iconColor="shadow-brand-700/30"
+              accentFrom="from-cyan-400"
+              accentTo="to-sky-300"
+              iconBg="bg-cyan-200 border border-cyan-300"
+              iconText="text-cyan-900"
+              iconShadow="shadow-lg shadow-cyan-500/20"
               buttonLabel="View All"
               link="/teachers"
             />
@@ -243,9 +266,11 @@ const Dashboard = () => {
             icon={Home} 
             title="Total Classes" 
             count={stats.classes} 
-            colorFrom="from-accent"
-            colorTo="to-brand-500"
-            iconColor="shadow-brand-700/25"
+            accentFrom="from-amber-300"
+            accentTo="to-yellow-300"
+            iconBg="bg-amber-200 border border-amber-300"
+            iconText="text-amber-900"
+            iconShadow="shadow-lg shadow-amber-500/20"
             buttonLabel={currentUser?.role === 'student' ? 'My Subjects' : 'View All'} 
             link={currentUser?.role === 'student' ? '/subjects' : '/classes'}
           />
@@ -254,9 +279,11 @@ const Dashboard = () => {
               icon={CreditCard} 
               title="Total Parents" 
               count={stats.parents} 
-              colorFrom="from-brand-600"
-              colorTo="to-brand-800"
-              iconColor="shadow-brand-700/30"
+              accentFrom="from-fuchsia-400"
+              accentTo="to-pink-400"
+              iconBg="bg-fuchsia-200 border border-fuchsia-300"
+              iconText="text-fuchsia-900"
+              iconShadow="shadow-lg shadow-rose-500/20"
               buttonLabel="Finance"
               link="/finance"
             />
@@ -266,16 +293,17 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {currentUser?.role === 'admin' && (
-          <div className="lg:col-span-2 ui-card ui-card-muted p-6">
+          <Link to="/schools" className="lg:col-span-2 ui-card ui-card-muted p-6 group relative overflow-hidden block hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-400 to-brand-300 opacity-55 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-50 text-brand-700 rounded-lg">
-                  <BarChart2 size={20} />
+                <div className="p-2 bg-brand-200 text-brand-700 rounded-lg border border-brand-300 shadow-lg shadow-brand-700/25 relative z-10">
+                  <BarChart2 size={20} className="text-brand-700" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-700">Statistics Overview</h3>
+                <h3 className="text-lg font-bold text-slate-700 relative z-10">Statistics Overview</h3>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-80 relative z-10">
               <Bar 
                 data={chartData} 
                 options={{
@@ -307,25 +335,31 @@ const Dashboard = () => {
                 }} 
               />
             </div>
-          </div>
+          </Link>
         )}
 
-        <div className={`ui-card ui-card-muted p-6 ${!(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') ? 'lg:col-span-3' : ''}`}>
+        <Link
+          to="/timetable"
+          className={`ui-card ui-card-muted p-6 group relative overflow-hidden block hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${!(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') ? 'lg:col-span-3' : ''}`}
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400 to-sky-300 opacity-55 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📅</span>
-              <h3 className="font-bold text-slate-700">Events Calendar</h3>
+              <div className="p-2 bg-cyan-200 text-cyan-700 rounded-lg border border-cyan-300 shadow-lg shadow-cyan-500/25 relative z-10">
+                <Activity size={20} className="text-cyan-900" />
+              </div>
+              <h3 className="font-bold text-slate-700 relative z-10">Events Calendar</h3>
             </div>
-            <button className="text-brand-700 text-sm font-semibold hover:text-brand-800 transition-colors">View All</button>
+            <span className="text-cyan-800 text-sm font-semibold transition-colors relative z-10">View All</span>
           </div>
           
-          <div className="text-center mb-6">
+          <div className="text-center mb-6 relative z-10">
              <h3 className="text-xl font-bold text-slate-800">December 2025</h3>
              <p className="text-sm text-slate-400">School Activities & Holidays</p>
           </div>
 
           {/* Simple Calendar Grid Mockup */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm relative z-10">
             <div className="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                  <div key={day} className="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{day}</div>
@@ -353,7 +387,7 @@ const Dashboard = () => {
                ))}
             </div>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   );

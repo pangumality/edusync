@@ -1,25 +1,31 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import api from '../../utils/api';
 
 export default function Students() {
+  const [searchParams] = useSearchParams();
+  const schoolId = searchParams.get('schoolId') || undefined;
   const [classesList, setClassesList] = useState([]);
   const [klass, setKlass] = useState('');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ 
     firstName: '', lastName: '', email: '', phone: '', gender: '', klass: '', section: '',
-    grade: '',
-    dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+    dateOfBirth: '', healthCondition: '',
     guardianName: '', guardianEmail: '', guardianPhone: ''
   });
   const [list, setList] = useState([]);
+  const editFormRef = useRef(null);
 
   const loadClasses = async () => {
     try {
-      const { data } = await api.get('/classes');
+      const { data } = await api.get('/classes', { params: { schoolId } });
       setClassesList(data);
-      if (!klass && data.length) {
-        setKlass(data[0].id);
+      if (!klass) {
+        setKlass('all');
+      }
+      if (!form.klass && data.length) {
         setForm(f => ({ ...f, klass: data[0].id }));
       }
     } catch {
@@ -28,9 +34,10 @@ export default function Students() {
   };
 
   const loadStudents = async (cid) => {
-    if (!cid) return;
     try {
-      const { data } = await api.get(`/students?classId=${cid}`);
+      const params = { schoolId };
+      if (cid && cid !== 'all') params.classId = cid;
+      const { data } = await api.get('/students', { params });
       setList(data);
     } catch {
       setList([]);
@@ -49,15 +56,22 @@ export default function Students() {
     return list.filter(s => `${s.firstName} ${s.lastName} ${s.email} ${s.phone} ${s.gender}`.toLowerCase().includes(search.toLowerCase()));
   }, [list, search]);
 
+  const defaultFormClassId = useMemo(() => {
+    if (klass && klass !== 'all') return klass;
+    return classesList[0]?.id || '';
+  }, [klass, classesList]);
+
   const startAdd = () => {
     setEditingId('new');
     setForm({ 
       firstName: '', lastName: '', email: '', phone: '', gender: '', 
-      klass: klass || (classesList[0]?.id || ''), section: '',
-      grade: '',
-      dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+      klass: defaultFormClassId, section: '',
+      dateOfBirth: '', healthCondition: '',
       guardianName: '', guardianEmail: '', guardianPhone: ''
     });
+    window.setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   };
 
   const startEdit = (s) => {
@@ -70,24 +84,23 @@ export default function Students() {
       gender: s.gender || '',
       klass: s.classId,
       section: s.section || '',
-      grade: s.grade || '',
       dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split('T')[0] : '',
-      bloodGroup: s.bloodGroup || '',
       healthCondition: s.healthCondition || '',
-      religion: s.religion || '',
       guardianName: s.guardianName || '',
       guardianEmail: s.guardianEmail || '',
       guardianPhone: s.guardianPhone || ''
     });
+    window.setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setForm({ 
       firstName: '', lastName: '', email: '', phone: '', gender: '', 
-      klass: klass || '', section: '',
-      grade: '',
-      dateOfBirth: '', bloodGroup: '', healthCondition: '', religion: '',
+      klass: defaultFormClassId, section: '',
+      dateOfBirth: '', healthCondition: '',
       guardianName: '', guardianEmail: '', guardianPhone: ''
     });
   };
@@ -104,9 +117,7 @@ export default function Students() {
         classId: form.klass,
         section: form.section || undefined,
         dateOfBirth: form.dateOfBirth || undefined,
-        bloodGroup: form.bloodGroup || undefined,
         healthCondition: form.healthCondition || undefined,
-        religion: form.religion || undefined,
         guardianName: form.guardianName || undefined,
         guardianEmail: form.guardianEmail || undefined,
         guardianPhone: form.guardianPhone || undefined
@@ -149,7 +160,16 @@ export default function Students() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-700 uppercase">Students</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-700 uppercase">Students</h2>
+        <button
+          className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
+          onClick={startAdd}
+          type="button"
+        >
+          Add Student
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl shadow-soft p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -163,6 +183,7 @@ export default function Students() {
     setKlass(id);
               }}
             >
+              <option value="all">All</option>
               {classesList.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -178,18 +199,11 @@ export default function Students() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex items-end">
-            <button
-              className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 w-full"
-              onClick={startAdd}
-            >
-              Add Student
-            </button>
-          </div>
+          <div className="hidden md:block" />
         </div>
 
         {editingId && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg space-y-4">
+        <div ref={editFormRef} className="mt-6 p-4 bg-gray-50 rounded-lg space-y-4">
           <h3 className="font-semibold text-gray-700">Student Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input
@@ -237,20 +251,6 @@ export default function Students() {
               value={form.dateOfBirth}
               onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
             />
-            <input 
-              type="text"
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Blood Group"
-              value={form.bloodGroup}
-              onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
-            />
-             <input 
-              type="text"
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Religion"
-              value={form.religion}
-              onChange={(e) => setForm({ ...form, religion: e.target.value })}
-            />
              <input 
               type="text"
               className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400 md:col-span-2"
@@ -280,13 +280,6 @@ export default function Students() {
                 <option key={sec} value={sec}>{sec}</option>
               ))}
             </select>
-             <input 
-              type="text"
-              className="border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
-              placeholder="Grade"
-              value={form.grade}
-              onChange={(e) => setForm({ ...form, grade: e.target.value })}
-            />
           </div>
 
           <h3 className="font-semibold text-gray-700 pt-2 border-t border-gray-200">Guardian Information</h3>
@@ -358,16 +351,20 @@ export default function Students() {
                   <td className="px-4 py-2 border-b">
                     <div className="flex items-center gap-3">
                       <button
-                        className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                        className="p-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
                         onClick={() => startEdit(s)}
+                        aria-label="Edit"
+                        title="Edit"
                       >
-                        Edit
+                        <Pencil size={16} />
                       </button>
                       <button
-                        className="px-3 py-1 rounded-md bg-gray-600 text-white hover:bg-gray-700"
+                        className="p-2 rounded-md bg-gray-600 text-white hover:bg-gray-700"
                         onClick={() => remove(s.id)}
+                        aria-label="Delete"
+                        title="Delete"
                       >
-                        Delete
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

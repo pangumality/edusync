@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { 
   School, 
@@ -14,8 +14,11 @@ import {
   Loader2
 } from 'lucide-react';
 
-const StatCard = ({ icon: Icon, title, value, color }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+const StatCard = ({ icon: Icon, title, value, color, to }) => (
+  <Link
+    to={to}
+    className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer group"
+  >
     <div className={`p-3 rounded-lg ${color}`}>
       <Icon className="text-white" size={24} />
     </div>
@@ -23,7 +26,7 @@ const StatCard = ({ icon: Icon, title, value, color }) => (
       <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">{title}</p>
       <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
     </div>
-  </div>
+  </Link>
 );
 
 const SchoolDetails = () => {
@@ -139,18 +142,21 @@ const SchoolDetails = () => {
           title="Students" 
           value={school.stats?.students || 0}
           color="bg-brand-600"
+          to={`/students?schoolId=${id}`}
         />
         <StatCard 
           icon={Users} 
           title="Teachers" 
           value={school.stats?.teachers || 0}
           color="bg-accent"
+          to={`/teachers?schoolId=${id}`}
         />
         <StatCard 
           icon={Home} 
           title="Classes" 
           value={school.stats?.classes || 0}
           color="bg-brand-800"
+          to={`/classes?schoolId=${id}`}
         />
       </div>
 

@@ -3,8 +3,8 @@ import pg from 'pg';
 
 const { Client } = pg;
 
-// Try connecting as postgres user
-const connectionString = "postgresql://postgres:StrongPassword123@localhost:5433/postgres";
+const connectionString =
+  process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5434/postgres";
 
 const client = new Client({
   connectionString: connectionString,

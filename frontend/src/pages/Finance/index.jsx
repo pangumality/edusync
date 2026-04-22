@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
 import api from '../../utils/api';
-import { CreditCard, Search, Plus, ListChecks, Printer, Trash2 } from 'lucide-react';
+import { pdf } from '@react-pdf/renderer';
+import { CreditCard, Search, Plus, ListChecks, Download, Trash2, Eye } from 'lucide-react';
 import Select from '../../components/Select';
+import FinanceStatementPdf from '../../pdf/FinanceStatementPdf';
+import { downloadBlob } from '../../pdf/download';
 
 const FEE_AMOUNT = 1200;
 
@@ -168,6 +171,44 @@ export default function Finance() {
     }
   }
 
+  const downloadStatementPdf = async () => {
+    if (!activeStudent) return;
+    const termLabel = selectedTermLabel();
+    const paidTerm = totalPaidForTerm(activeStudent.id, termLabel);
+    const balanceTerm = Math.max(FEE_AMOUNT - paidTerm, 0);
+    const className = classes.find((c) => c.id === activeStudent.klass)?.name || '';
+
+    const rows = (payments[activeStudent.id] || [])
+      .slice()
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .map((p) => ({
+        id: p.id,
+        date: p.date,
+        term: termLabelFromDate(p.date),
+        method: p.method,
+        reference: p.reference,
+        amount: p.amount,
+      }));
+
+    const doc = (
+      <FinanceStatementPdf
+        studentName={activeStudent.name}
+        studentSection={activeStudent.section}
+        className={className}
+        termLabel={termLabel}
+        feeAmount={FEE_AMOUNT}
+        totalPaidTerm={paidTerm}
+        balanceTerm={balanceTerm}
+        payments={rows}
+      />
+    );
+
+    const blob = await pdf(doc).toBlob();
+    const safeName = String(activeStudent.name || 'student').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 60);
+    const safeTerm = String(termLabel || 'term').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 30);
+    downloadBlob(blob, `fees-statement-${safeName}-${safeTerm}.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-700 uppercase">Finance</h2>
@@ -327,10 +368,12 @@ export default function Finance() {
                           Add Payment
                         </button>
                         <button
-                          className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm"
+                          className="p-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
                           onClick={() => openView(s)}
+                          aria-label="View"
+                          title="View"
                         >
-                          View
+                          <Eye size={16} />
                         </button>
                       </div>
                     </td>
@@ -441,9 +484,9 @@ export default function Finance() {
                 <div className="flex items-center gap-2">
                   <button
                     className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => window.print()}
+                    onClick={downloadStatementPdf}
                   >
-                    <Printer size={18} /> Print
+                    <Download size={18} /> Download PDF
                   </button>
                 </div>
               </div>

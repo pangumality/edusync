@@ -25,6 +25,7 @@ import Inventory from './pages/Inventory';
 import Schools from './pages/Schools';
 import SchoolDetails from './pages/Schools/SchoolDetails';
 import Subjects from './pages/Subjects';
+import Users from './pages/Users';
 import StudentExams from './pages/StudentExams';
 import TakeExam from './pages/StudentExams/TakeExam';
 import Newsletter from './pages/Newsletter';
@@ -64,6 +65,11 @@ function App() {
           <Route path="schools/:id" element={
             <RequireRole roles={['admin']}>
               <SchoolDetails />
+            </RequireRole>
+          } />
+          <Route path="users" element={
+            <RequireRole roles={['admin', 'staff']}>
+              <Users />
             </RequireRole>
           } />
           <Route path="exams" element={<Exams />} />
