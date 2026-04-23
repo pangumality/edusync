@@ -1415,7 +1415,10 @@ app.get('/api/teachers', authenticate, requirePermission(PERMISSIONS.TEACHER_MAN
     });
 
     const formatted = teachers.map(t => ({
+      // Keep `id` as user id for existing consumers (delete, class-subject assignments).
       id: t.id,
+      // Add teacher profile id for modules (like timetable) that require Teacher FK.
+      teacherId: t.teacher?.id || null,
       name: `${t.firstName} ${t.lastName}`,
       email: t.email,
       // Mapping employeeNumber to subject as a workaround for schema restrictions
@@ -1479,7 +1482,7 @@ app.post('/api/teachers', authenticate, requirePermission(PERMISSIONS.TEACHER_MA
     });
 
     await logAudit(req.user.id, 'CREATE', 'teacher', { id: userId, name });
-    res.status(201).json({ id: userId, name, email, subject });
+    res.status(201).json({ id: userId, teacherId, name, email, subject });
 
   } catch (error) {
     console.error('Error creating teacher:', error);
@@ -3262,6 +3265,53 @@ app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE
     try {
         const { schoolId } = req.user;
         const { classId, subjectId, teacherId, dayOfWeek, startTime, endTime } = req.body;
+
+        if (!classId || !subjectId || !teacherId || dayOfWeek === undefined || !startTime || !endTime) {
+            return res.status(400).json({ error: 'classId, subjectId, teacherId, dayOfWeek, startTime and endTime are required' });
+        }
+
+        const dayOfWeekNum = Number(dayOfWeek);
+        if (!Number.isInteger(dayOfWeekNum) || dayOfWeekNum < 1 || dayOfWeekNum > 7) {
+            return res.status(400).json({ error: 'dayOfWeek must be an integer between 1 and 7' });
+        }
+
+        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!timeRegex.test(String(startTime)) || !timeRegex.test(String(endTime))) {
+            return res.status(400).json({ error: 'startTime and endTime must be in HH:mm format' });
+        }
+
+        // Accept either a teacher profile id or a teacher user id and normalize to profile id.
+        const teacherProfile = await prisma.teacher.findFirst({
+            where: {
+                OR: [
+                    { id: String(teacherId) },
+                    { userId: String(teacherId) }
+                ]
+            },
+            select: { id: true, userId: true }
+        });
+        if (!teacherProfile) {
+            return res.status(400).json({ error: 'Invalid teacher selected' });
+        }
+
+        const teacherUser = await prisma.user.findUnique({
+            where: { id: teacherProfile.userId },
+            select: { schoolId: true }
+        });
+        if (!teacherUser || teacherUser.schoolId !== schoolId) {
+            return res.status(400).json({ error: 'Teacher does not belong to your school' });
+        }
+
+        const [klass, subject] = await Promise.all([
+            prisma.class.findFirst({ where: { id: String(classId), schoolId } }),
+            prisma.subject.findFirst({ where: { id: String(subjectId), schoolId } })
+        ]);
+        if (!klass) {
+            return res.status(400).json({ error: 'Invalid class selected' });
+        }
+        if (!subject) {
+            return res.status(400).json({ error: 'Invalid subject selected' });
+        }
         
         const period = await prisma.timeTablePeriod.create({
             data: {
@@ -3269,14 +3319,21 @@ app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE
                 schoolId,
                 classId,
                 subjectId,
-                teacherId,
-                dayOfWeek: parseInt(dayOfWeek),
+                teacherId: teacherProfile.id,
+                dayOfWeek: dayOfWeekNum,
                 startTime,
                 endTime
             }
         });
         res.json(period);
     } catch (error) {
+        console.error('Failed to add timetable period:', error);
+        if (error?.code === 'P2003') {
+            return res.status(400).json({ error: 'Invalid class, subject or teacher reference' });
+        }
+        if (error?.code === 'P2025') {
+            return res.status(400).json({ error: 'Referenced record not found' });
+        }
         res.status(500).json({ error: 'Failed to add timetable period' });
     }
 });

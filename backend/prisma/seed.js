@@ -1,31 +1,44 @@
-import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from the backend root
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const { PrismaClient } = pkg;
 const { Pool } = pg;
-const connectionString =
-  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5434/schoolerp';
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('Error: DATABASE_URL is not defined in .env file.');
+  process.exit(1);
+}
+
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-
 async function main() {
-  console.log('Starting seed...');
+  console.log('--- Starting Database Seed ---');
 
-  // 1. Create School
+  // 1. Create/Get School
   const schoolName = 'Tabo Academy';
   const schoolCode = 'TABO001';
   
-  console.log(`Creating School: ${schoolName}`);
+  console.log(`Checking School: ${schoolName} (${schoolCode})`);
   
   const school = await prisma.school.upsert({
     where: { code: schoolCode },
-    update: {},
+    update: { name: schoolName },
     create: {
       id: randomUUID(),
       name: schoolName,
@@ -35,29 +48,31 @@ async function main() {
 
   console.log(`School ID: ${school.id}`);
 
-  // 2. Create Class
-  console.log('Creating Class: Grade 10-A');
-  const classId = randomUUID();
-  const klass = await prisma.class.upsert({
-    where: { id: classId }, // In a real scenario, you'd check by name+school, but for seed we assume fresh or this ID
-    update: {}, // Simplified: We just create if not exists, but here we are generating random ID so upsert on ID isn't great if we want to find existing.
-    // Better strategy: Find first, then create.
-    create: {
-      id: classId,
-      schoolId: school.id,
-      name: 'Grade 10-A',
-    }
-  }).catch(async () => {
-      // Fallback if ID collision or logic change. Let's just find "Grade 10-A"
-      const existing = await prisma.class.findFirst({ where: { schoolId: school.id, name: 'Grade 10-A' }});
-      if(existing) return existing;
-      return prisma.class.create({ data: { id: randomUUID(), schoolId: school.id, name: 'Grade 10-A' }});
+  // 2. Create/Get Class
+  const className = 'Grade 10-A';
+  console.log(`Checking Class: ${className}`);
+  
+  let klass = await prisma.class.findFirst({
+    where: { schoolId: school.id, name: className }
   });
+
+  if (!klass) {
+    klass = await prisma.class.create({
+      data: {
+        id: randomUUID(),
+        schoolId: school.id,
+        name: className,
+      }
+    });
+    console.log(`Created Class: ${klass.id}`);
+  } else {
+    console.log(`Class already exists: ${klass.id}`);
+  }
 
   // 3. Create Users & Profiles
 
   // --- Super Admin ---
-  console.log('Creating Super Admin...');
+  console.log('Checking Super Admin...');
   const adminEmail = 'admin@system.com';
   const adminPassword = await bcrypt.hash('Admin@123', 10);
   
@@ -76,7 +91,7 @@ async function main() {
   });
 
   // --- School Admin (Staff) ---
-  console.log('Creating School Admin...');
+  console.log('Checking School Admin...');
   const staffEmail = 'taboacademy@gmail.com';
   const staffPassword = await bcrypt.hash('School@admin', 10);
 
@@ -95,7 +110,7 @@ async function main() {
   });
 
   // --- Teacher ---
-  console.log('Creating Teacher...');
+  console.log('Checking Teacher...');
   const teacherEmail = 'oneousmality11@gmail.com';
   const teacherPassword = await bcrypt.hash('Teacher@123', 10);
 
@@ -113,10 +128,10 @@ async function main() {
     },
   });
 
-  // Create Teacher Profile
-  await prisma.teacher.upsert({
+  // Create/Get Teacher Profile
+  const teacherProfile = await prisma.teacher.upsert({
     where: { userId: teacherUser.id },
-    update: {},
+    update: { employeeNumber: 'EMP001' },
     create: {
       id: randomUUID(),
       userId: teacherUser.id,
@@ -125,7 +140,7 @@ async function main() {
   });
 
   // --- Student ---
-  console.log('Creating Student...');
+  console.log('Checking Student...');
   const studentEmail = 'charity@gmail.com';
   const studentPassword = await bcrypt.hash('Student@123', 10);
 
@@ -144,10 +159,10 @@ async function main() {
     },
   });
 
-  // Create Student Profile
+  // Create/Get Student Profile
   const studentProfile = await prisma.student.upsert({
     where: { userId: studentUser.id },
-    update: { classId: klass.id },
+    update: { classId: klass.id, grade: '10' },
     create: {
       id: randomUUID(),
       schoolId: school.id,
@@ -159,7 +174,7 @@ async function main() {
   });
 
   // --- Parent ---
-  console.log('Creating Parent...');
+  console.log('Checking Parent...');
   const parentEmail = 'charityparent@gmail.com';
   const parentPassword = await bcrypt.hash('Parent@123', 10);
 
@@ -177,7 +192,7 @@ async function main() {
     },
   });
 
-  // Create Parent Profile
+  // Create/Get Parent Profile
   const parentProfile = await prisma.parent.upsert({
     where: { userId: parentUser.id },
     update: {},
@@ -195,7 +210,7 @@ async function main() {
         studentId: studentProfile.id,
       },
     },
-    update: {},
+    update: { relationship: 'Mother', isPrimary: true },
     create: {
       parentId: parentProfile.id,
       studentId: studentProfile.id,
@@ -205,40 +220,56 @@ async function main() {
   });
 
   // 4. Create Subjects
-  console.log('Creating Subjects...');
-  const subjects = ['Mathematics', 'Science', 'English', 'History', 'Sports'];
+  console.log('Checking Subjects...');
+  const subjectNames = ['Mathematics', 'Science', 'English', 'History', 'Sports'];
   
-  const teacherProfile = await prisma.teacher.findUnique({ where: { userId: teacherUser.id } });
-
-  for (const subName of subjects) {
-    const sub = await prisma.subject.create({
-      data: {
-        id: randomUUID(),
-        schoolId: school.id,
-        name: subName,
-      },
+  for (const subName of subjectNames) {
+    let subject = await prisma.subject.findFirst({
+      where: { schoolId: school.id, name: subName }
     });
 
+    if (!subject) {
+      subject = await prisma.subject.create({
+        data: {
+          id: randomUUID(),
+          schoolId: school.id,
+          name: subName,
+        },
+      });
+      console.log(`Created Subject: ${subName}`);
+    } else {
+      console.log(`Subject already exists: ${subName}`);
+    }
+
     // Link to Class (ClassSubject)
-    await prisma.classSubject.create({
-      data: {
-        id: randomUUID(),
-        classId: klass.id,
-        subjectId: sub.id,
-        teacherId: teacherProfile ? teacherProfile.id : undefined,
-      },
-    }).catch(() => {}); // Ignore if duplicate or logic fails
+    const existingLink = await prisma.classSubject.findFirst({
+      where: { classId: klass.id, subjectId: subject.id }
+    });
+
+    if (!existingLink) {
+      await prisma.classSubject.create({
+        data: {
+          id: randomUUID(),
+          classId: klass.id,
+          subjectId: subject.id,
+          teacherId: teacherProfile.id,
+        },
+      });
+      console.log(`Linked ${subName} to ${className}`);
+    }
   }
 
-  console.log('Seeding finished successfully.');
+  console.log('--- Seeding Finished Successfully ---');
 }
 
 main()
   .then(async () => {
     await prisma.$disconnect();
+    await pool.end();
   })
   .catch(async (e) => {
     console.error(e);
     await prisma.$disconnect();
+    await pool.end();
     process.exit(1);
   });

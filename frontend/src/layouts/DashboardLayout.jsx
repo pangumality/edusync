@@ -316,7 +316,7 @@ const DashboardLayout = () => {
             <MobileDashboardHome />
           ) : (
              <div className="bg-white/90 backdrop-blur rounded-t-3xl min-h-full p-4 shadow-inner border border-white/60">
-               <Outlet />
+              <Outlet context={{ currentUser }} />
              </div>
           )}
         </main>

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Calendar, Plus, Trash2, User } from 'lucide-react';
 import api from '../../utils/api';
 
 const TimeTable = () => {
-  const { currentUser } = useOutletContext();
+  const outletContext = useOutletContext() || {};
+  const fallbackCurrentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  const currentUser = outletContext.currentUser || fallbackCurrentUser;
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
@@ -14,6 +16,9 @@ const TimeTable = () => {
   // Admin filters/form
   const [selectedClassId, setSelectedClassId] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const toastTimerRef = useRef(null);
   const [formData, setFormData] = useState({
     classId: '',
     subjectId: '',
@@ -29,6 +34,18 @@ const TimeTable = () => {
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const WORK_DAYS = [1, 2, 3, 4, 5]; // Mon-Fri
 
+  const showSuccessToast = (message) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(message);
+    toastTimerRef.current = setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     fetchTimetable();
     if (canManage) {
@@ -37,17 +54,34 @@ const TimeTable = () => {
   }, [selectedClassId]);
 
   const fetchMetadata = async () => {
-    try {
-      const [classRes, subjectRes, teacherRes] = await Promise.all([
-        api.get('/classes'),
-        api.get('/subjects'),
-        api.get('/teachers')
-      ]);
-      setClasses(classRes.data);
-      setSubjects(subjectRes.data);
-      setTeachers(teacherRes.data);
-    } catch (error) {
-      console.error('Failed to fetch metadata');
+    const [classRes, subjectRes, teacherRes] = await Promise.allSettled([
+      api.get('/classes'),
+      api.get('/subjects'),
+      api.get('/teachers')
+    ]);
+
+    if (classRes.status === 'fulfilled') {
+      setClasses(classRes.value.data || []);
+    } else {
+      console.error('Failed to fetch classes metadata:', classRes.reason);
+    }
+
+    if (subjectRes.status === 'fulfilled') {
+      setSubjects(subjectRes.value.data || []);
+    } else {
+      console.error('Failed to fetch subjects metadata:', subjectRes.reason);
+    }
+
+    if (teacherRes.status === 'fulfilled') {
+      const normalizedTeachers = (teacherRes.value.data || []).map((t) => ({
+        ...t,
+        teacherId: t.teacherId || t.id,
+        name: t.name || `${t.user?.firstName || ''} ${t.user?.lastName || ''}`.trim()
+      }));
+      setTeachers(normalizedTeachers);
+    } else {
+      console.error('Failed to fetch teachers metadata:', teacherRes.reason);
+      setTeachers([]);
     }
   };
 
@@ -68,12 +102,22 @@ const TimeTable = () => {
 
   const handleAddPeriod = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await api.post('/timetable', formData);
+      const payload = {
+        ...formData,
+        teacherId: formData.teacherId
+      };
+      await api.post('/timetable', payload);
       setShowAddModal(false);
       fetchTimetable();
+      showSuccessToast('Period added to schedule successfully');
     } catch (error) {
-      alert('Failed to add period');
+      const message = error?.response?.data?.error || 'Failed to add period';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,6 +163,7 @@ const TimeTable = () => {
           <div className="ui-card max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Add Time Table Period</h2>
             <form onSubmit={handleAddPeriod} className="space-y-4">
+              <fieldset disabled={isSubmitting} className="space-y-4 disabled:opacity-70">
               <div>
                 <label className="block text-sm font-medium mb-1">Class</label>
                 <select
@@ -158,7 +203,7 @@ const TimeTable = () => {
                   >
                     <option value="">Select Teacher</option>
                     {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.user?.firstName} {t.user?.lastName}</option>
+                      <option key={t.id} value={t.teacherId}>{t.name}</option>
                     ))}
                   </select>
                 </div>
@@ -198,24 +243,40 @@ const TimeTable = () => {
                   />
                 </div>
               </div>
-              
+              </fieldset>
+               
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   className="ui-btn ui-btn-secondary"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="ui-btn ui-btn-primary"
+                  className="ui-btn ui-btn-primary inline-flex items-center gap-2 disabled:opacity-70"
+                  disabled={isSubmitting}
                 >
-                  Add to Schedule
+                  {isSubmitting ? (
+                    <>
+                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    'Add to Schedule'
+                  )}
                 </button>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-[60] bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg">
+          {toastMessage}
         </div>
       )}
 

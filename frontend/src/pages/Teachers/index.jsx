@@ -19,20 +19,43 @@ export default function Teachers() {
   const [assigningTeacher, setAssigningTeacher] = useState(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [assignClassId, setAssignClassId] = useState('');
   const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [assignmentSubjectsByTeacher, setAssignmentSubjectsByTeacher] = useState({});
 
   const fetchTeachers = async () => {
     setLoading(true);
     try {
       const response = await api.get('/teachers', { params: { schoolId } });
       setList(response.data);
+      await fetchTeacherAssignments();
       setError('');
     } catch (err) {
       console.error('Error fetching teachers:', err);
       setError('Failed to load teachers');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeacherAssignments = async () => {
+    try {
+      const { data } = await api.get('/class-subjects');
+      const byTeacher = {};
+      (data || []).forEach((item) => {
+        if (!item.teacherUserId || !item.subjectName) return;
+        if (!byTeacher[item.teacherUserId]) byTeacher[item.teacherUserId] = new Set();
+        byTeacher[item.teacherUserId].add(item.subjectName);
+      });
+      const normalized = {};
+      Object.keys(byTeacher).forEach((teacherUserId) => {
+        normalized[teacherUserId] = Array.from(byTeacher[teacherUserId]);
+      });
+      setAssignmentSubjectsByTeacher(normalized);
+    } catch (err) {
+      console.error('Failed to fetch teacher assignments', err);
+      setAssignmentSubjectsByTeacher({});
     }
   };
 
@@ -45,22 +68,28 @@ export default function Teachers() {
     setAssignClassId('');
     setAssignSubjectId('');
     try {
-      const clsRes = await api.get('/classes', { params: { schoolId } });
+      const [clsRes, subjRes] = await Promise.all([
+        api.get('/classes', { params: { schoolId } }),
+        api.get('/subjects', { params: { schoolId } })
+      ]);
       setClasses(clsRes.data);
+      setSubjects(subjRes.data || []);
       setAssignModalOpen(true);
     } catch (err) {
-      console.error('Failed to load classes', err);
-      alert('Failed to load classes');
+      console.error('Failed to load classes/subjects', err);
+      alert('Failed to load classes and subjects');
     }
   };
 
   const saveAssignment = async () => {
-    if (!assignClassId || !assigningTeacher) return;
+    if (!assignClassId || !assignSubjectId || !assigningTeacher) return;
     try {
       await api.post('/class-subjects', {
         teacherUserId: assigningTeacher.id,
-        classId: assignClassId
+        classId: assignClassId,
+        subjectId: assignSubjectId
       });
+      await fetchTeacherAssignments();
       setAssignModalOpen(false);
       setAssigningTeacher(null);
       setAssignClassId('');
@@ -230,7 +259,11 @@ export default function Teachers() {
                   <tr key={t.id} className="odd:bg-white even:bg-gray-50">
                     <td className="px-4 py-2 border-b text-gray-800">{t.name}</td>
                     <td className="px-4 py-2 border-b text-gray-700">{t.email}</td>
-                    <td className="px-4 py-2 border-b text-gray-700">{t.subject}</td>
+                    <td className="px-4 py-2 border-b text-gray-700">
+                      {assignmentSubjectsByTeacher[t.id]?.length
+                        ? assignmentSubjectsByTeacher[t.id].join(', ')
+                        : (t.subject || 'General')}
+                    </td>
                     <td className="px-4 py-2 border-b">
                       <div className="flex items-center gap-3">
                         <button
@@ -286,6 +319,19 @@ export default function Teachers() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <select
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2"
+                  value={assignSubjectId}
+                  onChange={(e) => setAssignSubjectId(e.target.value)}
+                >
+                  <option value="">Select subject</option>
+                  {subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button
@@ -296,7 +342,7 @@ export default function Teachers() {
               </button>
               <button
                 className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 disabled:opacity-50"
-                disabled={!assignClassId}
+                disabled={!assignClassId || !assignSubjectId}
                 onClick={saveAssignment}
               >
                 Save Assignment
