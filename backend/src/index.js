@@ -6,10 +6,68 @@ dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
+async function repairDb() {
+  try {
+    try {
+      await prisma.$executeRawUnsafe(
+        `DO $$ BEGIN
+          BEGIN
+            ALTER TYPE "UserRole" ADD VALUE 'staff';
+          EXCEPTION WHEN duplicate_object THEN
+            NULL;
+          END;
+        END $$;`
+      );
+    } catch {}
+
+    try {
+      await prisma.$executeRawUnsafe(
+        `UPDATE "User" SET role = 'staff' WHERE role::text = 'school_admin'`
+      );
+    } catch {}
+
+    try {
+      await prisma.$executeRawUnsafe(
+        `UPDATE "User" SET role = 'admin' WHERE role::text = 'super_admin'`
+      );
+    } catch {}
+
+    try {
+      await prisma.$executeRawUnsafe(
+        `DO $$ BEGIN
+          IF EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'Class'
+              AND column_name = 'sections'
+          ) THEN
+            IF (
+              SELECT udt_name
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'Class'
+                AND column_name = 'sections'
+            ) <> '_text' THEN
+              ALTER TABLE "Class" DROP COLUMN "sections";
+              ALTER TABLE "Class" ADD COLUMN "sections" text[] NOT NULL DEFAULT ARRAY[]::text[];
+            END IF;
+          ELSE
+            ALTER TABLE "Class" ADD COLUMN "sections" text[] NOT NULL DEFAULT ARRAY[]::text[];
+          END IF;
+        END $$;`
+      );
+    } catch {}
+  } catch (error) {
+    console.warn('⚠️ DB repair skipped:', error?.message || error);
+  }
+}
+
 // Attempt to connect to DB on start
 async function startServer() {
   try {
     await prisma.$connect();
+    await repairDb();
     await prisma.$queryRaw`SELECT 1`;
     console.log('✅ Database connected successfully');
     

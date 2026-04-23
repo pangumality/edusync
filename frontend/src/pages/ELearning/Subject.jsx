@@ -246,12 +246,21 @@ export default function Subject() {
       const subject = subjects.find(s => s.id === subjectId);
       if (subject) setSubjectName(subject.name);
       
-      const isTeacher = user?.role === 'teacher';
       const isAdmin = user?.role === 'admin' || user?.role === 'staff';
-      setCanManage(isAdmin || isTeacher);
+      setCanManage(Boolean(isAdmin));
 
-      const { data: notesData } = await api.get(`/class-notes?subjectId=${subjectId}`);
-      setNotes(notesData);
+      try {
+        const { data: notesData } = await api.get(`/class-notes?subjectId=${subjectId}`);
+        setNotes(notesData);
+        if (user?.role === 'teacher') setCanManage(true);
+      } catch (err) {
+        if (err?.response?.status === 403) {
+          setNotes([]);
+          setCanManage(false);
+        } else {
+          throw err;
+        }
+      }
       
       const { data: examsData } = await api.get('/exams');
       setExams(examsData);

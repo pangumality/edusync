@@ -38,6 +38,28 @@ const checkTeacherSubjectAccess = async (userId, subjectId) => {
     return !!assigned;
 };
 
+const checkTeacherSubjectClassAccess = async (userId, subjectId, classId) => {
+  const teacher = await prisma.teacher.findUnique({ where: { userId } });
+  if (!teacher) return false;
+
+  const assigned = await prisma.classSubject.findFirst({
+    where: { teacherId: teacher.id, subjectId: String(subjectId), classId: String(classId) },
+  });
+  return !!assigned;
+};
+
+const checkStudentSubjectAccess = async (userId, subjectId) => {
+  const student = await prisma.student.findUnique({ where: { userId } });
+  if (!student || !student.classId) return false;
+
+  const assigned = await prisma.classSubject.findFirst({
+    where: { classId: String(student.classId), subjectId: String(subjectId) },
+  });
+  return !!assigned;
+};
+
+const isAdminLike = (role) => role === ROLES.SUPER_ADMIN || role === ROLES.SCHOOL_ADMIN;
+
 // Export prisma client for usage in other files if needed
 export { prisma };
 
@@ -1819,6 +1841,10 @@ app.post('/api/class-notes', authenticate, requirePermission(PERMISSIONS.ELEARNI
     if (req.user.role === 'teacher') {
          const allowed = await checkTeacherSubjectAccess(req.user.id, subjectId);
          if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+         if (classId) {
+           const allowedClass = await checkTeacherSubjectClassAccess(req.user.id, subjectId, classId);
+           if (!allowedClass) return res.status(403).json({ error: 'Access denied to this class' });
+         }
     }
 
     const note = await prisma.classNote.create({
@@ -1843,18 +1869,20 @@ app.put('/api/class-notes/:id', authenticate, requirePermission(PERMISSIONS.ELEA
     const { id } = req.params;
     
     if (req.user.role === 'teacher') {
-         // Check if they have access to the NEW subject if changing
-         if (subjectId) {
-             const allowed = await checkTeacherSubjectAccess(req.user.id, subjectId);
-             if (!allowed) return res.status(403).json({ error: 'Access denied to target subject' });
-         }
-         
-         // Check if they have access to the OLD subject (ownership check essentially)
          const note = await prisma.classNote.findUnique({ where: { id } });
          if (!note) return res.status(404).json({ error: 'Note not found' });
-         
-         const allowedOld = await checkTeacherSubjectAccess(req.user.id, note.subjectId);
+
+         const allowedOld = note.classId
+           ? await checkTeacherSubjectClassAccess(req.user.id, note.subjectId, note.classId)
+           : await checkTeacherSubjectAccess(req.user.id, note.subjectId);
          if (!allowedOld) return res.status(403).json({ error: 'Access denied' });
+
+         const nextSubjectId = subjectId !== undefined ? subjectId : note.subjectId;
+         const nextClassId = classId !== undefined ? classId : note.classId;
+         const allowedNext = nextClassId
+           ? await checkTeacherSubjectClassAccess(req.user.id, nextSubjectId, nextClassId)
+           : await checkTeacherSubjectAccess(req.user.id, nextSubjectId);
+         if (!allowedNext) return res.status(403).json({ error: 'Access denied to target subject' });
     }
 
     await prisma.classNote.update({
@@ -1880,7 +1908,9 @@ app.delete('/api/class-notes/:id', authenticate, requirePermission(PERMISSIONS.E
          const note = await prisma.classNote.findUnique({ where: { id } });
          if (!note) return res.status(404).json({ error: 'Note not found' });
          
-         const allowed = await checkTeacherSubjectAccess(req.user.id, note.subjectId);
+         const allowed = note.classId
+           ? await checkTeacherSubjectClassAccess(req.user.id, note.subjectId, note.classId)
+           : await checkTeacherSubjectAccess(req.user.id, note.subjectId);
          if (!allowed) return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -3621,8 +3651,15 @@ app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL
 // --- E-Learning ---
 
 const checkSubjectAccessForUser = async (user, subjectId) => {
-    if (user.role === 'admin' || user.role === 'staff') return true;
-    if (user.role === 'teacher') return checkTeacherSubjectAccess(user.id, subjectId);
+    if (isAdminLike(user.role)) return true;
+    if (user.role === ROLES.TEACHER) return checkTeacherSubjectAccess(user.id, subjectId);
+    return false;
+};
+
+const checkSubjectViewForUser = async (user, subjectId) => {
+    if (isAdminLike(user.role)) return true;
+    if (user.role === ROLES.TEACHER) return checkTeacherSubjectAccess(user.id, subjectId);
+    if (user.role === ROLES.STUDENT) return checkStudentSubjectAccess(user.id, subjectId);
     return false;
 };
 
@@ -3634,9 +3671,28 @@ const createElearningCrud = (modelName, endpoint) => {
         try {
             const { subjectId } = req.query;
             if (!subjectId) return res.status(400).json({ error: 'Subject ID required' });
+
+            const allowed = await checkSubjectViewForUser(req.user, subjectId);
+            if (!allowed) return res.status(403).json({ error: 'Access denied' });
+
+            const where = { schoolId: req.user.schoolId, subjectId: String(subjectId) };
+            if (req.user.role === ROLES.STUDENT) {
+              const student = await prisma.student.findUnique({ where: { userId: req.user.id } });
+              if (!student || student.schoolId !== req.user.schoolId || !student.classId) return res.json([]);
+              where.classId = { in: [String(student.classId), null] };
+            } else if (req.user.role === ROLES.TEACHER) {
+              const teacher = await prisma.teacher.findUnique({ where: { userId: req.user.id } });
+              if (!teacher) return res.json([]);
+              const assigned = await prisma.classSubject.findMany({
+                where: { teacherId: teacher.id, subjectId: String(subjectId) },
+                select: { classId: true },
+              });
+              const classIds = assigned.map((a) => a.classId).filter(Boolean);
+              where.classId = { in: [...classIds, null] };
+            }
             
             const items = await Model.findMany({
-                where: { subjectId },
+                where,
                 orderBy: { createdAt: 'desc' }
             });
             res.json(items);
@@ -3656,6 +3712,10 @@ const createElearningCrud = (modelName, endpoint) => {
             
             const allowed = await checkSubjectAccessForUser(req.user, subjectId);
             if (!allowed) return res.status(403).json({ error: 'Access denied to this subject' });
+            if (req.user.role === ROLES.TEACHER && data.classId) {
+              const allowedClass = await checkTeacherSubjectClassAccess(req.user.id, subjectId, data.classId);
+              if (!allowedClass) return res.status(403).json({ error: 'Access denied to this class' });
+            }
 
             const item = await Model.create({
                 data: {
@@ -3721,6 +3781,14 @@ const createElearningCrud = (modelName, endpoint) => {
                 const allowedNew = await checkSubjectAccessForUser(req.user, subjectId);
                 if (!allowedNew) return res.status(403).json({ error: 'Access denied to new subject' });
             }
+            if (req.user.role === ROLES.TEACHER) {
+              const nextSubjectId = subjectId ? String(subjectId) : String(item.subjectId);
+              const nextClassId = data.classId !== undefined ? data.classId : item.classId;
+              if (nextClassId) {
+                const allowedClass = await checkTeacherSubjectClassAccess(req.user.id, nextSubjectId, nextClassId);
+                if (!allowedClass) return res.status(403).json({ error: 'Access denied to this class' });
+              }
+            }
 
             const updated = await Model.update({
                 where: { id },
@@ -3744,6 +3812,10 @@ const createElearningCrud = (modelName, endpoint) => {
             
             const allowed = await checkSubjectAccessForUser(req.user, item.subjectId);
             if (!allowed) return res.status(403).json({ error: 'Access denied' });
+            if (req.user.role === ROLES.TEACHER && item.classId) {
+              const allowedClass = await checkTeacherSubjectClassAccess(req.user.id, item.subjectId, item.classId);
+              if (!allowedClass) return res.status(403).json({ error: 'Access denied to this class' });
+            }
 
             await Model.delete({ where: { id } });
             res.json({ message: 'Deleted successfully' });

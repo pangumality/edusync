@@ -56,6 +56,14 @@ export default function ElearningItemForm() {
   useEffect(() => {
     const init = async () => {
       setInitialLoading(true);
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const role = user?.role;
+      const canManage = role === 'admin' || role === 'staff' || role === 'teacher';
+      if (!canManage) {
+        setError('Access denied');
+        setInitialLoading(false);
+        return;
+      }
       await fetchClasses();
       if (itemId && currentConfig) {
         await fetchItem();
