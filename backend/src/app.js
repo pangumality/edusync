@@ -3291,6 +3291,66 @@ app.get('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE_
     }
 });
 
+/**
+ * Check whether a proposed period clashes with any existing periods.
+ *
+ * Two rules are checked independently via separate DB queries:
+ *   1. Teacher clash  — same teacher already teaches during that time on that day.
+ *   2. Class clash    — same class already has a period during that time on that day.
+ *
+ * Overlap condition: existing.startTime < newEnd  AND  existing.endTime > newStart
+ * This works correctly for zero-padded "HH:mm" strings using lexicographic comparison.
+ *
+ * @param {object}      opts
+ * @param {string}      opts.schoolId
+ * @param {string}      opts.teacherProfileId  - resolved Teacher.id (may be null)
+ * @param {string}      opts.classId
+ * @param {number}      opts.dayOfWeek
+ * @param {string}      opts.startTime          - "HH:mm"
+ * @param {string}      opts.endTime            - "HH:mm"
+ * @param {string|null} opts.excludeId          - period id to skip (PUT/update flows)
+ * @returns {Promise<{clash: boolean, reason: string|null}>}
+ */
+const checkTimetableClash = async ({ schoolId, teacherProfileId, classId, dayOfWeek, startTime, endTime, excludeId = null }) => {
+    // Shared "overlapping time window" filter pushed down to the DB.
+    // Periods stored as "HH:mm" strings compare lexicographically correctly.
+    const overlapWhere = {
+        schoolId,
+        dayOfWeek,
+        startTime: { lt: endTime },   // existing period starts BEFORE new period ends
+        endTime:   { gt: startTime }, // existing period ends   AFTER  new period starts
+        ...(excludeId ? { NOT: { id: excludeId } } : {})
+    };
+
+    // ── 1. Teacher double-booking ──────────────────────────────────────────────
+    if (teacherProfileId) {
+        const teacherClash = await prisma.timeTablePeriod.findFirst({
+            where: { ...overlapWhere, teacherId: teacherProfileId },
+            select: { startTime: true, endTime: true },
+        });
+        if (teacherClash) {
+            return {
+                clash: true,
+                reason: `The selected teacher is already assigned to a class from ${teacherClash.startTime} to ${teacherClash.endTime} on that day.`
+            };
+        }
+    }
+
+    // ── 2. Class double-booking ────────────────────────────────────────────────
+    const classClash = await prisma.timeTablePeriod.findFirst({
+        where: { ...overlapWhere, classId: String(classId) },
+        select: { startTime: true, endTime: true },
+    });
+    if (classClash) {
+        return {
+            clash: true,
+            reason: `This class already has a period scheduled from ${classClash.startTime} to ${classClash.endTime} on that day.`
+        };
+    }
+
+    return { clash: false, reason: null };
+};
+
 app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE_MANAGE), async (req, res) => {
     try {
         const { schoolId } = req.user;
@@ -3303,6 +3363,10 @@ app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE
         const dayOfWeekNum = Number(dayOfWeek);
         if (!Number.isInteger(dayOfWeekNum) || dayOfWeekNum < 1 || dayOfWeekNum > 7) {
             return res.status(400).json({ error: 'dayOfWeek must be an integer between 1 and 7' });
+        }
+
+        if (startTime >= endTime) {
+            return res.status(400).json({ error: 'End time must be after start time' });
         }
 
         const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -3342,6 +3406,19 @@ app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE
         if (!subject) {
             return res.status(400).json({ error: 'Invalid subject selected' });
         }
+
+        // --- Clash detection ---
+        const { clash, reason } = await checkTimetableClash({
+            schoolId,
+            teacherProfileId: teacherProfile.id,
+            classId: String(classId),
+            dayOfWeek: dayOfWeekNum,
+            startTime: String(startTime),
+            endTime: String(endTime)
+        });
+        if (clash) {
+            return res.status(409).json({ error: reason });
+        }
         
         const period = await prisma.timeTablePeriod.create({
             data: {
@@ -3371,23 +3448,60 @@ app.post('/api/timetable', authenticate, requirePermission(PERMISSIONS.TIMETABLE
 app.put('/api/timetable/:id', authenticate, requirePermission(PERMISSIONS.TIMETABLE_MANAGE), async (req, res) => {
     try {
         const { id } = req.params;
+        const { schoolId } = req.user;
         const { classId, subjectId, teacherId, dayOfWeek, startTime, endTime } = req.body;
-        
-        // Optional: Check access (e.g. if teacher can manage their own timetable, but usually admin/staff manages this)
-        
+
+        if (!classId || !subjectId || !teacherId || dayOfWeek === undefined || !startTime || !endTime) {
+            return res.status(400).json({ error: 'classId, subjectId, teacherId, dayOfWeek, startTime and endTime are required' });
+        }
+
+        const dayOfWeekNum = Number(dayOfWeek);
+        if (startTime >= endTime) {
+            return res.status(400).json({ error: 'End time must be after start time' });
+        }
+
+        // Resolve teacher profile id (same as POST)
+        const teacherProfile = await prisma.teacher.findFirst({
+            where: {
+                OR: [
+                    { id: String(teacherId) },
+                    { userId: String(teacherId) }
+                ]
+            },
+            select: { id: true }
+        });
+        if (!teacherProfile) {
+            return res.status(400).json({ error: 'Invalid teacher selected' });
+        }
+
+        // --- Clash detection (exclude the period being updated) ---
+        const { clash, reason } = await checkTimetableClash({
+            schoolId,
+            teacherProfileId: teacherProfile.id,
+            classId: String(classId),
+            dayOfWeek: dayOfWeekNum,
+            startTime: String(startTime),
+            endTime: String(endTime),
+            excludeId: id
+        });
+        if (clash) {
+            return res.status(409).json({ error: reason });
+        }
+
         const period = await prisma.timeTablePeriod.update({
             where: { id },
             data: {
                 classId,
                 subjectId,
-                teacherId,
-                dayOfWeek: parseInt(dayOfWeek),
+                teacherId: teacherProfile.id,
+                dayOfWeek: dayOfWeekNum,
                 startTime,
                 endTime
             }
         });
         res.json(period);
     } catch (error) {
+        console.error('Failed to update timetable period:', error);
         res.status(500).json({ error: 'Failed to update timetable period' });
     }
 });

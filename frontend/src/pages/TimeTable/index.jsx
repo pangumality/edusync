@@ -18,6 +18,7 @@ const TimeTable = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const toastTimerRef = useRef(null);
   const [formData, setFormData] = useState({
     classId: '',
@@ -103,6 +104,7 @@ const TimeTable = () => {
   const handleAddPeriod = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+    setFormError('');
     setIsSubmitting(true);
     try {
       const payload = {
@@ -115,7 +117,7 @@ const TimeTable = () => {
       showSuccessToast('Period added to schedule successfully');
     } catch (error) {
       const message = error?.response?.data?.error || 'Failed to add period';
-      alert(message);
+      setFormError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,6 +164,12 @@ const TimeTable = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="ui-card max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Add Time Table Period</h2>
+            {formError && (
+              <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <span className="mt-0.5 shrink-0">⚠</span>
+                <span>{formError}</span>
+              </div>
+            )}
             <form onSubmit={handleAddPeriod} className="space-y-4">
               <fieldset disabled={isSubmitting} className="space-y-4 disabled:opacity-70">
               <div>
@@ -198,7 +206,7 @@ const TimeTable = () => {
                   <select
                     required
                     value={formData.teacherId}
-                    onChange={(e) => setFormData({...formData, teacherId: e.target.value})}
+                    onChange={(e) => { setFormError(''); setFormData({...formData, teacherId: e.target.value}); }}
                     className="ui-input"
                   >
                     <option value="">Select Teacher</option>
@@ -248,7 +256,7 @@ const TimeTable = () => {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setFormError(''); }}
                   className="ui-btn ui-btn-secondary"
                   disabled={isSubmitting}
                 >
