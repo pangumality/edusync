@@ -74,14 +74,14 @@ export default function Hostel() {
             <div 
               key={hostel.id} 
               onClick={() => setSelectedHostel(hostel)}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition"
+              className="ui-card p-6 cursor-pointer hover:shadow-md transition"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-gray-800">{hostel.name}</h3>
                   <span className={`inline-block px-2 py-1 text-xs rounded-full mt-2 ${
-                    hostel.type === 'BOYS' ? 'bg-blue-100 text-blue-700' :
-                    hostel.type === 'GIRLS' ? 'bg-pink-100 text-pink-700' :
+                    hostel.type === 'BOYS' ? 'bg-brand-50 text-brand-800 border border-brand-100' :
+                    hostel.type === 'GIRLS' ? 'bg-sidebar-bg-2/15 text-sidebar-bg border border-sidebar-bg-2/30' :
                     'bg-brand-100 text-brand-800'
                   }`}>
                     {hostel.type}

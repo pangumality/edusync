@@ -140,12 +140,12 @@ const ParentDashboard = () => {
           
           {/* Academic Overview Card */}
           <Link to="/subjects" className="bg-white p-6 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-400 to-sky-300 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2 opacity-55 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
             
             <div className="flex items-center justify-between mb-6 relative">
               <h3 className="font-bold text-slate-700 flex items-center gap-3">
-                <div className="p-2.5 bg-cyan-200 text-cyan-700 rounded-lg border border-cyan-300 shadow-lg shadow-cyan-500/25">
-                  <BookOpen size={20} className="text-cyan-900" />
+                <div className="p-2.5 bg-sidebar-bg-2/20 text-sidebar-bg rounded-lg border border-sidebar-bg-2/30 shadow-lg shadow-sidebar-bg-2/20">
+                  <BookOpen size={20} className="text-sidebar-bg" />
                 </div>
                 Academic Overview
               </h3>
@@ -163,7 +163,7 @@ const ParentDashboard = () => {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Enrolled Subjects</p>
                 <div className="flex flex-wrap gap-2">
                   {childData.overview?.subjects?.map(sub => (
-                    <span key={sub.id} className="px-2.5 py-1 bg-cyan-100 text-cyan-900 text-xs font-bold rounded-md border border-cyan-200">
+                    <span key={sub.id} className="px-2.5 py-1 bg-sidebar-bg-2/15 text-sidebar-bg text-xs font-bold rounded-md border border-sidebar-bg-2/30">
                       {sub.name}
                     </span>
                   )) || <span className="text-slate-400 text-sm">No subjects enrolled</span>}

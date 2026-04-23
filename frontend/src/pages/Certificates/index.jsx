@@ -118,10 +118,10 @@ const Certificates = () => {
   const getCertificateColor = (type) => {
     const colors = {
       TC: 'bg-red-50 text-red-700 border-red-200',
-      PROGRESS_CARD: 'bg-blue-50 text-blue-700 border-blue-200',
+      PROGRESS_CARD: 'bg-sidebar-bg-2/15 text-sidebar-bg border-sidebar-bg-2/30',
       MEDICAL: 'bg-green-50 text-green-700 border-green-200',
       MIGRATION: 'bg-brand-50 text-brand-800 border-brand-200',
-      REPORT_CARD: 'bg-yellow-50 text-yellow-700 border-yellow-200'
+      REPORT_CARD: 'bg-brand-50 text-brand-800 border-brand-200'
     };
     return colors[type] || 'bg-gray-50 text-gray-700 border-gray-200';
   };

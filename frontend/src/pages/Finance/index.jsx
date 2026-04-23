@@ -350,10 +350,10 @@ export default function Finance() {
                       <span
                         className={
                           st === 'Paid'
-                            ? 'px-2 py-1 text-xs rounded-md bg-green-100 text-green-700'
+                            ? 'px-2 py-1 text-xs rounded-md bg-success/10 text-success border border-success/20'
                             : st === 'Partial'
-                            ? 'px-2 py-1 text-xs rounded-md bg-yellow-100 text-yellow-700'
-                            : 'px-2 py-1 text-xs rounded-md bg-red-100 text-red-700'
+                            ? 'px-2 py-1 text-xs rounded-md bg-sidebar-bg-2/15 text-sidebar-bg border border-sidebar-bg-2/30'
+                            : 'px-2 py-1 text-xs rounded-md bg-danger/10 text-danger border border-danger/20'
                         }
                       >
                         {st}
@@ -362,13 +362,13 @@ export default function Finance() {
                     <td className="px-4 py-2 border-b">
                       <div className="flex items-center gap-2">
                         <button
-                          className="px-3 py-1.5 rounded-md bg-gray-800 text-white hover:bg-gray-700 text-sm"
+                          className="ui-btn ui-btn-primary px-3 py-2 text-sm"
                           onClick={() => openAddPayment(s)}
                         >
                           Add Payment
                         </button>
                         <button
-                          className="p-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                          className="ui-btn ui-btn-secondary px-2 py-2"
                           onClick={() => openView(s)}
                           aria-label="View"
                           title="View"
@@ -396,22 +396,22 @@ export default function Finance() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Amount (ZMW)</label>
+              <label className="ui-label mb-1 block">Amount (ZMW)</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md bg-white text-gray-700"
+                className="ui-input"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Method</label>
+              <label className="ui-label mb-1 block">Method</label>
               <select
                 value={method}
                 onChange={e => setMethod(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md bg-white text-gray-700"
+                className="ui-input"
               >
                 <option>Cash</option>
                 <option>Mobile Money</option>
@@ -421,28 +421,28 @@ export default function Finance() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Date</label>
+              <label className="ui-label mb-1 block">Date</label>
               <input
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md bg-white text-gray-700"
+                className="ui-input"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Reference</label>
+              <label className="ui-label mb-1 block">Reference</label>
               <input
                 type="text"
                 value={reference}
                 onChange={e => setReference(e.target.value)}
                 placeholder="Ref or receipt number"
-                className="w-full px-3 py-2 border rounded-md bg-white text-gray-700"
+                className="ui-input"
               />
             </div>
           </div>
           <div className="flex items-center justify-end gap-2">
-            <button className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100" onClick={() => setAddOpen(false)}>Cancel</button>
-            <button className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700" onClick={savePayment}>Save</button>
+            <button className="ui-btn ui-btn-secondary" onClick={() => setAddOpen(false)}>Cancel</button>
+            <button className="ui-btn ui-btn-primary" onClick={savePayment}>Save</button>
           </div>
         </div>
       </Modal>
@@ -450,7 +450,7 @@ export default function Finance() {
       <Modal open={viewOpen} onClose={() => setViewOpen(false)} title={activeStudent ? `Finance · ${activeStudent.name}` : 'Finance'}>
         {activeStudent ? (
           <div className="space-y-6">
-            <div className="bg-gray-50 border rounded-xl p-6">
+            <div className="ui-card ui-card-muted p-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 text-white flex items-center justify-center text-lg font-semibold">
                   {initials(activeStudent.name)}
@@ -459,31 +459,31 @@ export default function Finance() {
                   <div className="text-xl font-semibold text-gray-800">{activeStudent.name}</div>
                   <div className="text-sm text-gray-600">{klassLabel(activeStudent.klass)} · {activeStudent.section}</div>
                 </div>
-                <div className="px-3 py-1 rounded-md bg-gray-800 text-white text-sm">{selectedTermLabel()}</div>
+                <div className="ui-badge bg-sidebar-bg-2/15 text-sidebar-bg border border-sidebar-bg-2/30">{selectedTermLabel()}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl shadow-soft p-5 border">
+              <div className="ui-card p-5">
                 <div className="text-sm text-gray-500">Amount Due (Current Term)</div>
                 <div className="mt-2 text-2xl font-semibold text-gray-800">ZMW {FEE_AMOUNT.toLocaleString()}</div>
               </div>
-              <div className="bg-white rounded-xl shadow-soft p-5 border">
+              <div className="ui-card p-5">
                 <div className="text-sm text-gray-500">Paid (Current Term)</div>
                 <div className="mt-2 text-2xl font-semibold text-gray-800">ZMW {totalPaidForTerm(activeStudent.id, selectedTermLabel()).toLocaleString()}</div>
               </div>
-              <div className="bg-white rounded-xl shadow-soft p-5 border">
+              <div className="ui-card p-5">
                 <div className="text-sm text-gray-500">Balance (Current Term)</div>
                 <div className="mt-2 text-2xl font-semibold text-gray-800">ZMW {Math.max(FEE_AMOUNT - totalPaidForTerm(activeStudent.id, selectedTermLabel()), 0).toLocaleString()}</div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-soft p-6 border">
+            <div className="ui-card p-6">
               <div className="flex items-center justify-between">
                 <div className="text-lg font-semibold text-gray-800">Payment History</div>
                 <div className="flex items-center gap-2">
                   <button
-                    className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                    className="ui-btn ui-btn-secondary"
                     onClick={downloadStatementPdf}
                   >
                     <Download size={18} /> Download PDF
@@ -516,7 +516,7 @@ export default function Finance() {
                             <td className="px-4 py-2 border-b text-right text-gray-700">ZMW {Number(p.amount).toLocaleString()}</td>
                             <td className="px-4 py-2 border-b">
                               <button
-                                className="px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs flex items-center gap-1"
+                                className="ui-btn px-3 py-1.5 text-xs bg-danger/10 text-danger border border-danger/20 hover:bg-danger/15"
                                 onClick={() => deletePayment(p.id)}
                               >
                                 <Trash2 size={14} /> Delete

@@ -159,7 +159,7 @@ export default function ExamSetup() {
                 <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
             ))}
         </select>
-        {!subjectId && <p className="text-sm text-amber-600 mt-2">Please select a subject to start setting up the exam paper.</p>}
+        {!subjectId && <p className="text-sm text-sidebar-bg mt-2">Please select a subject to start setting up the exam paper.</p>}
       </div>
 
       {subjectId && (

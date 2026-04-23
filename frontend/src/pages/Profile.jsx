@@ -136,7 +136,7 @@ const Profile = () => {
         {/* Academic/Work Information */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <School className="text-accent" size={20} />
+            <School className="text-sidebar-bg" size={20} />
             {user.role === 'student' ? 'Academic Information' : 'Work Information'}
           </h3>
           <div className="space-y-4">

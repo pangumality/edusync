@@ -53,7 +53,7 @@ const MobileDashboardHome = ({ currentUser }) => {
               to={item.to}
               className="flex flex-col items-center justify-center bg-white/90 backdrop-blur p-3 rounded-2xl shadow-[0_2px_10px_-6px_rgba(15,23,42,0.35)] border border-surface-200 h-28 active:scale-95 transition-all duration-200 group relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-50/70 via-white/30 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-50/70 via-white/30 to-sidebar-bg-2/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
               <div className="p-2.5 rounded-xl bg-surface-100 text-slate-700 mb-2 group-hover:bg-brand-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand-700/25 transition-all duration-300 relative z-10">
                 <item.icon size={24} strokeWidth={2} />

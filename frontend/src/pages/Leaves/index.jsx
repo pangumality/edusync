@@ -88,13 +88,13 @@ const Leaves = () => {
 
   const getStatusBadge = (status) => {
     const styles = {
-      pending_parent: 'bg-yellow-100 text-yellow-800',
-      pending_school: 'bg-blue-100 text-blue-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800'
+      pending_parent: 'bg-sidebar-bg-2/15 text-sidebar-bg border border-sidebar-bg-2/30',
+      pending_school: 'bg-sidebar-bg-mid/15 text-sidebar-bg border border-sidebar-bg-mid/30',
+      approved: 'bg-success/10 text-success border border-success/20',
+      rejected: 'bg-danger/10 text-danger border border-danger/20'
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-gray-100'}`}>
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || 'bg-surface-100 text-slate-600 border border-surface-200'}`}>
         {status.replace('_', ' ').toUpperCase()}
       </span>
     );
@@ -209,7 +209,7 @@ const Leaves = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="ui-card overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead className="bg-gray-50 border-b">
@@ -253,7 +253,7 @@ const Leaves = () => {
                   {isParent && leave.status === 'pending_parent' && (
                     <button
                       onClick={() => handleParentApprove(leave.id)}
-                      className="text-green-600 hover:text-green-800 font-medium text-sm"
+                      className="ui-btn px-3 py-1.5 text-xs bg-success/10 text-success border border-success/20 hover:bg-success/15"
                     >
                       Approve
                     </button>
@@ -262,14 +262,14 @@ const Leaves = () => {
                     <>
                       <button
                         onClick={() => handleAdminApprove(leave.id, 'approved')}
-                        className="text-green-600 hover:text-green-800 p-1"
+                        className="ui-btn px-2 py-2 bg-success/10 text-success border border-success/20 hover:bg-success/15"
                         title="Approve"
                       >
                         <CheckCircle size={18} />
                       </button>
                       <button
                         onClick={() => handleAdminApprove(leave.id, 'rejected')}
-                        className="text-red-600 hover:text-red-800 p-1"
+                        className="ui-btn px-2 py-2 bg-danger/10 text-danger border border-danger/20 hover:bg-danger/15"
                         title="Reject"
                       >
                         <XCircle size={18} />

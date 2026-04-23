@@ -208,15 +208,15 @@ export default function Attendance() {
         {/* Location Status Badge */}
         <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg shadow-sm">
           <div className={`w-3 h-3 rounded-full ${
-            locStatus === 'allowed' ? 'bg-green-500' :
+            locStatus === 'allowed' ? 'bg-success' :
             locStatus === 'blocked' ? 'bg-red-500' :
-            locStatus === 'checking' ? 'bg-yellow-500 animate-pulse' :
+            locStatus === 'checking' ? 'bg-sidebar-bg-mid animate-pulse' :
             'bg-gray-400'
           }`} />
           <div className="text-sm">
-            {locStatus === 'allowed' && <span className="text-green-700 font-medium">Location Verified</span>}
+            {locStatus === 'allowed' && <span className="text-success font-medium">Location Verified</span>}
             {locStatus === 'blocked' && <span className="text-red-700 font-medium">Out of Bounds ({distance}m)</span>}
-            {locStatus === 'checking' && <span className="text-yellow-700">Locating...</span>}
+            {locStatus === 'checking' && <span className="text-sidebar-bg font-medium">Locating...</span>}
             {locStatus === 'idle' && <span className="text-gray-500">Location Check Required</span>}
             {(locStatus === 'error' || locStatus === 'permission_denied') && <span className="text-red-600">Loc Error</span>}
           </div>
@@ -226,7 +226,7 @@ export default function Attendance() {
           {locStatus === 'idle' && (
             <button 
               onClick={checkLocation}
-              className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+              className="ui-btn ui-btn-secondary px-3 py-1.5 text-xs ml-2"
             >
               Enable
             </button>
@@ -246,14 +246,14 @@ export default function Attendance() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-soft p-6">
+      <div className="ui-card p-6">
         {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Date</label>
             <input
               type="date"
-              className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              className="ui-input"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
@@ -261,7 +261,7 @@ export default function Attendance() {
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Class</label>
             <select
-              className="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:border-gray-400"
+              className="ui-input"
               value={klass}
               onChange={(e) => setKlass(e.target.value)}
               disabled={loadingClasses}
@@ -277,7 +277,7 @@ export default function Attendance() {
             <div className="relative">
               <input
                 type="text"
-                className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 focus:outline-none focus:border-gray-400"
+                className="ui-input pl-9"
                 placeholder="Student name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -291,10 +291,10 @@ export default function Attendance() {
 
         {/* Stats */}
         <div className="flex gap-4 mb-6 text-sm">
-          <div className="px-3 py-1 rounded-full bg-green-100 text-green-700">
+          <div className="px-3 py-1 rounded-full bg-success/10 text-success border border-success/20">
             Present: <b>{presentCount}</b>
           </div>
-          <div className="px-3 py-1 rounded-full bg-red-100 text-red-700">
+          <div className="px-3 py-1 rounded-full bg-danger/10 text-danger border border-danger/20">
             Absent: <b>{absentCount}</b>
           </div>
           <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -304,9 +304,9 @@ export default function Attendance() {
             <button 
               onClick={() => markAll('P')}
               disabled={locStatus !== 'allowed'}
-              className={`text-xs px-3 py-1 rounded border ${
+              className={`ui-btn px-3 py-1.5 text-xs border ${
                 locStatus === 'allowed' 
-                ? 'border-green-200 text-green-700 hover:bg-green-50' 
+                ? 'bg-success/10 border-success/20 text-success hover:bg-success/15' 
                 : 'border-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
@@ -315,9 +315,9 @@ export default function Attendance() {
             <button 
               onClick={() => markAll('A')}
               disabled={locStatus !== 'allowed'}
-              className={`text-xs px-3 py-1 rounded border ${
+              className={`ui-btn px-3 py-1.5 text-xs border ${
                 locStatus === 'allowed'
-                ? 'border-red-200 text-red-700 hover:bg-red-50'
+                ? 'bg-danger/10 border-danger/20 text-danger hover:bg-danger/15'
                 : 'border-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
