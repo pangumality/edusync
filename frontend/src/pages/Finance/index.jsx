@@ -238,17 +238,17 @@ export default function Finance() {
 
       <div className="bg-white rounded-xl shadow-soft p-6 space-y-4">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search pupil by name"
-                className="pl-9 pr-3 py-2 border rounded-md bg-white text-gray-700 placeholder-gray-400 w-64"
+                className="pl-9 pr-3 py-2 border rounded-md bg-white text-gray-700 placeholder-gray-400 w-full sm:w-64"
               />
             </div>
-            <div className="w-28">
+            <div className="w-full sm:w-28">
               <Select
                 value={year}
                 onChange={setYear}
@@ -258,7 +258,7 @@ export default function Finance() {
                 })}
               />
             </div>
-            <div className="w-28">
+            <div className="w-full sm:w-28">
               <Select
                 value={term}
                 onChange={setTerm}
@@ -269,7 +269,7 @@ export default function Finance() {
                 ]}
               />
             </div>
-            <div className="w-40">
+            <div className="w-full sm:w-40">
               <Select
                 value={klassFilter}
                 onChange={setKlassFilter}
@@ -279,7 +279,7 @@ export default function Finance() {
                 ]}
               />
             </div>
-            <div className="w-36">
+            <div className="w-full sm:w-36">
               <Select
                 value={statusFilter}
                 onChange={setStatusFilter}
@@ -292,9 +292,9 @@ export default function Finance() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <button
-              className="px-3 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 flex items-center gap-2"
+              className="ui-btn ui-btn-primary px-3 py-2 flex items-center gap-2"
               onClick={() => {
                 const first = filtered[0] || students[0];
                 if (first) openAddPayment(first);
@@ -303,7 +303,7 @@ export default function Finance() {
               <Plus size={18} /> Add Payment
             </button>
             <button
-              className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              className="ui-btn ui-btn-secondary px-3 py-2 flex items-center gap-2"
               onClick={() => {
                 const first = filtered[0] || students[0];
                 if (first) openView(first);

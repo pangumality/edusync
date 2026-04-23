@@ -226,7 +226,7 @@ export default function Inventory() {
             <label className="block text-sm font-medium mb-1">Item Name</label>
             <input type="text" required className="ui-input" value={itemForm.name} onChange={e => setItemForm({...itemForm, name: e.target.value})} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Category</label>
               <input type="text" className="ui-input" value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} />
@@ -236,7 +236,7 @@ export default function Inventory() {
               <input type="text" className="ui-input" value={itemForm.location} onChange={e => setItemForm({...itemForm, location: e.target.value})} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
               <input type="number" required className="ui-input" value={itemForm.quantity} onChange={e => setItemForm({...itemForm, quantity: e.target.value})} />

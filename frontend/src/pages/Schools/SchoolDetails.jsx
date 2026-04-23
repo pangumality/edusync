@@ -91,7 +91,7 @@ const SchoolDetails = () => {
 
       {/* Hero Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-sidebar-bg via-brand-900 to-brand-700 h-32"></div>
+        <div className="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 h-32"></div>
         <div className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-12 mb-6">
             <div className="bg-white p-4 rounded-2xl shadow-lg">

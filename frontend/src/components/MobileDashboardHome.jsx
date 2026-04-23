@@ -43,7 +43,7 @@ const MobileDashboardHome = ({ currentUser }) => {
 
   return (
     <div className="bg-surface-50 min-h-[calc(100vh-140px)] pb-24">
-      <div className="p-4 grid grid-cols-3 gap-3">
+      <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
         {menuItems.map((item, index) => {
           if (item.excludedRoles && currentUser && item.excludedRoles.includes(currentUser.role)) return null;
           
