@@ -128,16 +128,16 @@ const Dashboard = () => {
             Math.round(stats.revenue / 100)
         ],
         backgroundColor: [
-          'rgba(36, 144, 255, 0.82)',
+          'rgba(10, 147, 167, 0.82)',
           'rgba(20, 179, 198, 0.82)',
           'rgba(22, 163, 74, 0.82)',
-          'rgba(20, 71, 166, 0.82)'
+          'rgba(6, 90, 107, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(36, 144, 255, 1)',
+          'rgba(10, 147, 167, 1)',
           'rgba(20, 179, 198, 1)',
           'rgba(22, 163, 74, 1)',
-          'rgba(20, 71, 166, 1)'
+          'rgba(6, 90, 107, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -152,16 +152,16 @@ const Dashboard = () => {
         label: 'School Statistics',
         data: [stats.students, stats.teachers, stats.classes, stats.parents],
         backgroundColor: [
-          'rgba(36, 144, 255, 0.82)',
+          'rgba(10, 147, 167, 0.82)',
           'rgba(20, 179, 198, 0.82)',
           'rgba(22, 163, 74, 0.82)',
-          'rgba(20, 71, 166, 0.82)'
+          'rgba(6, 90, 107, 0.82)'
         ],
         hoverBackgroundColor: [
-          'rgba(36, 144, 255, 1)',
+          'rgba(10, 147, 167, 1)',
           'rgba(20, 179, 198, 1)',
           'rgba(22, 163, 74, 1)',
-          'rgba(20, 71, 166, 1)'
+          'rgba(6, 90, 107, 1)'
         ],
         borderRadius: 8,
         borderSkipped: false,
@@ -201,11 +201,11 @@ const Dashboard = () => {
             icon={Users} 
             title="Total Users" 
             count={stats.users} 
-            accentFrom="from-cyan-400"
-            accentTo="to-sky-300"
-            iconBg="bg-cyan-200 border border-cyan-300"
-            iconText="text-cyan-900"
-            iconShadow="shadow-lg shadow-cyan-500/20"
+            accentFrom="from-sidebar-bg-mid"
+            accentTo="to-sidebar-bg-2"
+            iconBg="bg-sidebar-bg-2/20 border border-sidebar-bg-2/30"
+            iconText="text-sidebar-bg"
+            iconShadow="shadow-lg shadow-sidebar-bg-2/20"
             buttonLabel="View All"
             link="/users"
           />
@@ -253,11 +253,11 @@ const Dashboard = () => {
               icon={Users} 
               title="Total Teachers" 
               count={stats.teachers} 
-              accentFrom="from-cyan-400"
-              accentTo="to-sky-300"
-              iconBg="bg-cyan-200 border border-cyan-300"
-              iconText="text-cyan-900"
-              iconShadow="shadow-lg shadow-cyan-500/20"
+              accentFrom="from-sidebar-bg-mid"
+              accentTo="to-sidebar-bg-2"
+              iconBg="bg-sidebar-bg-2/20 border border-sidebar-bg-2/30"
+              iconText="text-sidebar-bg"
+              iconShadow="shadow-lg shadow-sidebar-bg-2/20"
               buttonLabel="View All"
               link="/teachers"
             />
@@ -342,15 +342,15 @@ const Dashboard = () => {
           to="/timetable"
           className={`ui-card ui-card-muted p-6 group relative overflow-hidden block hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${!(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') ? 'lg:col-span-3' : ''}`}
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400 to-sky-300 opacity-55 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2 opacity-55 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110 group-hover:opacity-80 pointer-events-none" />
           <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-200 text-cyan-700 rounded-lg border border-cyan-300 shadow-lg shadow-cyan-500/25 relative z-10">
-                <Activity size={20} className="text-cyan-900" />
+              <div className="p-2 bg-sidebar-bg-2/20 text-sidebar-bg rounded-lg border border-sidebar-bg-2/30 shadow-lg shadow-sidebar-bg-2/20 relative z-10">
+                <Activity size={20} className="text-sidebar-bg" />
               </div>
               <h3 className="font-bold text-slate-700 relative z-10">Events Calendar</h3>
             </div>
-            <span className="text-cyan-800 text-sm font-semibold transition-colors relative z-10">View All</span>
+            <span className="text-sidebar-bg text-sm font-semibold transition-colors relative z-10">View All</span>
           </div>
           
           <div className="text-center mb-6 relative z-10">

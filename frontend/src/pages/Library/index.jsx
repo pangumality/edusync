@@ -270,14 +270,14 @@ const Library = () => {
                       {new Date(issue.dueDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                      <span className="px-2 py-1 bg-sidebar-bg-2/15 text-sidebar-bg border border-sidebar-bg-2/30 rounded-full text-xs font-medium">
                         Issued
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
                         onClick={() => handleReturn(issue.id)}
-                        className="flex items-center gap-1 ml-auto px-3 py-1 bg-brand-50 text-brand-800 rounded-lg hover:bg-brand-100 text-sm font-medium transition-colors border border-brand-100"
+                        className="ui-btn ui-btn-secondary ml-auto px-3 py-2 text-sm"
                       >
                         <RotateCcw size={14} /> Return
                       </button>

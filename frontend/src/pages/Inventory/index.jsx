@@ -6,10 +6,10 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="ui-card w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          <h2 className="text-xl font-bold text-slate-800">{title}</h2>
+          <button onClick={onClose} className="ui-btn ui-btn-secondary px-2 py-2">✕</button>
         </div>
         {children}
       </div>
@@ -118,12 +118,12 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-700 uppercase">Inventory Management</h2>
-          <p className="text-gray-600">Track stock levels and assets</p>
+          <h2 className="text-xl font-bold text-slate-700 uppercase">Inventory Management</h2>
+          <p className="text-slate-600">Track stock levels and assets</p>
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
               placeholder="Search items..." 
@@ -142,35 +142,35 @@ export default function Inventory() {
       </div>
 
       {loading ? <div>Loading inventory...</div> : (
-        <div className="bg-white rounded-xl shadow-soft overflow-hidden">
+        <div className="ui-card ui-card-muted overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-surface-50 border-b border-surface-200">
                 <tr>
-                  <th className="p-4 font-semibold text-gray-600">Item Name</th>
-                  <th className="p-4 font-semibold text-gray-600">Category</th>
-                  <th className="p-4 font-semibold text-gray-600">Location</th>
-                  <th className="p-4 font-semibold text-gray-600">Stock Level</th>
-                  <th className="p-4 font-semibold text-gray-600 text-right">Actions</th>
+                  <th className="p-4 font-semibold text-slate-600">Item Name</th>
+                  <th className="p-4 font-semibold text-slate-600">Category</th>
+                  <th className="p-4 font-semibold text-slate-600">Location</th>
+                  <th className="p-4 font-semibold text-slate-600">Stock Level</th>
+                  <th className="p-4 font-semibold text-slate-600 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filteredItems.map(item => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={item.id} className="hover:bg-surface-50">
                     <td className="p-4">
-                      <div className="font-medium text-gray-800">{item.name}</div>
-                      <div className="text-xs text-gray-500">Min: {item.minStock} {item.unit}</div>
+                      <div className="font-medium text-slate-800">{item.name}</div>
+                      <div className="text-xs text-slate-500">Min: {item.minStock} {item.unit}</div>
                     </td>
-                    <td className="p-4 text-gray-600">{item.category || '-'}</td>
-                    <td className="p-4 text-gray-600">{item.location || '-'}</td>
+                    <td className="p-4 text-slate-600">{item.category || '-'}</td>
+                    <td className="p-4 text-slate-600">{item.location || '-'}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <span className={`font-bold ${item.quantity <= item.minStock ? 'text-red-600' : 'text-green-600'}`}>
+                        <span className={`font-bold ${item.quantity <= item.minStock ? 'text-danger' : 'text-success'}`}>
                           {item.quantity}
                         </span>
-                        <span className="text-sm text-gray-500">{item.unit}</span>
+                        <span className="text-sm text-slate-500">{item.unit}</span>
                         {item.quantity <= item.minStock && (
-                          <AlertTriangle size={16} className="text-red-500" />
+                          <AlertTriangle size={16} className="text-danger" />
                         )}
                       </div>
                     </td>
@@ -178,28 +178,28 @@ export default function Inventory() {
                       <div className="flex justify-end gap-2">
                         <button 
                           onClick={() => openTransaction(item, 'IN')}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
+                          className="ui-btn ui-btn-secondary px-2 py-2 text-success hover:bg-success/10"
                           title="Restock (In)"
                         >
                           <ArrowDown size={18} />
                         </button>
                         <button 
                           onClick={() => openTransaction(item, 'OUT')}
-                          className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                          className="ui-btn ui-btn-secondary px-2 py-2 text-danger hover:bg-danger/10"
                           title="Distribute (Out)"
                         >
                           <ArrowUp size={18} />
                         </button>
                         <button 
                           onClick={() => openEdit(item)}
-                          className="p-1 text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded"
+                          className="ui-btn ui-btn-secondary px-2 py-2 text-brand-700 hover:bg-brand-50"
                           title="Edit"
                         >
                           <Edit2 size={18} />
                         </button>
                         <button 
                           onClick={() => handleDelete(item.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          className="ui-btn ui-btn-secondary px-2 py-2 text-danger hover:bg-danger/10"
                           title="Delete"
                         >
                           <Trash2 size={18} />
@@ -210,7 +210,7 @@ export default function Inventory() {
                 ))}
                 {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="p-8 text-center text-gray-500">No items found</td>
+                    <td colSpan="5" className="p-8 text-center text-slate-500">No items found</td>
                   </tr>
                 )}
               </tbody>
@@ -263,14 +263,14 @@ export default function Inventory() {
               <button 
                 type="button" 
                 onClick={() => setTransForm({...transForm, type: 'IN'})}
-                className={`flex-1 py-2 rounded border ${transForm.type === 'IN' ? 'bg-green-100 border-green-500 text-green-700' : 'bg-gray-50'}`}
+                className={`ui-btn ui-btn-secondary flex-1 py-2 ${transForm.type === 'IN' ? 'bg-success/10 border-success/30 text-success' : 'bg-surface-50'}`}
               >
                 Stock In (+)
               </button>
               <button 
                 type="button" 
                 onClick={() => setTransForm({...transForm, type: 'OUT'})}
-                className={`flex-1 py-2 rounded border ${transForm.type === 'OUT' ? 'bg-orange-100 border-orange-500 text-orange-700' : 'bg-gray-50'}`}
+                className={`ui-btn ui-btn-secondary flex-1 py-2 ${transForm.type === 'OUT' ? 'bg-danger/10 border-danger/20 text-danger' : 'bg-surface-50'}`}
               >
                 Stock Out (-)
               </button>

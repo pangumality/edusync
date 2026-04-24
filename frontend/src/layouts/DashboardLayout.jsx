@@ -53,13 +53,13 @@ const SidebarItem = ({ icon: Icon, label, to, active, onClick, isCollapsed }) =>
       title={isCollapsed ? label : ''}
     >
       {!isCollapsed && active && (
-        <span className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
+        <span className="absolute left-0 top-0 bottom-0 w-1 bg-sidebar-bg-2" />
       )}
       <Icon 
         size={20} 
         className={clsx(
           'transition-colors duration-300',
-          active ? 'text-accent' : 'text-white/70 group-hover:text-white'
+          active ? 'text-sidebar-bg-2' : 'text-white/70 group-hover:text-white'
         )} 
       />
       {!isCollapsed && <span className="font-medium whitespace-nowrap overflow-hidden tracking-wide">{label}</span>}
@@ -288,11 +288,11 @@ const DashboardLayout = () => {
                  ))}
               </div>
 
-              <div className="p-4 border-t bg-gray-50">
+              <div className="p-4 border-t border-surface-200 bg-surface-50">
                 <Link 
                   to="/profile" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 mb-4 hover:bg-gray-100 p-2 rounded-lg -mx-2 transition-colors"
+                  className="flex items-center gap-3 mb-4 hover:bg-surface-100 p-2 rounded-lg -mx-2 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-800 font-bold">
                     {currentUser?.firstName?.[0] || 'U'}
@@ -302,7 +302,7 @@ const DashboardLayout = () => {
                     <p className="text-xs text-gray-500 capitalize">{currentUser?.role}</p>
                   </div>
                 </Link>
-                <button className="flex items-center gap-2 text-red-500 w-full p-2 hover:bg-red-50 rounded">
+                <button onClick={handleLogout} className="ui-btn ui-btn-secondary w-full justify-start text-danger hover:bg-danger/10">
                   <LogOut size={18} />
                   <span>Logout</span>
                 </button>
@@ -364,7 +364,7 @@ const DashboardLayout = () => {
               className="relative text-slate-700 hover:text-slate-900 focus:outline-none"
                onClick={() => setShowNotifications(!showNotifications)}
              >
-               <Bell size={20} className={unreadCount > 0 ? "text-accent" : "text-slate-400"} />
+               <Bell size={20} className={unreadCount > 0 ? "text-sidebar-bg" : "text-slate-400"} />
                {unreadCount > 0 && (
                  <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center text-white">
                    {unreadCount}

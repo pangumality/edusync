@@ -55,7 +55,7 @@ const SchoolDetails = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="animate-spin text-blue-500" size={40} />
+        <Loader2 className="animate-spin text-sidebar-bg" size={40} />
       </div>
     );
   }
@@ -148,7 +148,7 @@ const SchoolDetails = () => {
           icon={Users} 
           title="Teachers" 
           value={school.stats?.teachers || 0}
-          color="bg-accent"
+          color="bg-sidebar-bg-mid"
           to={`/teachers?schoolId=${id}`}
         />
         <StatCard 
