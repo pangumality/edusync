@@ -329,20 +329,63 @@ export default function Landing() {
               <p className="mt-3 text-slate-600 leading-relaxed max-w-xl">
                 Keep daily operations consistent—from admins to students—with a single interface and role-based access.
               </p>
-              <div className="mt-6 flex flex-col gap-3">
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="text-xs font-bold text-sidebar-bg">1. Configure</div>
-                  <div className="mt-1 text-sm font-black text-slate-900">Set up schools, users, roles, and classes.</div>
-                </div>
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="text-xs font-bold text-sidebar-bg">2. Operate</div>
-                  <div className="mt-1 text-sm font-black text-slate-900">
-                    Run attendance, messaging, finance, exams, and newsletters.
+              <div className="mt-7">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="group ui-card ui-card-muted p-6 relative overflow-hidden">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(51,207,224,0.14),transparent_55%)]" />
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-black text-sidebar-bg">Step 1</div>
+                        <div className="h-7 w-7 rounded-xl bg-sidebar-bg-2/15 border border-sidebar-bg-2/25 flex items-center justify-center text-sidebar-bg font-black text-xs">
+                          1
+                        </div>
+                      </div>
+                      <div className="mt-3 text-sm font-black text-slate-900">Configure</div>
+                      <div className="mt-1 text-sm text-slate-600 leading-relaxed">
+                        Set up schools, users, roles, and classes.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="group ui-card ui-card-muted p-6 relative overflow-hidden">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(51,207,224,0.14),transparent_55%)]" />
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-black text-sidebar-bg">Step 2</div>
+                        <div className="h-7 w-7 rounded-xl bg-sidebar-bg-2/15 border border-sidebar-bg-2/25 flex items-center justify-center text-sidebar-bg font-black text-xs">
+                          2
+                        </div>
+                      </div>
+                      <div className="mt-3 text-sm font-black text-slate-900">Operate</div>
+                      <div className="mt-1 text-sm text-slate-600 leading-relaxed">
+                        Run attendance, messaging, finance, and exams.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="group ui-card ui-card-muted p-6 relative overflow-hidden">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(51,207,224,0.14),transparent_55%)]" />
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-black text-sidebar-bg">Step 3</div>
+                        <div className="h-7 w-7 rounded-xl bg-sidebar-bg-2/15 border border-sidebar-bg-2/25 flex items-center justify-center text-sidebar-bg font-black text-xs">
+                          3
+                        </div>
+                      </div>
+                      <div className="mt-3 text-sm font-black text-slate-900">Review</div>
+                      <div className="mt-1 text-sm text-slate-600 leading-relaxed">
+                        Use dashboards and reports to stay aligned.
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="text-xs font-bold text-sidebar-bg">3. Review</div>
-                  <div className="mt-1 text-sm font-black text-slate-900">Use dashboards and reports to stay aligned.</div>
+
+                <div className="hidden sm:block mt-4">
+                  <div className="relative h-1 rounded-full bg-surface-200 overflow-hidden">
+                    <div className="absolute inset-y-0 left-0 w-1/3 bg-sidebar-bg-2/35" />
+                    <div className="absolute inset-y-0 left-1/3 w-1/3 bg-sidebar-bg-mid/35" />
+                    <div className="absolute inset-y-0 left-2/3 w-1/3 bg-sidebar-bg/35" />
+                  </div>
                 </div>
               </div>
             </div>
