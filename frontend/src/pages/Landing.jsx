@@ -212,6 +212,9 @@ export default function Landing() {
             <a href="#features" className="hover:text-slate-900 transition-colors">
               Features
             </a>
+            <Link to="/services" className="hover:text-slate-900 transition-colors">
+              Services
+            </Link>
             <a href="#contact" className="hover:text-slate-900 transition-colors">
               Contact
             </a>
@@ -315,6 +318,57 @@ export default function Landing() {
         </Container>
       </section>
 
+      <section className="py-16 sm:py-24 bg-white/60 border-y border-white/70">
+        <Container>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+            <div>
+              <div className="text-sm font-bold text-sidebar-bg">How it works</div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                A clean workflow for every role.
+              </h2>
+              <p className="mt-3 text-slate-600 leading-relaxed max-w-xl">
+                Keep daily operations consistent—from admins to students—with a single interface and role-based access.
+              </p>
+              <div className="mt-6 flex flex-col gap-3">
+                <div className="ui-card ui-card-muted p-5">
+                  <div className="text-xs font-bold text-sidebar-bg">1. Configure</div>
+                  <div className="mt-1 text-sm font-black text-slate-900">Set up schools, users, roles, and classes.</div>
+                </div>
+                <div className="ui-card ui-card-muted p-5">
+                  <div className="text-xs font-bold text-sidebar-bg">2. Operate</div>
+                  <div className="mt-1 text-sm font-black text-slate-900">
+                    Run attendance, messaging, finance, exams, and newsletters.
+                  </div>
+                </div>
+                <div className="ui-card ui-card-muted p-5">
+                  <div className="text-xs font-bold text-sidebar-bg">3. Review</div>
+                  <div className="mt-1 text-sm font-black text-slate-900">Use dashboards and reports to stay aligned.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="ui-card ui-card-muted p-8 relative overflow-hidden">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(51,207,224,0.14),transparent_55%)]" />
+              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sidebar-bg-2/10 blur-3xl" />
+              <div className="relative">
+                <div className="text-sm font-bold text-sidebar-bg">Built for schools</div>
+                <p className="mt-3 text-lg sm:text-xl font-black text-slate-900 leading-snug">
+                  Consistent UI across dashboards, forms, and modals—so teams move faster with fewer mistakes.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <Link to="/services" className="ui-btn ui-btn-primary">
+                    View services <ArrowRight size={16} />
+                  </Link>
+                  <Link to="/login" className="ui-btn ui-btn-secondary">
+                    Sign in
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       <section id="modules" className="py-16 sm:py-24 bg-white/60 border-y border-white/70">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
@@ -345,6 +399,46 @@ export default function Landing() {
               </div>
             </div>
 
+            <div className="ui-card ui-card-muted p-8 relative overflow-hidden">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(51,207,224,0.14),transparent_55%)]" />
+              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sidebar-bg-2/10 blur-3xl" />
+              <div className="relative">
+                <div className="text-sm font-bold text-sidebar-bg">Why teams choose EduSync</div>
+                <p className="mt-3 text-lg sm:text-xl font-black text-slate-900 leading-snug">
+                  Smooth workflows, consistent UI, and clear data—without visual noise.
+                </p>
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="ui-card ui-card-muted p-5">
+                    <div className="text-xs font-bold text-sidebar-bg">Fast</div>
+                    <div className="mt-1 text-sm font-black text-slate-900">Quick daily tasks</div>
+                  </div>
+                  <div className="ui-card ui-card-muted p-5">
+                    <div className="text-xs font-bold text-sidebar-bg">Clean</div>
+                    <div className="mt-1 text-sm font-black text-slate-900">Modern theme</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      <section className="py-16 sm:py-24">
+        <Container>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="text-sm font-bold text-sidebar-bg">Testimonials</div>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                What users say about EduSync.
+              </h2>
+              <p className="mt-2 text-slate-600 max-w-2xl">Real feedback from different roles across the system.</p>
+            </div>
+            <Link to="/login" className="ui-btn ui-btn-secondary">
+              Sign in
+            </Link>
+          </div>
+
+          <div className="mt-10">
             <TestimonialCarousel />
           </div>
         </Container>

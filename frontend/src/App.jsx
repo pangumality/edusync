@@ -2,6 +2,7 @@ import React from 'react';
  import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
+import Services from './pages/Services';
 import Dashboard from './pages/Dashboard';
 import DashboardLayout from './layouts/DashboardLayout';
 import RequireRole from './components/RequireRole';
@@ -52,6 +53,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/services" element={<Services />} />
         
         <Route path="/" element={<RootGate />}>
           <Route index element={<Dashboard />} />
