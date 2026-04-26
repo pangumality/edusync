@@ -10,44 +10,24 @@ import {
   GraduationCap,
   Image as ImageIcon,
   MessageSquare,
+  Search,
   ShieldCheck,
   Users,
   Wallet,
 } from 'lucide-react';
 
-const Wave = ({ className }) => (
-  <svg
-    className={`block w-full ${className || ''}`}
-    viewBox="0 0 1440 180"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="none"
-  >
-    <path
-      fill="currentColor"
-      d="M0,96L60,117.3C120,139,240,181,360,176C480,171,600,117,720,85.3C840,53,960,43,1080,48C1200,53,1320,75,1380,85.3L1440,96L1440,0L1380,0C1320,0,1200,0,1080,0C960,0,840,0,720,0C600,0,480,0,360,0C240,0,120,0,60,0L0,0Z"
-    />
-  </svg>
-);
-
 const Container = ({ children, className = '' }) => (
-  <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>
-);
-
-const StatPill = ({ label, value }) => (
-  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-    <span className="text-white/80">{label}</span>
-    <span className="rounded-full bg-white/15 px-2 py-0.5">{value}</span>
-  </div>
+  <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 ${className}`}>{children}</div>
 );
 
 const FeatureCard = ({ icon: Icon, title, desc }) => (
-  <div className="ui-card ui-card-muted p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+  <div className="ui-card ui-card-muted p-7 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
     <div className="flex items-start gap-4">
       <div className="rounded-2xl border border-sidebar-bg-2/25 bg-sidebar-bg-2/15 p-3 text-sidebar-bg">
         <Icon size={22} />
       </div>
       <div>
-        <h3 className="text-base font-extrabold text-slate-800">{title}</h3>
+        <h3 className="text-base font-black text-slate-900">{title}</h3>
         <p className="mt-1 text-sm text-slate-600 leading-relaxed">{desc}</p>
       </div>
     </div>
@@ -123,21 +103,76 @@ const TestimonialCarousel = () => {
 };
 
 export default function Landing() {
+  const [query, setQuery] = useState('');
+
+  const popular = useMemo(
+    () => ['Attendance', 'Messaging', 'Finance', 'Exams', 'Gallery', 'Newsletters'],
+    []
+  );
+
+  const features = useMemo(
+    () => [
+      {
+        icon: Users,
+        title: 'Role-based access',
+        desc: 'Admins, staff, teachers, parents, and students each get the tools they need—nothing more.',
+      },
+      {
+        icon: MessageSquare,
+        title: 'Messaging & notices',
+        desc: 'Keep communication fast and centralized with notifications and messages.',
+      },
+      {
+        icon: CalendarCheck2,
+        title: 'Attendance tracking',
+        desc: 'Track attendance status, history, and reports with clean workflows.',
+      },
+      {
+        icon: BookOpen,
+        title: 'Learning resources',
+        desc: 'Organize e-learning materials and subjects in a structured way.',
+      },
+      {
+        icon: ImageIcon,
+        title: 'Gallery & updates',
+        desc: 'Share moments and announcements with a consistent look and feel.',
+      },
+      {
+        icon: BarChart3,
+        title: 'Dashboards & insights',
+        desc: 'See quick summaries for key metrics without visual clutter.',
+      },
+    ],
+    []
+  );
+
+  const filteredFeatures = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return features;
+    return features.filter((f) => `${f.title} ${f.desc}`.toLowerCase().includes(q));
+  }, [features, query]);
+
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const onSearch = (e) => {
+    e.preventDefault();
+    scrollToFeatures();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface-50 via-surface-100 to-surface-50 text-text-base">
-      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/75 backdrop-blur">
-        <Container className="py-3 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur">
+        <Container className="py-3 flex items-center gap-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 shadow-lg shadow-sidebar-bg-2/20 flex items-center justify-center">
               <span className="text-white font-black tracking-tight">E</span>
             </div>
-            <div>
-              <div className="text-sm font-extrabold text-slate-900 tracking-tight">EduSync</div>
-              <div className="text-[11px] text-slate-500 font-semibold">School management platform</div>
-            </div>
+            <div className="text-base font-black text-slate-900 tracking-tight">EduSync</div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-600 ml-auto">
             <a href="#features" className="hover:text-slate-900 transition-colors">
               Features
             </a>
@@ -152,133 +187,130 @@ export default function Landing() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="ui-btn ui-btn-primary">
-              Sign In <ArrowRight size={16} />
+          <div className="flex items-center gap-2 ml-auto lg:ml-0">
+            <Link to="/login" className="text-sm font-bold text-slate-700 hover:text-slate-900">
+              Sign In
+            </Link>
+            <Link to="/login" className="ui-btn ui-btn-secondary px-4 py-2">
+              Join
+            </Link>
+            <Link to="/login" className="ui-btn ui-btn-primary px-4 py-2 hidden sm:inline-flex">
+              Open <ArrowRight size={16} />
             </Link>
           </div>
         </Container>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2" />
-        <div className="absolute inset-0 opacity-90 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
-        <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-[420px] w-[420px] rounded-full bg-white/10 blur-3xl" />
+      <section className="relative overflow-hidden bg-surface-50">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-50 via-surface-50 to-surface-100" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[70%] -skew-x-12 origin-top-left translate-x-24 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[70%] -skew-x-12 origin-top-left translate-x-24 opacity-65 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_55%)]" />
+        <div className="pointer-events-none absolute -top-32 -left-32 h-[380px] w-[380px] rounded-full bg-sidebar-bg-2/10 blur-3xl" />
 
-        <Container className="relative py-16 sm:py-24 pb-24 sm:pb-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-16 items-center">
+        <Container className="relative py-14 sm:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <StatPill label="Attendance" value="Live" />
-                <StatPill label="Messaging" value="Instant" />
-                <StatPill label="Finance" value="Tracked" />
-                <StatPill label="Results" value="Organized" />
-              </div>
-
-              <h1 className="mt-7 text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-                Run your school with clarity, speed, and a modern experience.
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+                Find the perfect school management platform for your institution.
               </h1>
-              <p className="mt-4 text-white/85 text-base sm:text-lg leading-relaxed max-w-xl">
-                EduSync brings attendance, learning resources, newsletters, gallery, exams, and finance into one system—
-                built for admins, staff, teachers, parents, and students.
+              <p className="mt-4 text-slate-600 text-base sm:text-lg leading-relaxed max-w-xl">
+                EduSync helps you run attendance, communication, exams, newsletters, galleries, and finance with one clean
+                system—built for admins, staff, teachers, parents, and students.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                <Link to="/login" className="ui-btn ui-btn-primary">
-                  Sign In <ArrowRight size={16} />
-                </Link>
-                <a href="#features" className="ui-btn ui-btn-secondary border-white/25 bg-white/10 text-white hover:bg-white/15">
-                  Explore Features
-                </a>
-              </div>
+              <form onSubmit={onSearch} className="mt-7">
+                <div className="flex items-stretch overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-[0_14px_32px_-22px_rgba(15,23,42,0.55)]">
+                  <div className="flex items-center gap-2 px-4 text-slate-400">
+                    <Search size={18} />
+                  </div>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Try “attendance”, “finance”, “messaging”…"
+                    className="flex-1 py-3 pr-4 text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 sm:px-8 font-extrabold text-white bg-sidebar-bg hover:bg-sidebar-bg-mid transition-colors"
+                  >
+                    Search
+                  </button>
+                </div>
 
-              <div className="mt-10 grid grid-cols-2 gap-4 max-w-md">
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
-                  <div className="text-white text-lg font-black">All-in-one</div>
-                  <div className="text-white/75 text-xs font-semibold">Core modules</div>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-slate-500 font-semibold">Popular:</span>
+                  {popular.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        setQuery(tag);
+                        scrollToFeatures();
+                      }}
+                      className="rounded-full border border-surface-200 bg-white px-3 py-1 text-xs font-bold text-slate-700 hover:border-sidebar-bg-2/40 hover:bg-sidebar-bg-2/10 hover:text-slate-900 transition-colors"
+                    >
+                      {tag}
+                    </button>
+                  ))}
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
-                  <div className="text-white text-lg font-black">Role-based</div>
-                  <div className="text-white/75 text-xs font-semibold">Access control</div>
-                </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
-                  <div className="text-white text-lg font-black">Mobile-ready</div>
-                  <div className="text-white/75 text-xs font-semibold">Responsive UI</div>
-                </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
-                  <div className="text-white text-lg font-black">Fast</div>
-                  <div className="text-white/75 text-xs font-semibold">Smooth workflows</div>
-                </div>
-              </div>
+              </form>
             </div>
 
-            <div className="relative">
-              <div className="ui-card p-6 sm:p-8 border-white/25 bg-white/10 text-white shadow-2xl shadow-black/20">
+            <div className="relative hidden lg:block">
+              <div className="ui-card ui-card-muted p-7 border-white/30 bg-white/20 backdrop-blur shadow-2xl shadow-black/10">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-extrabold tracking-tight">What you can do</div>
-                  <div className="text-xs font-semibold text-white/75">Quick preview</div>
+                  <div className="text-sm font-black text-white">EduSync Dashboard</div>
+                  <div className="text-xs font-semibold text-white/80">Preview</div>
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-sm font-extrabold">
-                      <CalendarCheck2 size={18} />
-                      Attendance
-                    </div>
-                    <div className="mt-1 text-xs text-white/75">Track presence and history</div>
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
+                    <div className="text-xs font-bold text-white/80">Attendance</div>
+                    <div className="mt-2 text-2xl font-black">97%</div>
+                    <div className="mt-1 text-xs text-white/70">Weekly average</div>
                   </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-sm font-extrabold">
-                      <MessageSquare size={18} />
-                      Messages
-                    </div>
-                    <div className="mt-1 text-xs text-white/75">Notify and coordinate</div>
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
+                    <div className="text-xs font-bold text-white/80">Messages</div>
+                    <div className="mt-2 text-2xl font-black">24</div>
+                    <div className="mt-1 text-xs text-white/70">New today</div>
                   </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-sm font-extrabold">
-                      <Wallet size={18} />
-                      Finance
-                    </div>
-                    <div className="mt-1 text-xs text-white/75">Fees and payments overview</div>
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
+                    <div className="text-xs font-bold text-white/80">Finance</div>
+                    <div className="mt-2 text-2xl font-black">ZMW</div>
+                    <div className="mt-1 text-xs text-white/70">Payments tracked</div>
                   </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-                    <div className="flex items-center gap-2 text-sm font-extrabold">
-                      <FileText size={18} />
-                      Exams
-                    </div>
-                    <div className="mt-1 text-xs text-white/75">Setup, results, reporting</div>
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
+                    <div className="text-xs font-bold text-white/80">Exams</div>
+                    <div className="mt-2 text-2xl font-black">Live</div>
+                    <div className="mt-1 text-xs text-white/70">Setup & results</div>
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-sm font-extrabold flex items-center gap-2">
-                      <Bell size={18} />
-                      Updates & newsletters
-                    </div>
-                    <div className="text-xs font-semibold text-white/75">Always in sync</div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold">
-                      Newsletters
-                    </span>
-                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold">
-                      Gallery
-                    </span>
-                    <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold">
-                      Certificates
-                    </span>
-                  </div>
+                <div className="mt-5 flex items-center justify-between rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white">
+                  <div className="text-sm font-extrabold">Clean UI theme</div>
+                  <div className="text-xs font-bold text-white/80">Turquoise</div>
                 </div>
               </div>
 
-              <div className="pointer-events-none absolute -bottom-8 -right-10 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-10 -left-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
             </div>
           </div>
         </Container>
+      </section>
 
-        <Wave className="absolute left-0 bottom-0 h-24 sm:h-28 text-surface-50" />
+      <section className="bg-white/80 border-y border-surface-200">
+        <Container className="py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-slate-500">Trusted by schools and teams</div>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm font-black text-slate-300 tracking-wide">
+              <span>EDU</span>
+              <span>ACADEMY</span>
+              <span>INSTITUTE</span>
+              <span>CAMPUS</span>
+              <span>COLLEGE</span>
+            </div>
+          </div>
+        </Container>
       </section>
 
       <section id="features" className="py-16 sm:py-24">
@@ -290,7 +322,7 @@ export default function Landing() {
                 Everything your school needs, organized.
               </h2>
               <p className="mt-2 text-slate-600 max-w-2xl">
-                Streamline daily operations with a consistent, modern interface across dashboards, forms, and modals.
+                Search above to quickly find a feature, or browse the essentials below.
               </p>
             </div>
             <Link to="/login" className="ui-btn ui-btn-secondary">
@@ -299,36 +331,9 @@ export default function Landing() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <FeatureCard
-              icon={Users}
-              title="Role-based access"
-              desc="Admins, staff, teachers, parents, and students each get the tools they need—nothing more."
-            />
-            <FeatureCard
-              icon={MessageSquare}
-              title="Messaging & notices"
-              desc="Keep communication fast and centralized with notifications and messages."
-            />
-            <FeatureCard
-              icon={CalendarCheck2}
-              title="Attendance tracking"
-              desc="Track attendance status, history, and reports with clean workflows."
-            />
-            <FeatureCard
-              icon={BookOpen}
-              title="Learning resources"
-              desc="Organize e-learning materials and subjects in a structured way."
-            />
-            <FeatureCard
-              icon={ImageIcon}
-              title="Gallery & updates"
-              desc="Share moments and announcements with a consistent look and feel."
-            />
-            <FeatureCard
-              icon={BarChart3}
-              title="Dashboards & insights"
-              desc="See quick summaries for key metrics without visual clutter."
-            />
+            {filteredFeatures.map((f) => (
+              <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
+            ))}
           </div>
         </Container>
       </section>
@@ -441,14 +446,8 @@ export default function Landing() {
                 <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 shadow-lg shadow-sidebar-bg-2/20 flex items-center justify-center">
                   <span className="text-white font-black tracking-tight">E</span>
                 </div>
-                <div>
-                  <div className="text-sm font-extrabold text-slate-900 tracking-tight">EduSync</div>
-                  <div className="text-[11px] text-slate-500 font-semibold">Modern school management</div>
-                </div>
+                <div className="text-base font-black text-slate-900 tracking-tight">EduSync</div>
               </div>
-              <p className="mt-3 text-sm text-slate-600 leading-relaxed max-w-sm">
-                A unified platform for attendance, communication, finance, learning resources, and reporting.
-              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
