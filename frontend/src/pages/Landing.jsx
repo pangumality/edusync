@@ -15,6 +15,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import heroStudent from '../../school_girl-removebg-preview.png';
 
 const Container = ({ children, className = '' }) => (
   <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 ${className}`}>{children}</div>
@@ -106,7 +107,7 @@ export default function Landing() {
   const [query, setQuery] = useState('');
 
   const popular = useMemo(
-    () => ['Attendance', 'Messaging', 'Finance', 'Exams', 'Gallery', 'Newsletters'],
+    () => ['Attendance', 'Finance', 'Messaging', 'Exams'],
     []
   );
 
@@ -203,8 +204,8 @@ export default function Landing() {
 
       <section className="relative overflow-hidden bg-surface-50">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-50 via-surface-50 to-surface-100" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-[70%] -skew-x-12 origin-top-left translate-x-24 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-[70%] -skew-x-12 origin-top-left translate-x-24 opacity-65 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_55%)]" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 -skew-x-12 origin-top-right translate-x-10 bg-gradient-to-br from-sidebar-bg-mid to-sidebar-bg-2" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 -skew-x-12 origin-top-right translate-x-10 opacity-65 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_55%)]" />
         <div className="pointer-events-none absolute -top-32 -left-32 h-[380px] w-[380px] rounded-full bg-sidebar-bg-2/10 blur-3xl" />
 
         <Container className="relative py-14 sm:py-20">
@@ -214,8 +215,7 @@ export default function Landing() {
                 Find the perfect school management platform for your institution.
               </h1>
               <p className="mt-4 text-slate-600 text-base sm:text-lg leading-relaxed max-w-xl">
-                EduSync helps you run attendance, communication, exams, newsletters, galleries, and finance with one clean
-                system—built for admins, staff, teachers, parents, and students.
+                EduSync brings attendance, communication, exams, newsletters, galleries, and finance into one clean system.
               </p>
 
               <form onSubmit={onSearch} className="mt-7">
@@ -256,58 +256,12 @@ export default function Landing() {
               </form>
             </div>
 
-            <div className="relative hidden lg:block">
-              <div className="ui-card ui-card-muted p-7 border-white/30 bg-white/20 backdrop-blur shadow-2xl shadow-black/10">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-black text-white">EduSync Dashboard</div>
-                  <div className="text-xs font-semibold text-white/80">Preview</div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
-                    <div className="text-xs font-bold text-white/80">Attendance</div>
-                    <div className="mt-2 text-2xl font-black">97%</div>
-                    <div className="mt-1 text-xs text-white/70">Weekly average</div>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
-                    <div className="text-xs font-bold text-white/80">Messages</div>
-                    <div className="mt-2 text-2xl font-black">24</div>
-                    <div className="mt-1 text-xs text-white/70">New today</div>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
-                    <div className="text-xs font-bold text-white/80">Finance</div>
-                    <div className="mt-2 text-2xl font-black">ZMW</div>
-                    <div className="mt-1 text-xs text-white/70">Payments tracked</div>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-white">
-                    <div className="text-xs font-bold text-white/80">Exams</div>
-                    <div className="mt-2 text-2xl font-black">Live</div>
-                    <div className="mt-1 text-xs text-white/70">Setup & results</div>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white">
-                  <div className="text-sm font-extrabold">Clean UI theme</div>
-                  <div className="text-xs font-bold text-white/80">Turquoise</div>
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute -bottom-10 -left-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="bg-white/80 border-y border-surface-200">
-        <Container className="py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-slate-500">Trusted by schools and teams</div>
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm font-black text-slate-300 tracking-wide">
-              <span>EDU</span>
-              <span>ACADEMY</span>
-              <span>INSTITUTE</span>
-              <span>CAMPUS</span>
-              <span>COLLEGE</span>
+            <div className="relative hidden lg:flex justify-end">
+              <img
+                src={heroStudent}
+                alt="Student"
+                className="w-full max-w-md xl:max-w-lg object-contain drop-shadow-[0_34px_60px_rgba(15,23,42,0.28)]"
+              />
             </div>
           </div>
         </Container>
