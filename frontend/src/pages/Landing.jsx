@@ -22,14 +22,49 @@ const Container = ({ children, className = '' }) => (
 );
 
 const FeatureCard = ({ icon: Icon, title, desc }) => (
-  <div className="ui-card ui-card-muted p-7 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-    <div className="flex items-start gap-4">
-      <div className="rounded-2xl border border-sidebar-bg-2/25 bg-sidebar-bg-2/15 p-3 text-sidebar-bg">
+  <div className="group ui-card ui-card-muted p-7 relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(51,207,224,0.16),transparent_55%)] opacity-70" />
+    <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-sidebar-bg-2/10 blur-2xl" />
+
+    <div className="relative flex items-start gap-4">
+      <div className="rounded-2xl border border-sidebar-bg-2/25 bg-white p-3 text-sidebar-bg shadow-sm shadow-sidebar-bg-2/10 group-hover:bg-sidebar-bg-2/10 transition-colors">
         <Icon size={22} />
       </div>
       <div>
         <h3 className="text-base font-black text-slate-900">{title}</h3>
-        <p className="mt-1 text-sm text-slate-600 leading-relaxed">{desc}</p>
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const ModuleCard = ({ icon: Icon, title, desc, tone = 'sidebar' }) => (
+  <div className="group ui-card ui-card-muted p-6 relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+    <div
+      className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${
+        tone === 'success'
+          ? 'bg-success/60'
+          : tone === 'brand'
+          ? 'bg-brand-500/60'
+          : 'bg-sidebar-bg-2/60'
+      }`}
+    />
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(10,147,167,0.10),transparent_55%)] opacity-70" />
+    <div className="relative flex items-start gap-4">
+      <div
+        className={`rounded-2xl border p-3 ${
+          tone === 'success'
+            ? 'border-success/25 bg-success/10 text-success'
+            : tone === 'brand'
+            ? 'border-brand-200 bg-brand-50 text-brand-800'
+            : 'border-sidebar-bg-2/25 bg-sidebar-bg-2/15 text-sidebar-bg'
+        }`}
+      >
+        <Icon size={20} />
+      </div>
+      <div>
+        <div className="text-sm font-black text-slate-900">{title}</div>
+        <div className="mt-1 text-sm text-slate-600 leading-relaxed">{desc}</div>
       </div>
     </div>
   </div>
@@ -177,26 +212,14 @@ export default function Landing() {
             <a href="#features" className="hover:text-slate-900 transition-colors">
               Features
             </a>
-            <a href="#modules" className="hover:text-slate-900 transition-colors">
-              Modules
-            </a>
-            <a href="#security" className="hover:text-slate-900 transition-colors">
-              Security
-            </a>
             <a href="#contact" className="hover:text-slate-900 transition-colors">
               Contact
             </a>
           </nav>
 
           <div className="flex items-center gap-2 ml-auto lg:ml-0">
-            <Link to="/login" className="text-sm font-bold text-slate-700 hover:text-slate-900">
-              Sign In
-            </Link>
-            <Link to="/login" className="ui-btn ui-btn-secondary px-4 py-2">
-              Join
-            </Link>
-            <Link to="/login" className="ui-btn ui-btn-primary px-4 py-2 hidden sm:inline-flex">
-              Open <ArrowRight size={16} />
+            <Link to="/login" className="ui-btn ui-btn-primary px-4 py-2">
+              Sign In <ArrowRight size={16} />
             </Link>
           </div>
         </Container>
@@ -208,7 +231,7 @@ export default function Landing() {
         <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 -skew-x-12 origin-top-right translate-x-10 opacity-65 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_55%)]" />
         <div className="pointer-events-none absolute -top-32 -left-32 h-[380px] w-[380px] rounded-full bg-sidebar-bg-2/10 blur-3xl" />
 
-        <Container className="relative py-14 sm:py-20">
+        <Container className="relative pt-14 sm:pt-20 pb-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
@@ -218,7 +241,7 @@ export default function Landing() {
                 EduSync brings attendance, communication, exams, newsletters, galleries, and finance into one clean system.
               </p>
 
-              <form onSubmit={onSearch} className="mt-7">
+              <form onSubmit={onSearch} className="mt-7 pb-14 sm:pb-20">
                 <div className="flex items-stretch overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-[0_14px_32px_-22px_rgba(15,23,42,0.55)]">
                   <div className="flex items-center gap-2 px-4 text-slate-400">
                     <Search size={18} />
@@ -256,11 +279,11 @@ export default function Landing() {
               </form>
             </div>
 
-            <div className="relative hidden lg:flex justify-end">
+            <div className="relative hidden lg:flex justify-end items-end self-stretch min-h-[520px]">
               <img
                 src={heroStudent}
                 alt="Student"
-                className="w-full max-w-md xl:max-w-lg object-contain drop-shadow-[0_34px_60px_rgba(15,23,42,0.28)]"
+                className="w-[540px] xl:w-[660px] max-w-none object-contain drop-shadow-[0_34px_60px_rgba(15,23,42,0.28)]"
               />
             </div>
           </div>
@@ -305,50 +328,20 @@ export default function Landing() {
               </p>
 
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-brand-200 bg-brand-50 p-3 text-brand-800">
-                      <GraduationCap size={20} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-800">Students & Classes</div>
-                      <div className="text-xs text-slate-500 font-semibold">Records, sections, organization</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-sidebar-bg-2/25 bg-sidebar-bg-2/15 p-3 text-sidebar-bg">
-                      <FileText size={20} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-800">Exams & Certificates</div>
-                      <div className="text-xs text-slate-500 font-semibold">Setup, results, downloads</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-success/25 bg-success/10 p-3 text-success">
-                      <Wallet size={20} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-800">Finance</div>
-                      <div className="text-xs text-slate-500 font-semibold">Fees, payments, status</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="ui-card ui-card-muted p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-brand-200 bg-brand-50 p-3 text-brand-800">
-                      <Bell size={20} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-slate-800">Newsletters</div>
-                      <div className="text-xs text-slate-500 font-semibold">Share updates instantly</div>
-                    </div>
-                  </div>
-                </div>
+                <ModuleCard
+                  icon={GraduationCap}
+                  title="Students & Classes"
+                  desc="Records, sections, organization"
+                  tone="brand"
+                />
+                <ModuleCard
+                  icon={FileText}
+                  title="Exams & Certificates"
+                  desc="Setup, results, downloads"
+                  tone="sidebar"
+                />
+                <ModuleCard icon={Wallet} title="Finance" desc="Fees, payments, status" tone="success" />
+                <ModuleCard icon={Bell} title="Newsletters" desc="Share updates instantly" tone="brand" />
               </div>
             </div>
 
