@@ -344,110 +344,12 @@ const DashboardLayout = () => {
 
   // Desktop Layout
   return (
-    <div className="min-h-screen flex flex-col font-sans">
-      {/* Top Navigation Bar */}
-      <header className="bg-white/85 backdrop-blur h-16 flex items-center justify-between px-6 shadow-sm border-b border-surface-200 z-20 sticky top-0">
-        <div className="flex items-center gap-4">
-           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 shadow-lg shadow-brand-700/20 flex items-center justify-center overflow-hidden">
-             <img src="/systemlogo.jpg" alt="Edusync" className="w-full h-full object-cover" />
-           </div>
-           <div>
-             <h1 className="text-base font-semibold text-slate-900 tracking-tight">Dashboard</h1>
-             <div className="text-[11px] text-slate-500 font-medium">
-               {currentUser ? `${currentUser.firstName} · ${currentUser.role}` : 'Loading...'}
-             </div>
-           </div>
-        </div>
-        <div className="flex items-center gap-6 relative">
-           <div className="relative">
-             <button 
-              className="relative text-slate-700 hover:text-slate-900 focus:outline-none"
-               onClick={() => setShowNotifications(!showNotifications)}
-             >
-               <Bell size={20} className={unreadCount > 0 ? "text-sidebar-bg" : "text-slate-400"} />
-               {unreadCount > 0 && (
-                 <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center text-white">
-                   {unreadCount}
-                 </span>
-               )}
-             </button>
-
-             {showNotifications && (
-               <div className="absolute right-0 mt-2 w-80 bg-white text-gray-800 rounded-md shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
-                 <div className="p-3 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
-                   <h3 className="font-semibold text-sm">Notifications</h3>
-                   {unreadCount > 0 && (
-                     <button 
-                       onClick={markAllAsRead}
-                       className="text-xs text-brand-700 hover:text-brand-800 flex items-center gap-1"
-                     >
-                       <CheckCheck size={14} /> Mark all read
-                     </button>
-                   )}
-                 </div>
-                 
-                 {notifications.length === 0 ? (
-                   <div className="p-4 text-center text-gray-500 text-sm">
-                     No notifications
-                   </div>
-                 ) : (
-                   <div className="divide-y divide-gray-100">
-                     {notifications.map(notification => (
-                       <div 
-                         key={notification.id}
-                         onClick={() => handleNotificationClick(notification)}
-                         className={clsx(
-                           "p-3 cursor-pointer hover:bg-gray-50 transition-colors",
-                           !notification.isRead ? "bg-brand-50/70" : ""
-                         )}
-                       >
-                         <div className="flex justify-between items-start gap-2">
-                           <p className={clsx("text-sm", !notification.isRead ? "font-medium" : "text-gray-600")}>
-                             {notification.message}
-                           </p>
-                           {!notification.isRead && (
-                             <button 
-                               onClick={(e) => markAsRead(notification.id, e)}
-                               className="text-gray-400 hover:text-brand-700"
-                               title="Mark as read"
-                             >
-                               <Check size={14} />
-                             </button>
-                           )}
-                         </div>
-                         <span className="text-xs text-gray-400 mt-1 block">
-                           {new Date(notification.createdAt).toLocaleString()}
-                         </span>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-               </div>
-             )}
-           </div>
-
-           <Link to="/profile" className="flex items-center gap-2 hover:bg-surface-100 px-2 py-1 rounded-lg transition-colors">
-             <User size={20} className="text-brand-700" />
-             <span className="text-sm font-medium text-slate-700">
-               {currentUser ? currentUser.firstName : 'Loading...'}
-             </span>
-           </Link>
-           <Link to="/messages" className="flex items-center gap-1 text-slate-700 hover:text-slate-900">
-             <MessageSquare size={20} />
-             <span className="text-sm font-medium">Messages</span>
-           </Link>
-           <button onClick={handleLogout} className="flex items-center gap-1 text-slate-700 hover:text-red-600">
-             <span className="text-sm font-medium">Logout</span>
-           </button>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className={clsx(
-            "bg-gradient-to-b from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-10 relative",
-            isCollapsed ? "w-20" : "w-72"
-        )}>
+    <div className="min-h-screen flex font-sans">
+      {/* Sidebar */}
+      <aside className={clsx(
+          "bg-gradient-to-b from-sidebar-bg via-sidebar-bg-mid to-sidebar-bg-2 text-white border-r border-sidebar-border overflow-y-auto flex-shrink-0 pb-10 transition-all duration-300 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] z-20 relative",
+          isCollapsed ? "w-20" : "w-72"
+      )}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_55%)] opacity-70" />
           <div className="pointer-events-none absolute -top-28 -right-28 h-80 w-80 rounded-full bg-sidebar-bg-2/20 blur-3xl opacity-70" />
           <div className={clsx("p-4 flex items-center relative z-10", isCollapsed ? "justify-center" : "justify-between")}>
@@ -487,17 +389,110 @@ const DashboardLayout = () => {
                );
              })}
           </div>
-        </aside>
+      </aside>
+      
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Top Navigation Bar */}
+        <header className="bg-white/85 backdrop-blur h-16 flex items-center justify-between px-6 shadow-sm border-b border-surface-200 z-10 sticky top-0">
+          <div>
+            <h1 className="text-base font-semibold text-slate-900 tracking-tight">Dashboard</h1>
+            <div className="text-[11px] text-slate-500 font-medium">
+              {currentUser ? `${currentUser.firstName} · ${currentUser.role}` : 'Loading...'}
+            </div>
+          </div>
+          <div className="flex items-center gap-6 relative">
+             <div className="relative">
+               <button 
+                className="relative text-slate-700 hover:text-slate-900 focus:outline-none"
+                 onClick={() => setShowNotifications(!showNotifications)}
+               >
+                 <Bell size={20} className={unreadCount > 0 ? "text-sidebar-bg" : "text-slate-400"} />
+                 {unreadCount > 0 && (
+                   <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center text-white">
+                     {unreadCount}
+                   </span>
+                 )}
+               </button>
+  
+               {showNotifications && (
+                 <div className="absolute right-0 mt-2 w-80 bg-white text-gray-800 rounded-md shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                   <div className="p-3 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+                     <h3 className="font-semibold text-sm">Notifications</h3>
+                     {unreadCount > 0 && (
+                       <button 
+                         onClick={markAllAsRead}
+                         className="text-xs text-brand-700 hover:text-brand-800 flex items-center gap-1"
+                       >
+                         <CheckCheck size={14} /> Mark all read
+                       </button>
+                     )}
+                   </div>
+                   
+                   {notifications.length === 0 ? (
+                     <div className="p-4 text-center text-gray-500 text-sm">
+                       No notifications
+                     </div>
+                   ) : (
+                     <div className="divide-y divide-gray-100">
+                       {notifications.map(notification => (
+                         <div 
+                           key={notification.id}
+                           onClick={() => handleNotificationClick(notification)}
+                           className={clsx(
+                             "p-3 cursor-pointer hover:bg-gray-50 transition-colors",
+                             !notification.isRead ? "bg-brand-50/70" : ""
+                           )}
+                         >
+                           <div className="flex justify-between items-start gap-2">
+                             <p className={clsx("text-sm", !notification.isRead ? "font-medium" : "text-gray-600")}>
+                               {notification.message}
+                             </p>
+                             {!notification.isRead && (
+                               <button 
+                                 onClick={(e) => markAsRead(notification.id, e)}
+                                 className="text-gray-400 hover:text-brand-700"
+                                 title="Mark as read"
+                               >
+                                 <Check size={14} />
+                               </button>
+                             )}
+                           </div>
+                           <span className="text-xs text-gray-400 mt-1 block">
+                             {new Date(notification.createdAt).toLocaleString()}
+                           </span>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
+  
+             <Link to="/profile" className="flex items-center gap-2 hover:bg-surface-100 px-2 py-1 rounded-lg transition-colors">
+               <User size={20} className="text-brand-700" />
+               <span className="text-sm font-medium text-slate-700">
+                 {currentUser ? currentUser.firstName : 'Loading...'}
+               </span>
+             </Link>
+             <Link to="/messages" className="flex items-center gap-1 text-slate-700 hover:text-slate-900">
+               <MessageSquare size={20} />
+               <span className="text-sm font-medium">Messages</span>
+             </Link>
+             <button onClick={handleLogout} className="flex items-center gap-1 text-slate-700 hover:text-red-600">
+               <span className="text-sm font-medium">Logout</span>
+             </button>
+          </div>
+        </header>
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-6">
            <Outlet context={{ currentUser }} />
         </main>
+        
+        <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-500">
+          © {new Date().getFullYear()} Edusync. All rights reserved.
+        </footer>
       </div>
-      
-      <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Edusync. All rights reserved.
-      </footer>
     </div>
   );
 };
