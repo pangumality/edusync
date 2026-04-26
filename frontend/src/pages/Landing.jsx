@@ -17,7 +17,7 @@ import {
 
 const Wave = ({ className }) => (
   <svg
-    className={className}
+    className={`block w-full ${className || ''}`}
     viewBox="0 0 1440 180"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="none"
@@ -166,17 +166,17 @@ export default function Landing() {
         <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-[420px] w-[420px] rounded-full bg-white/10 blur-3xl" />
 
-        <Container className="relative py-14 sm:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <Container className="relative py-16 sm:py-24 pb-24 sm:pb-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-16 items-center">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <StatPill label="Attendance" value="Live" />
                 <StatPill label="Messaging" value="Instant" />
                 <StatPill label="Finance" value="Tracked" />
                 <StatPill label="Results" value="Organized" />
               </div>
 
-              <h1 className="mt-6 text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              <h1 className="mt-7 text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
                 Run your school with clarity, speed, and a modern experience.
               </h1>
               <p className="mt-4 text-white/85 text-base sm:text-lg leading-relaxed max-w-xl">
@@ -184,7 +184,7 @@ export default function Landing() {
                 built for admins, staff, teachers, parents, and students.
               </p>
 
-              <div className="mt-7 flex flex-col sm:flex-row gap-3">
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Link to="/login" className="ui-btn ui-btn-primary">
                   Sign In <ArrowRight size={16} />
                 </Link>
@@ -193,20 +193,20 @@ export default function Landing() {
                 </a>
               </div>
 
-              <div className="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+              <div className="mt-10 grid grid-cols-2 gap-4 max-w-md">
+                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
                   <div className="text-white text-lg font-black">All-in-one</div>
                   <div className="text-white/75 text-xs font-semibold">Core modules</div>
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
                   <div className="text-white text-lg font-black">Role-based</div>
                   <div className="text-white/75 text-xs font-semibold">Access control</div>
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
                   <div className="text-white text-lg font-black">Mobile-ready</div>
                   <div className="text-white/75 text-xs font-semibold">Responsive UI</div>
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+                <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4">
                   <div className="text-white text-lg font-black">Fast</div>
                   <div className="text-white/75 text-xs font-semibold">Smooth workflows</div>
                 </div>
@@ -278,10 +278,10 @@ export default function Landing() {
           </div>
         </Container>
 
-        <Wave className="absolute -bottom-1 left-0 right-0 h-20 text-surface-50" />
+        <Wave className="absolute left-0 bottom-0 h-24 sm:h-28 text-surface-50" />
       </section>
 
-      <section id="features" className="py-14 sm:py-18">
+      <section id="features" className="py-16 sm:py-24">
         <Container>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -298,7 +298,7 @@ export default function Landing() {
             </Link>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <FeatureCard
               icon={Users}
               title="Role-based access"
@@ -333,9 +333,9 @@ export default function Landing() {
         </Container>
       </section>
 
-      <section id="modules" className="py-14 sm:py-18 bg-white/60 border-y border-white/70">
+      <section id="modules" className="py-16 sm:py-24 bg-white/60 border-y border-white/70">
         <Container>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
             <div>
               <div className="text-sm font-bold text-sidebar-bg">Modules</div>
               <h2 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -345,7 +345,7 @@ export default function Landing() {
                 From admissions to daily operations—use what you need today and scale as you grow.
               </p>
 
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="ui-card ui-card-muted p-5">
                   <div className="flex items-center gap-3">
                     <div className="rounded-2xl border border-brand-200 bg-brand-50 p-3 text-brand-800">
@@ -398,7 +398,7 @@ export default function Landing() {
         </Container>
       </section>
 
-      <section id="security" className="py-14 sm:py-18">
+      <section id="security" className="py-16 sm:py-24">
         <Container>
           <div className="ui-card ui-card-muted p-8 overflow-hidden relative">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(10,147,167,0.12),transparent_55%)]" />
@@ -516,4 +516,3 @@ export default function Landing() {
     </div>
   );
 }
-
