@@ -1,9 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import DashboardLayout from './layouts/DashboardLayout';
-import ProtectedRoute from './components/ProtectedRoute';
 import RequireRole from './components/RequireRole';
 import Attendance from './pages/Attendance';
 import Messages from './pages/Messages';
@@ -35,17 +35,25 @@ import TimeTable from './pages/TimeTable';
 import Certificates from './pages/Certificates';
 import Profile from './pages/Profile';
 
+function RootGate() {
+  const token = localStorage.getItem('authToken');
+  const location = useLocation();
+
+  if (!token) {
+    if (location.pathname === '/') return <Landing />;
+    return <Navigate to="/login" replace />;
+  }
+
+  return <DashboardLayout />;
+}
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
         
-        <Route path="/" element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }>
+        <Route path="/" element={<RootGate />}>
           <Route index element={<Dashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="attendance" element={<Attendance />} />
