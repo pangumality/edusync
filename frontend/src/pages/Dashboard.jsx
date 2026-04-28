@@ -213,11 +213,11 @@ const Dashboard = () => {
             icon={DollarSign} 
             title="Total Revenue" 
             count={`ZMW ${Number(stats.revenue || 0).toLocaleString('en-ZM')}`}
-            accentFrom="from-success/35"
-            accentTo="to-success/15"
-            iconBg="bg-success/20 border border-success/30"
-            iconText="text-success"
-            iconShadow="shadow-lg shadow-success/20"
+            accentFrom="from-brand-400"
+            accentTo="to-brand-300"
+            iconBg="bg-brand-200 border border-brand-300"
+            iconText="text-brand-700"
+            iconShadow="shadow-lg shadow-brand-700/20"
             buttonLabel="Finance"
             link="/finance"
           />
@@ -279,11 +279,11 @@ const Dashboard = () => {
               icon={CreditCard} 
               title="Total Parents" 
               count={stats.parents} 
-              accentFrom="from-success/35"
-              accentTo="to-success/15"
-              iconBg="bg-success/20 border border-success/30"
-              iconText="text-success"
-              iconShadow="shadow-lg shadow-success/20"
+              accentFrom="from-brand-400"
+              accentTo="to-brand-300"
+              iconBg="bg-brand-200 border border-brand-300"
+              iconText="text-brand-700"
+              iconShadow="shadow-lg shadow-brand-700/20"
               buttonLabel="Finance"
               link="/finance"
             />
