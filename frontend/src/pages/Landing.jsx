@@ -282,11 +282,11 @@ export default function Landing() {
               </form>
             </div>
 
-            <div className="relative hidden lg:flex justify-end items-end self-stretch min-h-[520px]">
+            <div className="relative hidden lg:flex justify-end items-end self-stretch min-h-[580px]">
               <img
                 src={heroStudent}
                 alt="Student"
-                className="w-[540px] xl:w-[660px] max-w-none object-contain drop-shadow-[0_34px_60px_rgba(15,23,42,0.28)]"
+                className="w-[600px] xl:w-[740px] max-w-none object-contain drop-shadow-[0_34px_60px_rgba(15,23,42,0.28)]"
               />
             </div>
           </div>
