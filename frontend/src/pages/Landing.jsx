@@ -215,9 +215,9 @@ export default function Landing() {
             <Link to="/services" className="hover:text-slate-900 transition-colors">
               Services
             </Link>
-            <a href="#contact" className="hover:text-slate-900 transition-colors">
+            <Link to="/contact" className="hover:text-slate-900 transition-colors">
               Contact
-            </a>
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 ml-auto lg:ml-0">
@@ -244,7 +244,7 @@ export default function Landing() {
                 EduSync brings attendance, communication, exams, newsletters, galleries, and finance into one clean system.
               </p>
 
-              <form onSubmit={onSearch} className="mt-7 pb-14 sm:pb-20">
+              <form onSubmit={onSearch} className="mt-7 pb-6 sm:pb-10">
                 <div className="flex items-stretch overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-[0_14px_32px_-22px_rgba(15,23,42,0.55)]">
                   <div className="flex items-center gap-2 px-4 text-slate-400">
                     <Search size={18} />
@@ -282,7 +282,7 @@ export default function Landing() {
               </form>
             </div>
 
-            <div className="relative hidden lg:flex justify-end items-end self-stretch min-h-[580px]">
+            <div className="relative hidden lg:flex justify-end items-end self-stretch min-h-[540px]">
               <img
                 src={heroStudent}
                 alt="Student"
@@ -513,9 +513,9 @@ export default function Landing() {
                 <Link to="/login" className="ui-btn ui-btn-primary w-full">
                   Sign In
                 </Link>
-                <a href="#contact" className="ui-btn ui-btn-secondary w-full">
+                <Link to="/contact" className="ui-btn ui-btn-secondary w-full">
                   Contact us
-                </a>
+                </Link>
               </div>
             </div>
           </div>

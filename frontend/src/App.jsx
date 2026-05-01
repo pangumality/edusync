@@ -3,6 +3,7 @@ import React from 'react';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import Services from './pages/Services';
+import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
 import DashboardLayout from './layouts/DashboardLayout';
 import RequireRole from './components/RequireRole';
@@ -54,6 +55,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
         
         <Route path="/" element={<RootGate />}>
           <Route index element={<Dashboard />} />

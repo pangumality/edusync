@@ -24,6 +24,12 @@ const formatTime = (dateString) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString([], { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+};
+
 // --- Components ---
 
 const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) => {
@@ -48,6 +54,11 @@ const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) =>
         <div className="flex justify-between items-start">
           <h4 className="font-semibold text-gray-800 truncate flex items-center gap-1">
             {conversation.name}
+            {conversation.kind === 'contact' && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-700 border border-brand-100">
+                Contact
+              </span>
+            )}
           </h4>
           <span className="text-xs text-gray-400 whitespace-nowrap">{lastMsg ? formatTime(lastMsg.sentAt) : ''}</span>
         </div>
@@ -60,6 +71,204 @@ const ConversationItem = ({ conversation, isActive, onClick, currentUserId }) =>
                     {conversation.unreadCount}
                 </span>
             )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ContactInbox = ({
+  messages,
+  loading,
+  selectedId,
+  selectedDetail,
+  loadingDetail,
+  replyBody,
+  replyStatus,
+  sendingReply,
+  onSelect,
+  onMarkRead,
+  onRefresh,
+  onChangeReplyBody,
+  onSendReply,
+}) => {
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="h-16 border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 bg-white z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center font-black border border-brand-100">
+            C
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              Contact Us
+              <span className="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-700 border border-brand-100">
+                Contact
+              </span>
+            </h3>
+            <div className="text-xs text-gray-500">Messages submitted from the public contact page</div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="ui-btn ui-btn-secondary px-3 py-2"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+        <div className="border-r border-gray-100 overflow-y-auto bg-white">
+          {loading ? (
+            <div className="flex justify-center p-6"><Loader2 className="animate-spin text-gray-400"/></div>
+          ) : messages.length === 0 ? (
+            <div className="p-8 text-center text-gray-400">No contact messages yet.</div>
+          ) : (
+            <div className="p-2 space-y-1">
+              {messages.map((m) => {
+                const active = selectedId === m.id;
+                const preview = (m.subject || m.message || '').trim();
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => onSelect(m)}
+                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      active ? 'bg-brand-50 border-l-4 border-brand-600' : 'hover:bg-gray-50 border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className={`text-sm font-bold truncate ${m.isRead ? 'text-gray-800' : 'text-gray-900'}`}>
+                            {m.name}
+                          </div>
+                          {!m.isRead && (
+                            <span className="inline-flex items-center rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">{m.email}</div>
+                        <div className={`mt-1 text-sm truncate ${m.isRead ? 'text-gray-500' : 'text-gray-800 font-semibold'}`}>
+                          {preview || '—'}
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-gray-400 whitespace-nowrap">{formatDateTime(m.createdAt)}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="overflow-y-auto bg-gray-50/50">
+          {selectedId ? (
+            (() => {
+              const msg = selectedDetail || messages.find((m) => m.id === selectedId);
+              if (!msg) return <div className="p-8 text-center text-gray-400">Select a message.</div>;
+              return (
+                <div className="p-6">
+                  <div className="ui-card ui-card-muted p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-lg font-black text-slate-900 truncate">{msg.name}</div>
+                        <div className="mt-1 text-sm text-slate-600">{msg.email}{msg.phone ? ` • ${msg.phone}` : ''}</div>
+                        <div className="mt-2 text-xs text-slate-500">
+                          Submitted: {formatDateTime(msg.createdAt)}
+                          {msg.readAt ? ` • Read: ${formatDateTime(msg.readAt)}` : ''}
+                        </div>
+                      </div>
+                      {!msg.isRead && (
+                        <button
+                          type="button"
+                          onClick={() => onMarkRead(msg.id)}
+                          className="ui-btn ui-btn-secondary px-3 py-2"
+                        >
+                          Mark as read
+                        </button>
+                      )}
+                    </div>
+
+                    {msg.subject && (
+                      <div className="mt-4">
+                        <div className="text-xs font-bold text-sidebar-bg">Subject</div>
+                        <div className="mt-1 text-sm text-slate-800">{msg.subject}</div>
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <div className="text-xs font-bold text-sidebar-bg">Message</div>
+                      <div className="mt-2 whitespace-pre-wrap text-sm text-slate-800 leading-relaxed">{msg.message}</div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="text-xs font-bold text-sidebar-bg">Replies</div>
+                      <div className="mt-3 space-y-3">
+                        {loadingDetail ? (
+                          <div className="flex justify-center p-4"><Loader2 className="animate-spin text-gray-400"/></div>
+                        ) : (msg.replies && msg.replies.length > 0) ? (
+                          msg.replies.map((r) => (
+                            <div key={r.id} className="flex justify-end">
+                              <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-brand-600 text-white">
+                                <div className="text-[10px] text-brand-200 font-bold flex items-center justify-between gap-2">
+                                  <span>
+                                    {r.sender?.firstName ? `${r.sender.firstName}${r.sender.lastName ? ` ${r.sender.lastName}` : ''}` : 'Reply'}
+                                  </span>
+                                  <span className="whitespace-nowrap">{formatDateTime(r.sentAt)}</span>
+                                </div>
+                                {r.subject && <div className="mt-1 text-xs text-brand-100 font-semibold">{r.subject}</div>}
+                                <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.body}</div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-gray-500">No replies yet.</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="text-xs font-bold text-sidebar-bg">Reply (sends email)</div>
+                      <div className="mt-3">
+                        <textarea
+                          value={replyBody}
+                          onChange={(e) => onChangeReplyBody(e.target.value)}
+                          className="w-full min-h-[120px] resize-y rounded-xl border border-surface-200 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/25 focus:border-brand-400"
+                          placeholder="Type your reply..."
+                        />
+                        {replyStatus?.type && (
+                          <div
+                            className={`mt-3 rounded-xl border px-4 py-3 text-sm font-semibold ${
+                              replyStatus.type === 'success'
+                                ? 'border-success/25 bg-success/10 text-success'
+                                : 'border-red-200 bg-red-50 text-red-700'
+                            }`}
+                          >
+                            {replyStatus.message}
+                          </div>
+                        )}
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={onSendReply}
+                            disabled={sendingReply || replyBody.trim().length < 2}
+                            className="ui-btn ui-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingReply ? 'Sending…' : 'Send reply'} <Send size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            <div className="p-8 text-center text-gray-400">Select a message to view details.</div>
+          )}
         </div>
       </div>
     </div>
@@ -329,6 +538,14 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadingConvos, setLoadingConvos] = useState(true);
+  const [contactMessages, setContactMessages] = useState([]);
+  const [loadingContact, setLoadingContact] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [selectedContactDetail, setSelectedContactDetail] = useState(null);
+  const [loadingContactDetail, setLoadingContactDetail] = useState(false);
+  const [contactReplyBody, setContactReplyBody] = useState('');
+  const [contactReplyStatus, setContactReplyStatus] = useState({ type: null, message: '' });
+  const [sendingContactReply, setSendingContactReply] = useState(false);
   const messagesEndRef = useRef(null);
   const isWindowFocused = useRef(true);
 
@@ -351,8 +568,18 @@ export default function Messages() {
     setCurrentUser(user);
     if (user) {
         fetchConversations();
+        if (user.role === 'admin') fetchContactMessages();
     }
   }, []);
+
+  useEffect(() => {
+    if (selectedConversation?.id !== 'contact_inbox') return;
+    if (!selectedContactId && contactMessages[0]?.id) {
+      setSelectedContactId(contactMessages[0].id);
+      return;
+    }
+    if (selectedContactId) fetchContactMessageDetail(selectedContactId);
+  }, [selectedConversation?.id, selectedContactId, contactMessages]);
 
   const fetchConversations = async () => {
     setLoadingConvos(true);
@@ -366,8 +593,64 @@ export default function Messages() {
     }
   };
 
+  const fetchContactMessages = async () => {
+    setLoadingContact(true);
+    try {
+      const { data } = await api.get('/contact-messages');
+      setContactMessages(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setContactMessages([]);
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
+  const fetchContactMessageDetail = async (id) => {
+    setLoadingContactDetail(true);
+    try {
+      const { data } = await api.get(`/contact-messages/${id}`);
+      setSelectedContactDetail(data);
+    } catch (error) {
+      setSelectedContactDetail(null);
+    } finally {
+      setLoadingContactDetail(false);
+    }
+  };
+
+  const markContactAsRead = async (id) => {
+    try {
+      await api.put(`/contact-messages/${id}/read`);
+      setContactMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, isRead: true, readAt: new Date().toISOString() } : m))
+      );
+    } catch (error) {}
+  };
+
+  const sendContactReply = async () => {
+    if (!selectedContactId) return;
+    const body = contactReplyBody.trim();
+    if (body.length < 2 || sendingContactReply) return;
+    setSendingContactReply(true);
+    setContactReplyStatus({ type: null, message: '' });
+    try {
+      await api.post(`/contact-messages/${selectedContactId}/reply`, { body });
+      setContactReplyBody('');
+      setContactReplyStatus({ type: 'success', message: 'Reply sent.' });
+      await fetchContactMessageDetail(selectedContactId);
+      await fetchContactMessages();
+    } catch (error) {
+      const msg =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to send reply.';
+      setContactReplyStatus({ type: 'error', message: msg });
+    } finally {
+      setSendingContactReply(false);
+    }
+  };
+
   useEffect(() => {
-    if (selectedConversation && selectedConversation.id !== 'new') {
+    if (selectedConversation && !['new', 'broadcast', 'contact_inbox'].includes(selectedConversation.id)) {
         fetchMessages(selectedConversation.id);
         markAsRead(selectedConversation.id);
         
@@ -541,6 +824,32 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {currentUser?.role === 'admin' && (
+            <ConversationItem
+              conversation={{
+                id: 'contact_inbox',
+                kind: 'contact',
+                name: 'Contact Us',
+                lastMessage: contactMessages[0]
+                  ? {
+                      content: (contactMessages[0].subject || contactMessages[0].message || '').trim() || 'New contact message',
+                      sentAt: contactMessages[0].createdAt,
+                    }
+                  : null,
+                unreadCount: contactMessages.filter((m) => !m.isRead).length,
+                participants: [],
+              }}
+              isActive={selectedConversation?.id === 'contact_inbox'}
+              onClick={() => {
+                setSelectedConversation({ id: 'contact_inbox', name: 'Contact Us', kind: 'contact' });
+                setSelectedContactDetail(null);
+                setContactReplyBody('');
+                setContactReplyStatus({ type: null, message: '' });
+                fetchContactMessages();
+              }}
+              currentUserId={currentUser.id}
+            />
+          )}
           {loadingConvos ? (
              <div className="flex justify-center p-4"><Loader2 className="animate-spin text-gray-400"/></div>
           ) : conversations.length > 0 ? (
@@ -564,7 +873,32 @@ export default function Messages() {
 
       {/* Main Chat Area */}
       <div className="flex-1 bg-white rounded-2xl shadow-sm flex flex-col overflow-hidden min-h-[60vh] md:min-h-0">
-        {selectedConversation ? (
+        {selectedConversation?.id === 'contact_inbox' ? (
+          <ContactInbox
+            messages={contactMessages}
+            loading={loadingContact}
+            selectedId={selectedContactId}
+            selectedDetail={selectedContactDetail}
+            loadingDetail={loadingContactDetail}
+            replyBody={contactReplyBody}
+            replyStatus={contactReplyStatus}
+            sendingReply={sendingContactReply}
+            onSelect={(m) => {
+              setSelectedContactId(m.id);
+              setSelectedContactDetail(null);
+              setContactReplyBody('');
+              setContactReplyStatus({ type: null, message: '' });
+              if (!m.isRead) markContactAsRead(m.id);
+            }}
+            onMarkRead={(id) => markContactAsRead(id)}
+            onRefresh={() => {
+              fetchContactMessages();
+              if (selectedContactId) fetchContactMessageDetail(selectedContactId);
+            }}
+            onChangeReplyBody={setContactReplyBody}
+            onSendReply={sendContactReply}
+          />
+        ) : selectedConversation ? (
           <>
             {/* Chat Header */}
             <div className="h-16 border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 bg-white z-10">

@@ -14,6 +14,7 @@ import { upload } from './middleware/uploadMiddleware.js';
 import path from 'path';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import { sendEmail } from './utils/mailer.js';
 
 const app = express();
 
@@ -71,6 +72,209 @@ app.get('/api/db/health', async (req, res) => {
   const ok = checks.prisma === 'ok';
   res.status(ok ? 200 : 500).json({ status: ok ? 'ok' : 'error', checks });
 });
+
+app.post('/api/contact', async (req, res) => {
+  try {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const phone = typeof req.body?.phone === 'string' ? req.body.phone.trim() : null;
+    const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim() : null;
+    const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+
+    if (name.length < 2) return res.status(400).json({ error: 'Name is required.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Valid email is required.' });
+    if (message.length < 10) return res.status(400).json({ error: 'Message must be at least 10 characters.' });
+
+    const created = await prisma.contactMessage.create({
+      data: {
+        id: randomUUID(),
+        name,
+        email,
+        phone: phone || null,
+        subject: subject || null,
+        message,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+      },
+    });
+
+    res.status(201).json(created);
+  } catch (error) {
+    console.error('Failed to create contact message:', error);
+    res.status(500).json({ error: 'Failed to submit contact message' });
+  }
+});
+
+app.get(
+  '/api/contact-messages',
+  authenticate,
+  requirePermission(PERMISSIONS.CONTACT_MESSAGE_VIEW),
+  async (req, res) => {
+    try {
+      const messages = await prisma.contactMessage.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          subject: true,
+          message: true,
+          createdAt: true,
+          isRead: true,
+          readAt: true,
+        },
+      });
+      res.json(messages);
+    } catch (error) {
+      console.error('Failed to fetch contact messages:', error);
+      res.status(500).json({ error: 'Failed to fetch contact messages' });
+    }
+  }
+);
+
+app.put(
+  '/api/contact-messages/:id/read',
+  authenticate,
+  requirePermission(PERMISSIONS.CONTACT_MESSAGE_VIEW),
+  async (req, res) => {
+    try {
+      const id = String(req.params.id);
+      const updated = await prisma.contactMessage.update({
+        where: { id },
+        data: { isRead: true, readAt: new Date(), handledById: req.user.id },
+        select: { id: true, isRead: true, readAt: true },
+      });
+      res.json(updated);
+    } catch (error) {
+      const code = error?.code;
+      if (code === 'P2025') return res.status(404).json({ error: 'Contact message not found' });
+      console.error('Failed to mark contact message as read:', error);
+      res.status(500).json({ error: 'Failed to mark as read' });
+    }
+  }
+);
+
+app.get(
+  '/api/contact-messages/:id',
+  authenticate,
+  requirePermission(PERMISSIONS.CONTACT_MESSAGE_VIEW),
+  async (req, res) => {
+    try {
+      const id = String(req.params.id);
+      const message = await prisma.contactMessage.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          subject: true,
+          message: true,
+          createdAt: true,
+          isRead: true,
+          readAt: true,
+          replies: {
+            orderBy: { sentAt: 'asc' },
+            select: {
+              id: true,
+              subject: true,
+              body: true,
+              sentAt: true,
+              providerMessageId: true,
+              sender: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
+            },
+          },
+        },
+      });
+      if (!message) return res.status(404).json({ error: 'Contact message not found' });
+      res.json(message);
+    } catch (error) {
+      console.error('Failed to fetch contact message:', error);
+      res.status(500).json({ error: 'Failed to fetch contact message' });
+    }
+  }
+);
+
+app.post(
+  '/api/contact-messages/:id/reply',
+  authenticate,
+  requirePermission(PERMISSIONS.CONTACT_MESSAGE_REPLY),
+  async (req, res) => {
+    try {
+      const id = String(req.params.id);
+      const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+      const subjectOverride = typeof req.body?.subject === 'string' ? req.body.subject.trim() : '';
+
+      if (body.length < 2) return res.status(400).json({ error: 'Reply body is required.' });
+
+      const contact = await prisma.contactMessage.findUnique({
+        where: { id },
+        select: { id: true, name: true, email: true, subject: true, message: true, createdAt: true },
+      });
+      if (!contact) return res.status(404).json({ error: 'Contact message not found' });
+
+      const subjectBase = subjectOverride || contact.subject || 'EduSync contact message';
+      const emailSubject = subjectBase.toLowerCase().startsWith('re:') ? subjectBase : `Re: ${subjectBase}`;
+      const emailText = [
+        `Hi ${contact.name},`,
+        '',
+        body,
+        '',
+        '---',
+        'Original message:',
+        `Submitted: ${contact.createdAt.toISOString()}`,
+        contact.subject ? `Subject: ${contact.subject}` : null,
+        '',
+        contact.message,
+        '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const { messageId } = await sendEmail({
+        to: contact.email,
+        subject: emailSubject,
+        text: emailText,
+      });
+
+      const reply = await prisma.contactMessageReply.create({
+        data: {
+          id: randomUUID(),
+          contactMessageId: contact.id,
+          senderId: req.user.id,
+          subject: emailSubject,
+          body,
+          providerMessageId: messageId,
+        },
+        select: {
+          id: true,
+          subject: true,
+          body: true,
+          sentAt: true,
+          providerMessageId: true,
+          sender: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
+        },
+      });
+
+      await prisma.contactMessage.update({
+        where: { id: contact.id },
+        data: { isRead: true, readAt: new Date(), handledById: req.user.id },
+        select: { id: true },
+      });
+
+      res.status(201).json(reply);
+    } catch (error) {
+      if (error?.code === 'EMAIL_NOT_CONFIGURED') {
+        return res.status(500).json({ error: 'Email sending is not configured on the server.' });
+      }
+      console.error('Failed to reply to contact message:', error);
+      res.status(500).json({ error: 'Failed to send reply' });
+    }
+  }
+);
 
 app.get('/api/stats', authenticate, requirePermission(PERMISSIONS.STATS_VIEW_ALL), async (req, res) => {
   try {

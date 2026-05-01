@@ -40,6 +40,10 @@ export const PERMISSIONS = {
   MESSAGE_SEND_STUDENT: 'message:send_student',
   MESSAGE_SEND_ADMIN: 'message:send_admin',
   MESSAGE_CONTACT_TEACHER: 'message:contact_teacher',
+
+  // Contact Messages
+  CONTACT_MESSAGE_VIEW: 'contact_message:view',
+  CONTACT_MESSAGE_REPLY: 'contact_message:reply',
   
   // Finance
   FINANCE_MANAGE: 'finance:manage',

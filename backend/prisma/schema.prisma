@@ -176,6 +176,37 @@ model Message {
   @@map("Message")
 }
 
+model ContactMessage {
+  id          String   @id
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String
+  createdAt   DateTime @default(now())
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  handledById String?
+  handledBy   User?    @relation(fields: [handledById], references: [id])
+  replies     ContactMessageReply[]
+
+  @@map("ContactMessage")
+}
+
+model ContactMessageReply {
+  id              String         @id
+  contactMessageId String
+  senderId        String
+  subject         String?
+  body            String
+  providerMessageId String?
+  sentAt          DateTime       @default(now())
+  contactMessage  ContactMessage @relation(fields: [contactMessageId], references: [id])
+  sender          User           @relation(fields: [senderId], references: [id])
+
+  @@map("ContactMessageReply")
+}
+
 model Parent {
   id             String           @id
   userId         String           @unique
@@ -418,6 +449,8 @@ model User {
   conversations ConversationParticipant[]
   issuedCertificates Certificate[]
   notifications Notification[]
+  handledContactMessages ContactMessage[]
+  contactMessageReplies ContactMessageReply[]
   school    School    @relation(fields: [schoolId], references: [id])
   
   @@map("User")
